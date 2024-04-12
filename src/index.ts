@@ -281,10 +281,16 @@ function osiTimestampToTime(time: OsiTimestamp): Time {
 
 const staticObjectsRenderCache: {
   lastRenderTime: Time | undefined;
-  lastRenderedObjects: Set<number>;
+  lastRenderedObjects: {
+    traffic_light: Set<number>;
+    traffic_sign: Set<number>;
+  }
 } = {
   lastRenderTime: undefined,
-  lastRenderedObjects: new Set<number>(),
+  lastRenderedObjects: {
+    traffic_light: new Set<number>(),
+    traffic_sign: new Set<number>()
+  },
 };
 
 export function determineTheNeedToRerender(lastRenderTime: Time, currentRenderTime: Time): boolean {
@@ -333,30 +339,38 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
   );
   sceneEntities = sceneEntities.concat(stationaryObjectSceneEntities);
 
-  // Traffic Sign objects
+  // Traffic Sign + Traffic Light objects
+  // HACK: Performance Issue (to be removed on newest foxglove's versions)
+  // Older versions of foxglove do not handle 3d objects in an perfomant way,
+  // This logic prevents the 3d object to be rebuit on every playback frame
   let filteredTrafficSigns: OsiTrafficSign[];
+  let filteredTrafficLights: OsiTrafficLight[];
   if (needtoRerender) {
-    staticObjectsRenderCache.lastRenderedObjects.clear();
+    staticObjectsRenderCache.lastRenderedObjects.traffic_sign.clear();
     filteredTrafficSigns = osiGroundTruth.traffic_sign;
+    staticObjectsRenderCache.lastRenderedObjects.traffic_light.clear();
+    filteredTrafficLights = osiGroundTruth.traffic_light;
   } else {
     filteredTrafficSigns = osiGroundTruth.traffic_sign.filter((obj) => {
-      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value);
+      return !staticObjectsRenderCache.lastRenderedObjects.traffic_sign.has(obj.id.value);
+    });
+    filteredTrafficLights = osiGroundTruth.traffic_light.filter((obj) => {
+      return !staticObjectsRenderCache.lastRenderedObjects.traffic_light.has(obj.id.value);
     });
   }
   const trafficsignObjectSceneEntities = filteredTrafficSigns.map((obj) => {
-    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value);
+    staticObjectsRenderCache.lastRenderedObjects.traffic_sign.add(obj.id.value);
     return buildTrafficSignEntity(obj, "traffic_sign_", ROOT_FRAME, time);
   });
-  staticObjectsRenderCache.lastRenderTime = time;
-  sceneEntities = sceneEntities.concat(trafficsignObjectSceneEntities);
-
-  // Traffic Light objects
-  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map(
+  const trafficlightObjectSceneEntities = filteredTrafficLights.map(
     (obj: OsiTrafficLight) => {
+      staticObjectsRenderCache.lastRenderedObjects.traffic_light.add(obj.id.value);
       const metadata = buildTrafficLightMetadata(obj);
       return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
     },
   );
+  staticObjectsRenderCache.lastRenderTime = time;
+  sceneEntities = sceneEntities.concat(trafficsignObjectSceneEntities);
   sceneEntities = sceneEntities.concat(trafficlightObjectSceneEntities);
 
   // Lane boundaries
