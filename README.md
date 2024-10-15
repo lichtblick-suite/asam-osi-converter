@@ -4,11 +4,19 @@
 
 The goal is to have a Lichtblick extension which can visualise data which is following the standards of the [Open Simulation Interface (OSI) by ASAM](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
+## Getting started
+
+Get Lichtblick Studio from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
+
+Get extension file from [releases](https://github.com/Lichtblick-Suite/asam-osi-converter/releases).
+
+Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
+
+Open a file/stream which is following the OSI standard.
 
 ## Coding guidelines
 
 The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the lichtblick-suite sdk.
-
 
 ## Develop
 
