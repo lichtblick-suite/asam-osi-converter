@@ -7,30 +7,8 @@ The goal is to have a Lichtblick extension which can visualise data which is fol
 
 ## Coding guidelines
 
-The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the foxglove studio sdk.
+The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the lichtblick-suite sdk.
 
-## TODO Code
-
- - [x] Debazelise / extend package.json
- - [x] Enable yarn build & yarn package 
- - [x] Remove BMW specific transforms
- - [x] Remove unused converters (current code contains multiple converters)
- - [x] Move util functions from the common  directory to extension src 
- - [x] Implement newest commits e.g. traffic sign visualisation
- - [x] Add missing license files
- - [x] Apply foxglove's basic prettier/typing/linting rules to existing code base
- - [x] Adjust tests
- - [ ] Replace example data with data which is allowed to go public
-
-## TODO CI/CD
-
- - [ ] Run tests/linting
- - [ ] Run build of .foxe file
-
-
-## Roadmap
-
-- Implement traffic lights visualisation
 
 ## Develop
 
