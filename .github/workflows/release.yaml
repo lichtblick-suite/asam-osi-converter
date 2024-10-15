@@ -33,43 +33,23 @@ jobs:
           version=$(node -p "require('./package.json').version")
           echo "version=$version" >> $GITHUB_ENV
 
-      - name: Upload foxe artifact
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: foxe-${{ env.version }}
-          path: lichtblick.asam-osi-visualizer-${{ env.version }}.foxe
-  # build_release:
-  #   name: build_release
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: checkout
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
-  #     - name: build
-  #       run: make build
-  #     - name: version
-  #       run: echo "::set-output name=version::$(./bin/azblogfilter --version)"
-  #       id: version
-  #     - name: build artifacts
-  #       run: make build-linux && make build-windows && make build-darwin
-  #     - name: release
-  #       uses: actions/create-release@v1
-  #       id: create_release
-  #       with:
-  #         draft: false
-  #         prerelease: false
-  #         release_name: ${{ steps.version.outputs.version }}
-  #         tag_name: ${{ github.ref }}
-  #         body_path: CHANGELOG.md
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #     - name: upload foxe file
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #       with:
-  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #         asset_path: ./bin/azblogfilter.linux-amd64.tar.gz
-  #         asset_name: azblogfilter.linux-amd64.tar.gz
-  #         asset_content_type: application/gzip
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ env.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: lichtblick.asam-osi-visualizer-${{ env.version }}.foxe
+          asset_name: lichtblick.asam-osi-visualizer-${{ env.version }}.foxe
+          asset_content_type: application/octet-stream
