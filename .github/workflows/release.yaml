@@ -29,7 +29,9 @@ jobs:
 
       - name: Extract version
         id: extract_version
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> $GITHUB_ENV
 
       - name: Upload foxe artifact
         uses: actions/upload-artifact@v4
