@@ -5,8 +5,10 @@ on:
     tags:
       - '*'
 
-jobs:
+permissions:
+  contents: write
 
+jobs:
   build_foxe:
     name: build_foxe
     runs-on: ubuntu-latest
