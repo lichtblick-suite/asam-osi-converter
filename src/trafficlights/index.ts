@@ -2,22 +2,22 @@ import { Color, KeyValuePair, ModelPrimitive } from "@foxglove/schemas";
 import { convertDataURIToBinary } from "@utils/helper";
 import { objectToModelPrimitive } from "@utils/marker";
 
+import {
+  TrafficLight_Classification_Color,
+  TrafficLight_Classification_Icon,
+  TrafficLight_Classification_Mode,
+} from "asam-osi-types";
+
 import * as geometries from "./geometries";
 import images from "./images";
-import {
-  OsiTrafficLight,
-  OsiTrafficLightClassification,
-  OsiTrafficLightClassificationColor,
-  OsiTrafficLightClassificationIcon,
-  OsiTrafficLightClassificationMode,
-} from "../types/osiGroundTruth";
+import { OsiTrafficLight, OsiTrafficLightClassification } from "../types/osiGroundTruth";
 
 const modelCacheMap = new Map<string | number, Uint8Array>();
 
 export const buildTrafficLightModel = (item: OsiTrafficLight, color: Color): ModelPrimitive => {
   const mapKey = getMapKey(item.classification);
 
-  if (item.classification.mode.value === OsiTrafficLightClassificationMode.OFF) {
+  if (item.classification.mode.value === TrafficLight_Classification_Mode.OFF) {
     color.a = 0.5;
   }
 
@@ -26,15 +26,15 @@ export const buildTrafficLightModel = (item: OsiTrafficLight, color: Color): Mod
   }
 
   return objectToModelPrimitive(
-    item.base.position.x,
-    item.base.position.y,
-    item.base.position.z,
-    item.base.orientation.yaw,
+    item.base.position!.x!,
+    item.base.position!.y!,
+    item.base.position!.z!,
+    item.base.orientation!.yaw!,
     0,
     0,
-    item.base.dimension.width,
-    item.base.dimension.length,
-    item.base.dimension.height,
+    item.base.dimension!.width!,
+    item.base.dimension!.length!,
+    item.base.dimension!.height!,
     color,
     modelCacheMap.get(mapKey)!,
   );
@@ -57,15 +57,15 @@ export function buildTrafficLightMetadata(obj: OsiTrafficLight): KeyValuePair[] 
   const metadata: KeyValuePair[] = [
     {
       key: "color",
-      value: OsiTrafficLightClassificationColor[obj.classification.color.value],
+      value: TrafficLight_Classification_Color[obj.classification.color.value],
     },
     {
       key: "icon",
-      value: OsiTrafficLightClassificationIcon[obj.classification.icon.value],
+      value: TrafficLight_Classification_Icon[obj.classification.icon.value],
     },
     {
       key: "mode",
-      value: OsiTrafficLightClassificationMode[obj.classification.mode.value],
+      value: TrafficLight_Classification_Mode[obj.classification.mode.value],
     },
   ];
 

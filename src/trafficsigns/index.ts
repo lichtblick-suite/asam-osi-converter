@@ -42,15 +42,15 @@ export const buildTrafficSignModel = (
   }
 
   return objectToModelPrimitive(
-    item.base.position.x,
-    item.base.position.y,
-    item.base.position.z,
-    item.base.orientation.yaw,
+    item.base.position!.x!,
+    item.base.position!.y!,
+    item.base.position!.z!,
+    item.base.orientation!.yaw!,
     0,
     0,
-    item.base.dimension.width,
-    item.base.dimension.length,
-    item.base.dimension.height,
+    item.base.dimension!.width!,
+    item.base.dimension!.length!,
+    item.base.dimension!.height!,
     { r: 0, g: 0, b: 0, a: 0 },
     modelSignCacheMap[category].get(mapKey)!,
   );

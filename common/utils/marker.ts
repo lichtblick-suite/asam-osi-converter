@@ -6,6 +6,7 @@ import {
   Point3,
   Point2,
   ModelPrimitive,
+  Vector3,
 } from "@foxglove/schemas";
 
 import { eulerToQuaternion } from "./geometry";
@@ -41,7 +42,7 @@ export function pointListToLinePrimitive(
 }
 
 export function pointListToDashedLinePrimitive(
-  points: { x: number; y: number; z: number }[],
+  points: Vector3[],
   length_segment: number,
   length_gap: number,
   thickness: number,

@@ -18,6 +18,16 @@ import {
   objectToCubePrimitive,
 } from "@utils/marker";
 import { PartialSceneEntity } from "@utils/scene";
+import {
+  Identifier,
+  LaneBoundary_Classification_Type,
+  MovingObject_Type,
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
+  MovingObject_VehicleClassification_LightState_GenericLightState,
+  MovingObject_VehicleClassification_LightState_IndicatorState,
+  MovingObject_VehicleClassification_Type,
+  Timestamp,
+} from "asam-osi-types";
 import { DeepPartial } from "ts-essentials";
 
 import {
@@ -35,17 +45,9 @@ import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 import {
   OsiGroundTruth,
   OsiObject,
-  OsiTimestamp,
   OsiLaneBoundary,
-  OsiLaneBoundaryType,
-  OsiMovingObjectType,
   OsiStationaryObject,
   OsiMovingObjectVehicleClassification,
-  OsiMovingObjectVehicleClassificationType,
-  OsiMovingObjectVehicleClassificationLightStateBrakeLightState,
-  OsiMovingObjectVehicleClassificationLightStateIndicatorState,
-  OsiMovingObjectVehicleClassificationLightStateGenericLightState,
-  OsiIdentifier,
   OsiTrafficSign,
   OsiTrafficLight,
 } from "./types/osiGroundTruth";
@@ -70,21 +72,21 @@ function buildObjectEntity(
   const y_offset = 0;
 
   const cube = objectToCubePrimitive(
-    osiObject.base.position.x,
-    osiObject.base.position.y,
-    osiObject.base.orientation.yaw,
+    osiObject.base.position!.x!,
+    osiObject.base.position!.y!,
+    osiObject.base.orientation!.yaw!,
     x_offset,
     y_offset,
-    osiObject.base.dimension.width,
-    osiObject.base.dimension.length,
-    osiObject.base.dimension.height,
+    osiObject.base.dimension!.width!,
+    osiObject.base.dimension!.length!,
+    osiObject.base.dimension!.height!,
     color,
   );
 
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + osiObject.id.value.toString(),
+    id: id_prefix + osiObject.id.value!.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
@@ -112,7 +114,7 @@ function buildTrafficSignEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value.toString(),
+    id: id_prefix + obj.id.value!.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -137,7 +139,7 @@ function buildTrafficLightEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value.toString(),
+    id: id_prefix + obj.id.value!.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -152,24 +154,24 @@ function buildLaneBoundaryEntity(
   time: Time,
 ): PartialSceneEntity {
   const boundaryPoints = osiLaneBoundary.boundary_line.map(
-    (point) => ({ x: point.position.x, y: point.position.y }) as Vector2,
+    (point) => ({ x: point.position!.x, y: point.position!.y }) as Vector2,
   );
 
   const color = LANE_BOUNDARY_COLOR[osiLaneBoundary.classification.type.value];
   let line: LinePrimitive;
   switch (osiLaneBoundary.classification.type.value) {
-    case OsiLaneBoundaryType.DASHED_LINE:
+    case LaneBoundary_Classification_Type.DASHED_LINE:
       line = pointListToDashedLinePrimitive(
-        osiLaneBoundary.boundary_line.map((point) => point.position),
+        osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
         1,
         2.5,
         osiLaneBoundary.boundary_line[0]?.width ?? 0,
         color,
       );
       break;
-    case OsiLaneBoundaryType.BOTTS_DOTS:
+    case LaneBoundary_Classification_Type.BOTTS_DOTS:
       line = pointListToDashedLinePrimitive(
-        osiLaneBoundary.boundary_line.map((point) => point.position),
+        osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
         0.1,
         1,
         osiLaneBoundary.boundary_line[0]?.width ?? 0,
@@ -189,7 +191,7 @@ function buildLaneBoundaryEntity(
   return {
     timestamp: time,
     frame_id,
-    id: "boundary_" + osiLaneBoundary.id.value.toString(),
+    id: "boundary_" + osiLaneBoundary.id.value!.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: [line],
@@ -198,14 +200,14 @@ function buildLaneBoundaryEntity(
 }
 
 interface IlightStateEnumStringMaps {
-  generic_light_state: typeof OsiMovingObjectVehicleClassificationLightStateGenericLightState;
+  generic_light_state: typeof MovingObject_VehicleClassification_LightState_GenericLightState;
   [key: string]: Record<number, string>;
 }
 
 const lightStateEnumStringMaps: IlightStateEnumStringMaps = {
-  indicator_state: OsiMovingObjectVehicleClassificationLightStateIndicatorState,
-  brake_light_state: OsiMovingObjectVehicleClassificationLightStateBrakeLightState,
-  generic_light_state: OsiMovingObjectVehicleClassificationLightStateGenericLightState,
+  indicator_state: MovingObject_VehicleClassification_LightState_IndicatorState,
+  brake_light_state: MovingObject_VehicleClassification_LightState_BrakeLightState,
+  generic_light_state: MovingObject_VehicleClassification_LightState_GenericLightState,
 };
 
 export function buildVehicleMetadata(
@@ -214,15 +216,15 @@ export function buildVehicleMetadata(
   return [
     {
       key: "type",
-      value: OsiMovingObjectVehicleClassificationType[vehicle_classification.type.value],
+      value: MovingObject_VehicleClassification_Type[vehicle_classification.type.value],
     },
     ...Object.entries(vehicle_classification.light_state).map(
-      ([key, { value }]: [string, OsiIdentifier]) => {
+      ([key, { value }]: [string, Identifier]) => {
         return {
           key: `light_state.${key}`,
           value:
-            lightStateEnumStringMaps[key]?.[value] ??
-            lightStateEnumStringMaps.generic_light_state[value]!,
+            lightStateEnumStringMaps[key]?.[value!] ??
+            lightStateEnumStringMaps.generic_light_state[value!]!,
         };
       },
     ),
@@ -233,11 +235,11 @@ export function buildLaneBoundaryMetadata(lane_boundary: OsiLaneBoundary): KeyVa
   const metadata: KeyValuePair[] = [
     {
       key: "type",
-      value: OsiLaneBoundaryType[lane_boundary.classification.type.value],
+      value: LaneBoundary_Classification_Type[lane_boundary.classification.type.value],
     },
     {
       key: "width",
-      value: lane_boundary.boundary_line[0]?.width.toString() ?? "0",
+      value: lane_boundary.boundary_line[0]?.width!.toString() ?? "0",
     },
   ];
 
@@ -272,10 +274,10 @@ export function buildStationaryMetadata(obj: OsiStationaryObject): KeyValuePair[
   return metadata;
 }
 
-function osiTimestampToTime(time: OsiTimestamp): Time {
+function osiTimestampToTime(time: Timestamp): Time {
   return {
-    sec: time.seconds,
-    nsec: time.nanos,
+    sec: time.seconds!,
+    nsec: time.nanos!,
   };
 }
 
@@ -309,11 +311,11 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
       const metadata = buildVehicleMetadata(obj.vehicle_classification);
       entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, "", ROOT_FRAME, time, metadata);
     } else {
-      const objectType = OsiMovingObjectType[obj.type.value];
+      const objectType = MovingObject_Type[obj.type.value];
       const objectColor = MOVING_OBJECT_COLOR[obj.type.value];
       const prefix = `moving_object_${objectType}_`;
       const metadata =
-        obj.type.value === OsiMovingObjectType.VEHICLE
+        obj.type.value === MovingObject_Type.VEHICLE
           ? buildVehicleMetadata(obj.vehicle_classification)
           : [];
       entity = buildObjectEntity(obj, objectColor, prefix, ROOT_FRAME, time, metadata);
@@ -340,11 +342,11 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
     filteredTrafficSigns = osiGroundTruth.traffic_sign;
   } else {
     filteredTrafficSigns = osiGroundTruth.traffic_sign.filter((obj) => {
-      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value);
+      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value!);
     });
   }
   const trafficsignObjectSceneEntities = filteredTrafficSigns.map((obj) => {
-    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value);
+    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value!);
     return buildTrafficSignEntity(obj, "traffic_sign_", ROOT_FRAME, time);
   });
   staticObjectsRenderCache.lastRenderTime = time;
@@ -373,18 +375,18 @@ export function frameTransformator(osiGroundTruth: OsiGroundTruth): FrameTransfo
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
-  const rollAngle = hostObject.base.orientation.roll;
-  const pitchAngle = hostObject.base.orientation.pitch;
-  const yawAngle = -hostObject.base.orientation.yaw;
+  const rollAngle = hostObject.base.orientation!.roll!;
+  const pitchAngle = hostObject.base.orientation!.pitch!;
+  const yawAngle = -hostObject.base.orientation!.yaw!;
   const hostObjectBasePosition: Vector3 = {
-    x: -hostObject.base.position.x,
-    y: -hostObject.base.position.y,
-    z: -hostObject.base.position.z,
+    x: -hostObject.base.position!.x!,
+    y: -hostObject.base.position!.y!,
+    z: -hostObject.base.position!.z!,
   };
   const quaternion: Quaternion = eulerToQuaternion(rollAngle, pitchAngle, yawAngle);
   const translationResult = pointRotationByQuaternion(hostObjectBasePosition, quaternion);
-  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear.x;
-  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear.y;
+  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear!.x!;
+  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear!.y!;
   translationResult.z = 0;
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),

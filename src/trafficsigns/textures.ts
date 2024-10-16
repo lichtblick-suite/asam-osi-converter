@@ -1,7 +1,8 @@
+import { TrafficSign_MainSign_Classification_Type as MAIN_TYPE } from "asam-osi-types";
+
 import {
   OsiTrafficSignMainSignClassification,
   OsiTrafficSignSupplementarySignClassification,
-  OsiTrafficSignMainSignClassificationType as MAIN_TYPE,
 } from "../types/osiGroundTruth";
 
 interface TrafficSignCustomization {

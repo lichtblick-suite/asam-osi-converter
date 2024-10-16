@@ -1,4 +1,14 @@
 import { ExtensionContext } from "@foxglove/studio";
+import {
+  BaseMoving,
+  LaneBoundary_BoundaryPoint,
+  LaneBoundary_Classification_Type,
+  MovingObject_Type,
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
+  MovingObject_VehicleClassification_LightState_GenericLightState,
+  MovingObject_VehicleClassification_LightState_IndicatorState,
+  MovingObject_VehicleClassification_Type,
+} from "asam-osi-types";
 
 import {
   activate,
@@ -8,19 +18,12 @@ import {
 } from "../index";
 import {
   OsiLaneBoundary,
-  OsiLaneBoundaryType,
-  OsiMovingObjectVehicleClassificationType,
-  OsiMovingObjectVehicleClassificationLightStateBrakeLightState,
-  OsiMovingObjectVehicleClassificationLightStateGenericLightState,
-  OsiMovingObjectVehicleClassificationLightStateIndicatorState,
   OsiGroundTruth,
   OsiMovingObject,
-  OsiMovingObjectType,
   OsiMovingObjectVehicleClassification,
-  OsiBase,
-  OsiLaneBoundaryBoundaryPoint,
   OsiStationaryObject,
 } from "../types/osiGroundTruth";
+
 
 jest.mock(
   "../trafficsigns",
@@ -35,7 +38,7 @@ jest.mock("../trafficlights", () => {}, { virtual: true });
 describe("OSI Visualizer: Message Converter", () => {
   const mockRegisterMessageConverter = jest.fn();
   const mockExtensionContext = {} as ExtensionContext;
-  const mockBase: OsiBase = {
+  const mockBase: BaseMoving = {
     dimension: {
       width: 1,
       height: 1,
@@ -59,7 +62,7 @@ describe("OSI Visualizer: Message Converter", () => {
     },
     base: mockBase,
     type: {
-      value: OsiMovingObjectType.VEHICLE,
+      value: MovingObject_Type.VEHICLE,
     },
     vehicle_attributes: {
       bbcenter_to_rear: {
@@ -70,7 +73,7 @@ describe("OSI Visualizer: Message Converter", () => {
     },
     vehicle_classification: {
       type: {
-        value: OsiMovingObjectVehicleClassificationType.SMALL_CAR,
+        value: MovingObject_VehicleClassification_Type.SMALL_CAR,
       },
       light_state: {},
     },
@@ -111,7 +114,7 @@ describe("OSI Visualizer: Message Converter", () => {
     ],
     classification: {
       type: {
-        value: OsiLaneBoundaryType.NO_LINE,
+        value: LaneBoundary_Classification_Type.NO_LINE,
       },
     },
   };
@@ -171,27 +174,27 @@ describe("OSI Visualizer: Moving Objects", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "type",
-          value: OsiMovingObjectVehicleClassificationType[input.type.value],
+          value: MovingObject_VehicleClassification_Type[input.type.value],
         }),
         expect.objectContaining({
           key: "light_state.indicator_state",
           value:
-            OsiMovingObjectVehicleClassificationLightStateIndicatorState[
-              input.light_state.indicator_state!.value
+            MovingObject_VehicleClassification_LightState_IndicatorState[
+              input.light_state.indicator_state!.value!
             ],
         }),
         expect.objectContaining({
           key: "light_state.brake_light_state",
           value:
-            OsiMovingObjectVehicleClassificationLightStateBrakeLightState[
-              input.light_state.brake_light_state!.value
+            MovingObject_VehicleClassification_LightState_BrakeLightState[
+              input.light_state.brake_light_state!.value!
             ],
         }),
         expect.objectContaining({
           key: "light_state.head_light",
           value:
-            OsiMovingObjectVehicleClassificationLightStateGenericLightState[
-              input.light_state.head_light!.value
+            MovingObject_VehicleClassification_LightState_GenericLightState[
+              input.light_state.head_light!.value!
             ],
         }),
       ]),
@@ -201,14 +204,14 @@ describe("OSI Visualizer: Moving Objects", () => {
 
 describe("OSI Visualizer: Lane Boundaries", () => {
   it("builds metadata for lane boundaries", () => {
-    const mockLaneBoundaryPoint: OsiLaneBoundaryBoundaryPoint = {
+    const mockLaneBoundaryPoint: LaneBoundary_BoundaryPoint = {
       position: { x: 0, y: 0, z: 0 },
       width: 2.0,
     };
     const mockLaneBoundary: OsiLaneBoundary = {
       id: { value: 123 },
       classification: {
-        type: { value: OsiLaneBoundaryType.SOLID_LINE },
+        type: { value: LaneBoundary_Classification_Type.SOLID_LINE },
       },
       boundary_line: [mockLaneBoundaryPoint],
     };
@@ -217,11 +220,11 @@ describe("OSI Visualizer: Lane Boundaries", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "type",
-          value: OsiLaneBoundaryType[mockLaneBoundary.classification.type.value],
+          value: LaneBoundary_Classification_Type[mockLaneBoundary.classification.type.value],
         }),
         expect.objectContaining({
           key: "width",
-          value: mockLaneBoundaryPoint.width.toString(),
+          value: mockLaneBoundaryPoint.width!.toString(),
         }),
       ]),
     );

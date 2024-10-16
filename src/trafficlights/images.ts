@@ -1,3 +1,5 @@
+import { TrafficLight_Classification_Icon as ICON } from "asam-osi-types";
+
 import ARROW_DIAG_LEFT from "../../assets/images/arrow_diag_left_one.png";
 import ARROW_DIAG_RIGHT from "../../assets/images/arrow_diag_right_one.png";
 import ARROW_DOWN from "../../assets/images/arrow_down_one.png";
@@ -23,7 +25,6 @@ import PEDESTRIAN from "../../assets/images/pedestrian_one.png";
 import UNKNOWN from "../../assets/images/unknown.png";
 import OTHER from "../../assets/images/unknown.png";
 import WALK from "../../assets/images/walk.png";
-import { OsiTrafficLightClassificationIcon as ICON } from "../types/osiGroundTruth";
 
 export default {
   [ICON.UNKNOWN]: UNKNOWN,
