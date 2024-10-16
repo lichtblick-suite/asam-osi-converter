@@ -12,6 +12,7 @@ jobs:
   build_foxe:
     name: build_foxe
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: checkout
         uses: actions/checkout@v4
