@@ -1,36 +1,22 @@
-# ASAM OSI visualizer extension for Lichtblick
+# ASAM OSI Converter extension for Lichtblick
 
 ## What is this extension about?
 
-The goal is to have a Lichtblick extension which can visualise data which is following the standards of the [Open Simulation Interface (OSI) by ASAM](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
+The goal is to have an extension which visualises data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
+## Getting started
+
+Get Lichtblick from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
+
+Get extension file from [releases](https://github.com/Lichtblick-Suite/asam-osi-converter/releases).
+
+Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
+
+Open a file/stream which is following the ASAM OSI standard.
 
 ## Coding guidelines
 
-The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the foxglove studio sdk.
-
-## TODO Code
-
- - [x] Debazelise / extend package.json
- - [x] Enable yarn build & yarn package 
- - [x] Remove BMW specific transforms
- - [x] Remove unused converters (current code contains multiple converters)
- - [x] Move util functions from the common  directory to extension src 
- - [x] Implement newest commits e.g. traffic sign visualisation
- - [x] Add missing license files
- - [x] Apply foxglove's basic prettier/typing/linting rules to existing code base
- - [x] Adjust tests
- - [ ] Replace example data with data which is allowed to go public
-
-## TODO CI/CD
-
- - [ ] Run tests/linting
- - [ ] Run build of .foxe file
-
-
-## Roadmap
-
-- Implement traffic lights visualisation
+The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the lichtblick-suite sdk.
 
 ## Develop
 
@@ -48,7 +34,7 @@ To build and install the extension into your local Foxglove Studio desktop app, 
 yarn run local-install
 ```
 
-Open the `Foxglove Studio` desktop (or `ctrl-R` to refresh if it is already open). Your extension is installed and available within the app.
+Open the `Lichtblick` desktop (or `ctrl-R` to refresh if it is already open). Your extension is installed and available within the app.
 
 ## Package
 

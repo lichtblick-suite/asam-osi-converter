@@ -1,11 +1,11 @@
 {
-  "name": "asam-osi-visualizer",
-  "displayName": "ASAM OSI Visualizer",
-  "description": "",
-  "publisher": "unknown",
-  "homepage": "",
+  "name": "asam-osi-converter",
+  "displayName": "ASAM OSI Converter",
+  "description": "Visualises data following the standard of the ASAM Open Simulation Interface (ASAM OSI) using the native 3D panel of Lichtblick",
+  "publisher": "Lichtblick",
+  "homepage": "https://www.asam.net/standards/detail/osi/",
   "version": "0.0.1",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "./dist/extension.js",
   "keywords": [],
   "scripts": {
@@ -17,11 +17,15 @@
     "package": "foxglove-extension package",
     "test": "jest"
   },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",
-    "@foxglove/eslint-plugin": "1.0.1",
     "@foxglove/schemas": "^1.6.2",
-    "@foxglove/studio": "1.87.0",
+    "@lichtblick/eslint-plugin": "^1.0.1",
+    "@lichtblick/suite": "^1.5.0",
     "@types/jest": "^29.5.12",
     "@types/react": "18.2.55",
     "@types/react-dom": "18.2.19",
