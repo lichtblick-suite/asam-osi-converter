@@ -1,18 +1,18 @@
-# ASAM OSI visualizer extension for Lichtblick
+# ASAM OSI Converter extension for Lichtblick
 
 ## What is this extension about?
 
-The goal is to have a Lichtblick extension which can visualise data which is following the standards of the [Open Simulation Interface (OSI) by ASAM](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
+The goal is to have an extension which visualises data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
 ## Getting started
 
-Get Lichtblick Studio from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
+Get Lichtblick from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
 
 Get extension file from [releases](https://github.com/Lichtblick-Suite/asam-osi-converter/releases).
 
 Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
 
-Open a file/stream which is following the OSI standard.
+Open a file/stream which is following the ASAM OSI standard.
 
 ## Coding guidelines
 
@@ -34,7 +34,7 @@ To build and install the extension into your local Foxglove Studio desktop app, 
 yarn run local-install
 ```
 
-Open the `Foxglove Studio` desktop (or `ctrl-R` to refresh if it is already open). Your extension is installed and available within the app.
+Open the `Lichtblick` desktop (or `ctrl-R` to refresh if it is already open). Your extension is installed and available within the app.
 
 ## Package
 
