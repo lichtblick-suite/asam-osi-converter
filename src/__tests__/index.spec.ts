@@ -1,4 +1,4 @@
-import { ExtensionContext } from "@foxglove/studio";
+import { ExtensionContext } from "@lichtblick/suite";
 
 import {
   activate,

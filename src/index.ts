@@ -9,7 +9,7 @@ import {
   type Vector2,
   type Vector3,
 } from "@foxglove/schemas";
-import { ExtensionContext, Time } from "@foxglove/studio";
+import { ExtensionContext, Time } from "@lichtblick/suite";
 import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
