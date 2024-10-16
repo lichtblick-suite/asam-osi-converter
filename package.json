@@ -24,6 +24,7 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",
     "@foxglove/schemas": "^1.6.2",
+    "@lichtblick/eslint-plugin": "^1.0.1",
     "@lichtblick/suite": "^1.5.0",
     "@types/jest": "^29.5.12",
     "@types/react": "18.2.55",
