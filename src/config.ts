@@ -22,6 +22,7 @@ export const MOVING_OBJECT_COLOR: Record<MovingObject_Type, Color> = {
 };
 
 export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Type, Color> = {
+  [LaneBoundary_Classification_Type.BARRIER]: ColorCode("gray", 0.5),
   [LaneBoundary_Classification_Type.BOTTS_DOTS]: ColorCode("y", 0.5),
   [LaneBoundary_Classification_Type.CURB]: ColorCode("c", 0.5),
   [LaneBoundary_Classification_Type.DASHED_LINE]: ColorCode("gray", 0.5),
@@ -34,12 +35,13 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Type, Color
   [LaneBoundary_Classification_Type.SNOW_EDGE]: ColorCode("w", 0.5),
   [LaneBoundary_Classification_Type.SOIL_EDGE]: ColorCode("y", 0.5),
   [LaneBoundary_Classification_Type.SOLID_LINE]: ColorCode("gray", 0.5),
+  [LaneBoundary_Classification_Type.SOUND_BARRIER]: ColorCode("gray", 0.5),
   [LaneBoundary_Classification_Type.STRUCTURE]: ColorCode("c", 0.5),
   [LaneBoundary_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
 };
 
 export const TRAFFIC_LIGHT_COLOR: Record<
-TrafficLight_Classification_Color,
+  TrafficLight_Classification_Color,
   { code: Color; name: string }
 > = {
   [TrafficLight_Classification_Color.UNKNOWN]: { code: ColorCode("gray", 1), name: "Unknown" },
@@ -76,7 +78,7 @@ export const STATIONARY_OBJECT_COLOR: Record<
   },
 };
 
-export const STATIONARY_OBJECT_TYPE = {
+export const STATIONARY_OBJECT_TYPE: Record<StationaryObject_Classification_Type, string> = {
   [StationaryObject_Classification_Type.UNKNOWN]:
     "Type of the object is unknown (must not be used in ground truth).",
   [StationaryObject_Classification_Type.OTHER]: "Other (unspecified but known) type of object.",
@@ -101,28 +103,31 @@ export const STATIONARY_OBJECT_TYPE = {
     "Landmarks corresponding to reflective structures in the environment, like reflective poles on the road boarder.",
   [StationaryObject_Classification_Type.CONSTRUCTION_SITE_ELEMENT]:
     "Landmarks corresponding to construction site elements in the environment, like beacons.",
-  // [StationaryObject_Classification_Type.SPEED_BUMP]: "Object is a speed bump.",
-  // [StationaryObject_Classification_Type.EMITTING_STRUCTURE]:
-  //   "Landmarks corresponding to sources of electromagnetic waves in the environment, like street lights.",
+  [StationaryObject_Classification_Type.SPEED_BUMP]: "Object is a speed bump.",
+  [StationaryObject_Classification_Type.EMITTING_STRUCTURE]:
+    "Landmarks corresponding to sources of electromagnetic waves in the environment, like street lights.",
 };
 
-export const STATIONARY_OBJECT_MATERIAL = {
-  [StationaryObject_Classification_Material.UNKNOWN]:
-    "Type of the material is unknown (must not be used in ground truth).",
-  [StationaryObject_Classification_Material.OTHER]: "Other (unspecified but known) type of material.",
-  [StationaryObject_Classification_Material.WOOD]: "Wooden structure.",
-  [StationaryObject_Classification_Material.PLASTIC]: "Plastic structure.",
-  [StationaryObject_Classification_Material.CONCRETE]: "Concrete structure.",
-  [StationaryObject_Classification_Material.METAL]: "Metal structure.",
-  [StationaryObject_Classification_Material.STONE]: "Natural stone structure.",
-  [StationaryObject_Classification_Material.GLAS]: "Glas structure.",
-  [StationaryObject_Classification_Material.MUD]: "Mud structure.",
-};
+export const STATIONARY_OBJECT_MATERIAL: Record<StationaryObject_Classification_Material, string> =
+  {
+    [StationaryObject_Classification_Material.UNKNOWN]:
+      "Type of the material is unknown (must not be used in ground truth).",
+    [StationaryObject_Classification_Material.OTHER]:
+      "Other (unspecified but known) type of material.",
+    [StationaryObject_Classification_Material.WOOD]: "Wooden structure.",
+    [StationaryObject_Classification_Material.PLASTIC]: "Plastic structure.",
+    [StationaryObject_Classification_Material.CONCRETE]: "Concrete structure.",
+    [StationaryObject_Classification_Material.METAL]: "Metal structure.",
+    [StationaryObject_Classification_Material.STONE]: "Natural stone structure.",
+    [StationaryObject_Classification_Material.GLAS]: "Glas structure.",
+    [StationaryObject_Classification_Material.MUD]: "Mud structure.",
+  };
 
-export const STATIONARY_OBJECT_DENSITY = {
+export const STATIONARY_OBJECT_DENSITY: Record<StationaryObject_Classification_Density, string> = {
   [StationaryObject_Classification_Density.UNKNOWN]:
     "Type of the material density is unknown (must not be used in ground truth).",
-  [StationaryObject_Classification_Density.OTHER]: "Other (unspecified but known) type of material density.",
+  [StationaryObject_Classification_Density.OTHER]:
+    "Other (unspecified but known) type of material density.",
   [StationaryObject_Classification_Density.SOLID]: "No perforation - solid;.",
   [StationaryObject_Classification_Density.SMALL_MESH]: "Perforation max.]0; 100] mm",
   [StationaryObject_Classification_Density.MEDIAN_MESH]: "Perforation max.]100; 500] mm",
