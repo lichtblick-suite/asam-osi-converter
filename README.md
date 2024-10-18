@@ -2,7 +2,7 @@
 
 ## What is this extension about?
 
-The goal is to have an extension which visualises data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
+A converter extension which visualizes data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
 ## Getting started
 

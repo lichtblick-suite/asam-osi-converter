@@ -7,7 +7,12 @@
   "version": "0.0.1",
   "license": "MIT",
   "main": "./dist/extension.js",
-  "keywords": [],
+  "keywords": [
+    "lichtblick",
+    "asam",
+    "osi",
+    "visualization"
+  ],
   "scripts": {
     "build": "foxglove-extension build",
     "foxglove:prepublish": "foxglove-extension build --mode production",

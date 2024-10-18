@@ -53,6 +53,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: lichtblick.asam-osi-visualizer-${{ env.version }}.foxe
-          asset_name: lichtblick.asam-osi-visualizer-${{ env.version }}.foxe
+          asset_path: lichtblick.asam-osi-converter-${{ env.version }}.foxe
+          asset_name: lichtblick.asam-osi-converter-${{ env.version }}.foxe
           asset_content_type: application/octet-stream
