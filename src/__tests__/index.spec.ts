@@ -1,14 +1,19 @@
 import { ExtensionContext } from "@lichtblick/suite";
 import {
-  BaseMoving,
+  GroundTruth,
+  LaneBoundary,
   LaneBoundary_BoundaryPoint,
   LaneBoundary_Classification_Type,
+  MovingObject,
   MovingObject_Type,
+  MovingObject_VehicleClassification,
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   MovingObject_VehicleClassification_LightState_GenericLightState,
   MovingObject_VehicleClassification_LightState_IndicatorState,
   MovingObject_VehicleClassification_Type,
+  StationaryObject,
 } from "asam-osi-types";
+import { DeepRequired } from "ts-essentials";
 
 import {
   activate,
@@ -16,14 +21,6 @@ import {
   buildVehicleMetadata,
   determineTheNeedToRerender,
 } from "../index";
-import {
-  OsiLaneBoundary,
-  OsiGroundTruth,
-  OsiMovingObject,
-  OsiMovingObjectVehicleClassification,
-  OsiStationaryObject,
-} from "../types/osiGroundTruth";
-
 
 jest.mock(
   "../trafficsigns",
@@ -38,7 +35,7 @@ jest.mock("../trafficlights", () => {}, { virtual: true });
 describe("OSI Visualizer: Message Converter", () => {
   const mockRegisterMessageConverter = jest.fn();
   const mockExtensionContext = {} as ExtensionContext;
-  const mockBase: BaseMoving = {
+  const mockBase = {
     dimension: {
       width: 1,
       height: 1,
@@ -54,9 +51,8 @@ describe("OSI Visualizer: Message Converter", () => {
       pitch: 0,
       roll: 0,
     },
-    base_polygon: [],
   };
-  const mockMovingObject: OsiMovingObject = {
+  const mockMovingObject = {
     id: {
       value: 0,
     },
@@ -77,28 +73,20 @@ describe("OSI Visualizer: Message Converter", () => {
       },
       light_state: {},
     },
-  };
-  const mockStationaryObject: OsiStationaryObject = {
+  } as unknown as DeepRequired<MovingObject>;
+  const mockStationaryObject = {
     id: {
       value: 1,
     },
     base: mockBase,
     classification: {
-      color: {
-        value: 0,
-      },
-      type: {
-        value: 0,
-      },
-      material: {
-        value: 0,
-      },
-      density: {
-        value: 0,
-      },
+      color: 0,
+      type: 0,
+      material: 0,
+      density: 0,
     },
-  };
-  const mockLaneBoundary: OsiLaneBoundary = {
+  } as unknown as DeepRequired<StationaryObject>;
+  const mockLaneBoundary = {
     id: {
       value: 2,
     },
@@ -117,8 +105,8 @@ describe("OSI Visualizer: Message Converter", () => {
         value: LaneBoundary_Classification_Type.NO_LINE,
       },
     },
-  };
-  const mockMessageData: OsiGroundTruth = {
+  } as unknown as DeepRequired<LaneBoundary>;
+  const mockMessageData = {
     timestamp: {
       seconds: 0,
       nanos: 0,
@@ -131,7 +119,7 @@ describe("OSI Visualizer: Message Converter", () => {
     lane_boundary: [mockLaneBoundary],
     traffic_sign: [],
     traffic_light: [],
-  };
+  } as GroundTruth;
 
   beforeEach(() => {
     mockExtensionContext.registerMessageConverter = mockRegisterMessageConverter;
@@ -140,7 +128,7 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("registers the message converters", () => {
     activate(mockExtensionContext);
-    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(4);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(5);
   });
 
   it("converts a simple message { fromSchemaName: osi_3_msgs/osi_GroundTruth toSchemaName: foxglove.SceneUpdate }", () => {
@@ -154,47 +142,39 @@ describe("OSI Visualizer: Message Converter", () => {
 
 describe("OSI Visualizer: Moving Objects", () => {
   it("builds metadata  for vehicle moving objects", () => {
-    const input: OsiMovingObjectVehicleClassification = {
-      type: {
-        value: 5,
-      },
+    const input = {
+      type: 5,
       light_state: {
-        indicator_state: {
-          value: 5,
-        },
-        brake_light_state: {
-          value: 4,
-        },
-        head_light: {
-          value: 3,
-        },
+        indicator_state: 5,
+        brake_light_state: 4,
+        head_light: 3,
       },
-    };
+    } as DeepRequired<MovingObject_VehicleClassification>;
     expect(buildVehicleMetadata(input)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: "type",
-          value: MovingObject_VehicleClassification_Type[input.type.value],
+          value: MovingObject_VehicleClassification_Type[input.type],
         }),
         expect.objectContaining({
           key: "light_state.indicator_state",
           value:
             MovingObject_VehicleClassification_LightState_IndicatorState[
-              input.light_state.indicator_state!.value!
+              input.light_state.indicator_state
             ],
         }),
         expect.objectContaining({
           key: "light_state.brake_light_state",
           value:
             MovingObject_VehicleClassification_LightState_BrakeLightState[
-              input.light_state.brake_light_state!.value!
+              input.light_state.brake_light_state
             ],
         }),
         expect.objectContaining({
           key: "light_state.head_light",
           value:
             MovingObject_VehicleClassification_LightState_GenericLightState[
-              input.light_state.head_light!.value!
+              input.light_state.head_light
             ],
         }),
       ]),
@@ -204,27 +184,27 @@ describe("OSI Visualizer: Moving Objects", () => {
 
 describe("OSI Visualizer: Lane Boundaries", () => {
   it("builds metadata for lane boundaries", () => {
-    const mockLaneBoundaryPoint: LaneBoundary_BoundaryPoint = {
+    const mockLaneBoundaryPoint = {
       position: { x: 0, y: 0, z: 0 },
       width: 2.0,
-    };
-    const mockLaneBoundary: OsiLaneBoundary = {
+    } as DeepRequired<LaneBoundary_BoundaryPoint>;
+    const mockLaneBoundary = {
       id: { value: 123 },
       classification: {
-        type: { value: LaneBoundary_Classification_Type.SOLID_LINE },
+        type: LaneBoundary_Classification_Type.SOLID_LINE,
       },
       boundary_line: [mockLaneBoundaryPoint],
-    };
+    } as DeepRequired<LaneBoundary>;
 
     expect(buildLaneBoundaryMetadata(mockLaneBoundary)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: "type",
-          value: LaneBoundary_Classification_Type[mockLaneBoundary.classification.type.value],
+          value: LaneBoundary_Classification_Type[mockLaneBoundary.classification.type],
         }),
         expect.objectContaining({
           key: "width",
-          value: mockLaneBoundaryPoint.width!.toString(),
+          value: mockLaneBoundaryPoint.width.toString(),
         }),
       ]),
     );

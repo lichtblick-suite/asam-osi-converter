@@ -1,6 +1,8 @@
+import { TrafficLight } from "asam-osi-types";
+import { DeepRequired } from "ts-essentials";
+
 import { TRAFFIC_LIGHT_COLOR } from "../config";
 import { buildTrafficLightModel } from "../trafficlights";
-import { OsiTrafficLight } from "../types/osiGroundTruth";
 
 const mockImage =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -32,18 +34,12 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         },
       },
       classification: {
-        icon: {
-          value: 2,
-        },
-        color: {
-          value: 2,
-        },
-        mode: {
-          value: 2,
-        },
+        icon: 2,
+        color: 2,
+        mode: 2,
       },
-    } as OsiTrafficLight;
-    const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification.color.value].code;
+    } as DeepRequired<TrafficLight>;
+    const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification.color].code;
 
     expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor)).toEqual(
       expect.objectContaining({

@@ -2,8 +2,8 @@ import { TrafficLight_Classification_Icon as ICON } from "asam-osi-types";
 
 import ARROW_DIAG_LEFT from "../../assets/images/arrow_diag_left_one.png";
 import ARROW_DIAG_RIGHT from "../../assets/images/arrow_diag_right_one.png";
-import ARROW_DOWN from "../../assets/images/arrow_down_one.png";
 import ARROW_DOWN_LEFT from "../../assets/images/arrow_down_left_one.png";
+import ARROW_DOWN from "../../assets/images/arrow_down_one.png";
 import ARROW_DOWN_RIGHT from "../../assets/images/arrow_down_right_one.png";
 import ARROW_STRAIGHT_AHEAD from "../../assets/images/arrow_forward_one.png";
 import ARROW_LEFT from "../../assets/images/arrow_left_one.png";
@@ -12,16 +12,16 @@ import ARROW_STRAIGHT_AHEAD_LEFT from "../../assets/images/arrow_left_straight_o
 import ARROW_RIGHT from "../../assets/images/arrow_right_one.png";
 import ARROW_STRAIGHT_AHEAD_RIGHT from "../../assets/images/arrow_right_straight_one.png";
 import BICYCLE from "../../assets/images/bicycle_one.png";
-import COUNTDOWN_PERCENT from "../../assets/images/countdown_percent.png";
-import TRAM from "../../assets/images/tram.png";
 import BUS from "../../assets/images/bus.png";
 import BUS_AND_TRAM from "../../assets/images/bus_and_tram.png";
+import COUNTDOWN_PERCENT from "../../assets/images/countdown_percent.png";
 import COUNTDOWN_SECONDS from "../../assets/images/countdown_second.png";
 import ARROW_CROSS from "../../assets/images/cross.png";
 import DONT_WALK from "../../assets/images/do_not_walk.png";
 import NONE from "../../assets/images/normal_one.png";
 import PEDESTRIAN_AND_BICYCLE from "../../assets/images/pedestrian_and_bicycle.png";
 import PEDESTRIAN from "../../assets/images/pedestrian_one.png";
+import TRAM from "../../assets/images/tram.png";
 import UNKNOWN from "../../assets/images/unknown.png";
 import OTHER from "../../assets/images/unknown.png";
 import WALK from "../../assets/images/walk.png";

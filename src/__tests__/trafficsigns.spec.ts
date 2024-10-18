@@ -1,5 +1,6 @@
+import { DeepRequired } from "ts-essentials";
 import { buildTrafficSignModel, preloadDynamicTextures } from "../trafficsigns";
-import { OsiTrafficSignMainSign } from "../types/osiGroundTruth";
+import { TrafficSign_MainSign } from "asam-osi-types";
 
 const mockImage =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -68,14 +69,10 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         },
       },
       classification: {
-        type: {
-          value: 0,
-        },
-        value: {
-          value: 1,
-        },
+        type: 0,
+        value: 1,
       },
-    } as OsiTrafficSignMainSign;
+    } as unknown as DeepRequired<TrafficSign_MainSign>;
 
     expect(buildTrafficSignModel("main", mockMainSignStatic)).toEqual(
       expect.objectContaining({
@@ -105,14 +102,10 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         },
       },
       classification: {
-        type: {
-          value: 1,
-        },
-        value: {
-          value: 1,
-        },
+        type: 1,
+        value: 1,
       },
-    } as OsiTrafficSignMainSign;
+    } as unknown as DeepRequired<TrafficSign_MainSign>;
 
     expect(buildTrafficSignModel("main", mockMainSignDynamic)).toEqual(
       expect.objectContaining({

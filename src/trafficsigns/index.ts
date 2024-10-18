@@ -1,16 +1,17 @@
 import { ModelPrimitive } from "@foxglove/schemas";
 import { convertDataURIToBinary } from "@utils/helper";
 import { objectToModelPrimitive } from "@utils/marker";
+import {
+  TrafficSign_MainSign,
+  TrafficSign_MainSign_Classification,
+  TrafficSign_SupplementarySign,
+  TrafficSign_SupplementarySign_Classification,
+} from "asam-osi-types";
+import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
 import images from "./images";
 import textureHandlerMap, { drawTrafficSignText } from "./textures";
-import {
-  OsiTrafficSignMainSignClassification,
-  OsiTrafficSignSupplementarySignClassification,
-  OsiTrafficSignMainSign,
-  OsiTrafficSignSupplementarySign,
-} from "../types/osiGroundTruth";
 
 type TrafficSignCategory = keyof typeof images;
 
@@ -26,9 +27,9 @@ const textureBaseCacheMap = {
 
 export const buildTrafficSignModel = (
   category: TrafficSignCategory,
-  item: OsiTrafficSignMainSign | OsiTrafficSignSupplementarySign,
+  item: DeepRequired<TrafficSign_MainSign> | DeepRequired<TrafficSign_SupplementarySign>,
 ): ModelPrimitive => {
-  let mapKey: string | number = item.classification.type.value;
+  let mapKey: string | number = item.classification.type;
 
   if (textureHandlerMap[category].has(mapKey)) {
     mapKey = getTextureMapKey(item.classification);
@@ -42,15 +43,15 @@ export const buildTrafficSignModel = (
   }
 
   return objectToModelPrimitive(
-    item.base.position!.x!,
-    item.base.position!.y!,
-    item.base.position!.z!,
-    item.base.orientation!.yaw!,
+    item.base.position.x,
+    item.base.position.y,
+    item.base.position.z,
+    item.base.orientation.yaw,
     0,
     0,
-    item.base.dimension!.width!,
-    item.base.dimension!.length!,
-    item.base.dimension!.height!,
+    item.base.dimension.width,
+    item.base.dimension.length,
+    item.base.dimension.height,
     { r: 0, g: 0, b: 0, a: 0 },
     modelSignCacheMap[category].get(mapKey)!,
   );
@@ -68,18 +69,18 @@ const buildGltfModel = (
 };
 
 const processTexture = (
-  category: TrafficSignCategory,
+  category: DeepRequired<TrafficSignCategory>,
   classification:
-    | OsiTrafficSignMainSignClassification
-    | OsiTrafficSignSupplementarySignClassification,
+    | TrafficSign_MainSign_Classification
+    | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  const typeKey = classification.type.value;
+  const typeKey = classification.type as number;
   let image = (images[category] as Record<number, string>)[typeKey] ?? images[category][0];
 
   if (textureHandlerMap[category].has(typeKey)) {
     const customization = textureHandlerMap[category].get(typeKey)!;
     image = drawTrafficSignText(
-      textureBaseCacheMap[category].get(classification.type.value)!,
+      textureBaseCacheMap[category].get(typeKey)!,
       customization.getText(classification),
       customization.getOptions(classification),
     );
@@ -109,10 +110,10 @@ export const preloadDynamicTextures = (): HTMLImageElement[] => {
 
 const getTextureMapKey = (
   classification:
-    | OsiTrafficSignMainSignClassification
-    | OsiTrafficSignSupplementarySignClassification,
+    | TrafficSign_MainSign_Classification
+    | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  return `${classification.type.value}|${classification.value.value}`;
+  return `${classification.type}|${classification.value?.toString()}`;
 };
 
 const getImage = (file: string): HTMLImageElement => {

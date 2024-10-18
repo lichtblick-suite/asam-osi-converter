@@ -18,8 +18,3 @@ export interface OsiLaneBoundaryBoundaryPoint {
 export interface OsiDetectedLaneBoundary {
   boundary_line: OsiLaneBoundaryBoundaryPoint[];
 }
-
-export interface OsiSensorData {
-  timestamp: OsiTimestamp;
-  lane_boundary: OsiDetectedLaneBoundary[];
-}

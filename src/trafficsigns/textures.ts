@@ -1,20 +1,19 @@
-import { TrafficSign_MainSign_Classification_Type as MAIN_TYPE } from "asam-osi-types";
-
 import {
-  OsiTrafficSignMainSignClassification,
-  OsiTrafficSignSupplementarySignClassification,
-} from "../types/osiGroundTruth";
+  TrafficSign_MainSign_Classification_Type as MAIN_TYPE,
+  TrafficSign_MainSign_Classification,
+  TrafficSign_SupplementarySign_Classification,
+} from "asam-osi-types";
 
 interface TrafficSignCustomization {
   getText: (
     classification:
-      | OsiTrafficSignMainSignClassification
-      | OsiTrafficSignSupplementarySignClassification,
+      | TrafficSign_MainSign_Classification
+      | TrafficSign_SupplementarySign_Classification,
   ) => string;
   getOptions: (
     classification?:
-      | OsiTrafficSignMainSignClassification
-      | OsiTrafficSignSupplementarySignClassification,
+      | TrafficSign_MainSign_Classification
+      | TrafficSign_SupplementarySign_Classification,
   ) => TrafficSignCustomizationOptions;
 }
 
@@ -62,10 +61,10 @@ export const drawTrafficSignText = (
 
 const getValueAsText = (
   classification:
-    | OsiTrafficSignMainSignClassification
-    | OsiTrafficSignSupplementarySignClassification,
+    | TrafficSign_MainSign_Classification
+    | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  return classification.value.value.toString();
+  return classification.value?.toString() ?? "";
 };
 
 const textures = {

@@ -36,3 +36,5 @@ export function ColorCode(color: string, alpha = 1.0): Color {
 export function convertDataURIToBinary(dataURI: string): Uint8Array {
   return Uint8Array.from(window.atob(dataURI.replace(/^data[^,]+,/, "")), (v) => v.charCodeAt(0));
 }
+
+export type ColorCodeName = { code: Color; name: string };

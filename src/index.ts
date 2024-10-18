@@ -1,5 +1,6 @@
 import {
   LineType,
+  SceneUpdate,
   type Color,
   type FrameTransform,
   type KeyValuePair,
@@ -9,7 +10,8 @@ import {
   type Vector2,
   type Vector3,
 } from "@foxglove/schemas";
-import { ExtensionContext, Time } from "@lichtblick/suite";
+import { Time } from "@foxglove/schemas/schemas/typescript/Time";
+import { ExtensionContext } from "@lichtblick/suite";
 import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
@@ -19,16 +21,26 @@ import {
 } from "@utils/marker";
 import { PartialSceneEntity } from "@utils/scene";
 import {
-  Identifier,
+  DetectedLaneBoundary,
+  GroundTruth,
+  LaneBoundary,
+  LaneBoundary_BoundaryPoint,
   LaneBoundary_Classification_Type,
+  MovingObject,
   MovingObject_Type,
-  MovingObject_VehicleClassification_LightState_BrakeLightState,
-  MovingObject_VehicleClassification_LightState_GenericLightState,
-  MovingObject_VehicleClassification_LightState_IndicatorState,
+  MovingObject_VehicleClassification,
   MovingObject_VehicleClassification_Type,
+  SensorData,
+  SensorView,
+  StationaryObject,
   Timestamp,
+  TrafficLight,
+  TrafficSign,
+  MovingObject_VehicleClassification_LightState_GenericLightState,
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
+  MovingObject_VehicleClassification_LightState_IndicatorState,
 } from "asam-osi-types";
-import { DeepPartial } from "ts-essentials";
+import { DeepPartial, DeepRequired } from "ts-essentials";
 
 import {
   HOST_OBJECT_COLOR,
@@ -42,25 +54,11 @@ import {
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
-import {
-  OsiGroundTruth,
-  OsiObject,
-  OsiLaneBoundary,
-  OsiStationaryObject,
-  OsiMovingObjectVehicleClassification,
-  OsiTrafficSign,
-  OsiTrafficLight,
-} from "./types/osiGroundTruth";
-import {
-  OsiDetectedLaneBoundary,
-  OsiLaneBoundaryBoundaryPoint,
-  OsiSensorData,
-} from "./types/osiSensorData";
 
 const ROOT_FRAME = "<root>";
 
 function buildObjectEntity(
-  osiObject: OsiObject,
+  osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
   color: Color,
   id_prefix: string,
   frame_id: string,
@@ -72,21 +70,21 @@ function buildObjectEntity(
   const y_offset = 0;
 
   const cube = objectToCubePrimitive(
-    osiObject.base.position!.x!,
-    osiObject.base.position!.y!,
-    osiObject.base.orientation!.yaw!,
+    osiObject.base.position.x,
+    osiObject.base.position.y,
+    osiObject.base.orientation.yaw,
     x_offset,
     y_offset,
-    osiObject.base.dimension!.width!,
-    osiObject.base.dimension!.length!,
-    osiObject.base.dimension!.height!,
+    osiObject.base.dimension.width,
+    osiObject.base.dimension.length,
+    osiObject.base.dimension.height,
     color,
   );
 
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + osiObject.id.value!.toString(),
+    id: id_prefix + osiObject.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
@@ -95,7 +93,7 @@ function buildObjectEntity(
 }
 
 function buildTrafficSignEntity(
-  obj: OsiTrafficSign,
+  obj: DeepRequired<TrafficSign>,
   id_prefix: string,
   frame_id: string,
   time: Time,
@@ -114,7 +112,7 @@ function buildTrafficSignEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value!.toString(),
+    id: id_prefix + obj.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -124,7 +122,7 @@ function buildTrafficSignEntity(
 }
 
 function buildTrafficLightEntity(
-  obj: OsiTrafficLight,
+  obj: DeepRequired<TrafficLight>,
   id_prefix: string,
   frame_id: string,
   time: Time,
@@ -132,14 +130,12 @@ function buildTrafficLightEntity(
 ): PartialSceneEntity {
   const models = [];
 
-  models.push(
-    buildTrafficLightModel(obj, TRAFFIC_LIGHT_COLOR[obj.classification.color.value].code),
-  );
+  models.push(buildTrafficLightModel(obj, TRAFFIC_LIGHT_COLOR[obj.classification.color].code));
 
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value!.toString(),
+    id: id_prefix + obj.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -149,17 +145,17 @@ function buildTrafficLightEntity(
 }
 
 function buildLaneBoundaryEntity(
-  osiLaneBoundary: OsiLaneBoundary,
+  osiLaneBoundary: DeepRequired<LaneBoundary>,
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
   const boundaryPoints = osiLaneBoundary.boundary_line.map(
-    (point) => ({ x: point.position!.x, y: point.position!.y }) as Vector2,
+    (point) => ({ x: point.position.x, y: point.position.y }) as Vector2,
   );
 
-  const color = LANE_BOUNDARY_COLOR[osiLaneBoundary.classification.type.value];
+  const color = LANE_BOUNDARY_COLOR[osiLaneBoundary.classification.type];
   let line: LinePrimitive;
-  switch (osiLaneBoundary.classification.type.value) {
+  switch (osiLaneBoundary.classification.type) {
     case LaneBoundary_Classification_Type.DASHED_LINE:
       line = pointListToDashedLinePrimitive(
         osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
@@ -191,7 +187,7 @@ function buildLaneBoundaryEntity(
   return {
     timestamp: time,
     frame_id,
-    id: "boundary_" + osiLaneBoundary.id.value!.toString(),
+    id: "boundary_" + osiLaneBoundary.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: [line],
@@ -210,32 +206,33 @@ const lightStateEnumStringMaps: IlightStateEnumStringMaps = {
   generic_light_state: MovingObject_VehicleClassification_LightState_GenericLightState,
 };
 
+
 export function buildVehicleMetadata(
-  vehicle_classification: OsiMovingObjectVehicleClassification,
+  vehicle_classification: DeepRequired<MovingObject_VehicleClassification>,
 ): KeyValuePair[] {
   return [
     {
       key: "type",
-      value: MovingObject_VehicleClassification_Type[vehicle_classification.type.value],
+      value: MovingObject_VehicleClassification_Type[vehicle_classification.type],
     },
-    ...Object.entries(vehicle_classification.light_state).map(
-      ([key, { value }]: [string, Identifier]) => {
-        return {
-          key: `light_state.${key}`,
-          value:
-            lightStateEnumStringMaps[key]?.[value!] ??
-            lightStateEnumStringMaps.generic_light_state[value!]!,
-        };
-      },
-    ),
+    ...Object.entries(vehicle_classification.light_state ?? {}).map(([key, value]) => {
+      return {
+        key: `light_state.${key}`,
+        value:
+          lightStateEnumStringMaps[key]?.[value] ??
+          lightStateEnumStringMaps.generic_light_state[value]!,
+      };
+    }),
   ];
 }
 
-export function buildLaneBoundaryMetadata(lane_boundary: OsiLaneBoundary): KeyValuePair[] {
+export function buildLaneBoundaryMetadata(
+  lane_boundary: DeepRequired<LaneBoundary>,
+): KeyValuePair[] {
   const metadata: KeyValuePair[] = [
     {
       key: "type",
-      value: LaneBoundary_Classification_Type[lane_boundary.classification.type.value],
+      value: LaneBoundary_Classification_Type[lane_boundary.classification.type],
     },
     {
       key: "width",
@@ -246,38 +243,35 @@ export function buildLaneBoundaryMetadata(lane_boundary: OsiLaneBoundary): KeyVa
   return metadata;
 }
 
-export function buildStationaryMetadata(obj: OsiStationaryObject): KeyValuePair[] {
+export function buildStationaryMetadata(obj: DeepRequired<StationaryObject>): KeyValuePair[] {
   const metadata: KeyValuePair[] = [
     {
       key: "density",
-      value:
-        STATIONARY_OBJECT_DENSITY[obj.classification.density.value] || STATIONARY_OBJECT_DENSITY[0],
+      value: STATIONARY_OBJECT_DENSITY[obj.classification.density] || STATIONARY_OBJECT_DENSITY[0],
     },
     {
       key: "material",
       value:
-        STATIONARY_OBJECT_MATERIAL[obj.classification.material.value] ||
-        STATIONARY_OBJECT_MATERIAL[0],
+        STATIONARY_OBJECT_MATERIAL[obj.classification.material] || STATIONARY_OBJECT_MATERIAL[0],
     },
     {
       key: "color",
       value:
-        STATIONARY_OBJECT_COLOR[obj.classification.color.value].name ||
-        STATIONARY_OBJECT_COLOR[0].name,
+        STATIONARY_OBJECT_COLOR[obj.classification.color].name || STATIONARY_OBJECT_COLOR[0].name,
     },
     {
       key: "type",
-      value: STATIONARY_OBJECT_TYPE[obj.classification.type.value] || STATIONARY_OBJECT_TYPE[0],
+      value: STATIONARY_OBJECT_TYPE[obj.classification.type] || STATIONARY_OBJECT_TYPE[0],
     },
   ];
 
   return metadata;
 }
 
-function osiTimestampToTime(time: Timestamp): Time {
+function osiTimestampToTime(time: DeepRequired<Timestamp>): Time {
   return {
-    sec: time.seconds!,
-    nsec: time.nanos!,
+    sec: time.seconds,
+    nsec: time.nanos,
   };
 }
 
@@ -297,7 +291,7 @@ export function determineTheNeedToRerender(lastRenderTime: Time, currentRenderTi
   return !(diff >= 0 && diff <= 10000000);
 }
 
-function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[] {
+function buildSceneEntities(osiGroundTruth: DeepRequired<GroundTruth>): PartialSceneEntity[] {
   let sceneEntities: PartialSceneEntity[] = [];
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
   const needtoRerender =
@@ -307,15 +301,15 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
   // Moving objects
   const movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
     let entity;
-    if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
+    if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
       const metadata = buildVehicleMetadata(obj.vehicle_classification);
       entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, "", ROOT_FRAME, time, metadata);
     } else {
-      const objectType = MovingObject_Type[obj.type.value];
-      const objectColor = MOVING_OBJECT_COLOR[obj.type.value];
+      const objectType = MovingObject_Type[obj.type];
+      const objectColor = MOVING_OBJECT_COLOR[obj.type];
       const prefix = `moving_object_${objectType}_`;
       const metadata =
-        obj.type.value === MovingObject_Type.VEHICLE
+        obj.type === MovingObject_Type.VEHICLE
           ? buildVehicleMetadata(obj.vehicle_classification)
           : [];
       entity = buildObjectEntity(obj, objectColor, prefix, ROOT_FRAME, time, metadata);
@@ -326,39 +320,35 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
   sceneEntities = sceneEntities.concat(movingObjectSceneEntities);
 
   // Stationary objects
-  const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map(
-    (obj: OsiStationaryObject) => {
-      const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color.value].code;
-      const metadata = buildStationaryMetadata(obj);
-      return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
-    },
-  );
+  const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
+    const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
+    const metadata = buildStationaryMetadata(obj);
+    return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
+  });
   sceneEntities = sceneEntities.concat(stationaryObjectSceneEntities);
 
   // Traffic Sign objects
-  let filteredTrafficSigns: OsiTrafficSign[];
+  let filteredTrafficSigns: DeepRequired<TrafficSign>[];
   if (needtoRerender) {
     staticObjectsRenderCache.lastRenderedObjects.clear();
     filteredTrafficSigns = osiGroundTruth.traffic_sign;
   } else {
     filteredTrafficSigns = osiGroundTruth.traffic_sign.filter((obj) => {
-      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value!);
+      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value);
     });
   }
   const trafficsignObjectSceneEntities = filteredTrafficSigns.map((obj) => {
-    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value!);
+    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value);
     return buildTrafficSignEntity(obj, "traffic_sign_", ROOT_FRAME, time);
   });
   staticObjectsRenderCache.lastRenderTime = time;
   sceneEntities = sceneEntities.concat(trafficsignObjectSceneEntities);
 
   // Traffic Light objects
-  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map(
-    (obj: OsiTrafficLight) => {
-      const metadata = buildTrafficLightMetadata(obj);
-      return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
-    },
-  );
+  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
+    const metadata = buildTrafficLightMetadata(obj);
+    return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
+  });
   sceneEntities = sceneEntities.concat(trafficlightObjectSceneEntities);
 
   // Lane boundaries
@@ -370,23 +360,23 @@ function buildSceneEntities(osiGroundTruth: OsiGroundTruth): PartialSceneEntity[
   return sceneEntities;
 }
 
-export function frameTransformator(osiGroundTruth: OsiGroundTruth): FrameTransform {
+export function frameTransformator(osiGroundTruth: DeepRequired<GroundTruth>): FrameTransform {
   const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
-  const rollAngle = hostObject.base.orientation!.roll!;
-  const pitchAngle = hostObject.base.orientation!.pitch!;
-  const yawAngle = -hostObject.base.orientation!.yaw!;
+  const rollAngle = hostObject.base.orientation.roll;
+  const pitchAngle = hostObject.base.orientation.pitch;
+  const yawAngle = -hostObject.base.orientation.yaw;
   const hostObjectBasePosition: Vector3 = {
-    x: -hostObject.base.position!.x!,
-    y: -hostObject.base.position!.y!,
-    z: -hostObject.base.position!.z!,
+    x: -hostObject.base.position.x,
+    y: -hostObject.base.position.y,
+    z: -hostObject.base.position.z,
   };
   const quaternion: Quaternion = eulerToQuaternion(rollAngle, pitchAngle, yawAngle);
   const translationResult = pointRotationByQuaternion(hostObjectBasePosition, quaternion);
-  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear!.x!;
-  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear!.y!;
+  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear.x;
+  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear.y;
   translationResult.z = 0;
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
@@ -397,8 +387,10 @@ export function frameTransformator(osiGroundTruth: OsiGroundTruth): FrameTransfo
   };
 }
 
-function buildGroundTruthSceneEntities(osiSensorData: OsiSensorData): PartialSceneEntity[] {
-  const ToPoint3 = (boundary: OsiLaneBoundaryBoundaryPoint): Point3 => {
+function buildGroundTruthSceneEntities(
+  osiSensorData: DeepRequired<SensorData>,
+): PartialSceneEntity[] {
+  const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
     return { x: boundary.position.x, y: boundary.position.y, z: 0 };
   };
   const ToLinePrimitive = (points: Point3[], thickness: number): DeepPartial<LinePrimitive> => {
@@ -417,14 +409,14 @@ function buildGroundTruthSceneEntities(osiSensorData: OsiSensorData): PartialSce
   };
 
   const makeLinePrimitive = (
-    lane_boundary: OsiDetectedLaneBoundary,
+    lane_boundary: DeepRequired<DetectedLaneBoundary>,
     thickness: number,
   ): DeepPartial<LinePrimitive> => {
     return ToLinePrimitive(lane_boundary.boundary_line.map(ToPoint3), thickness);
   };
 
   const makePrimitiveLines = (
-    lane_boundary: OsiDetectedLaneBoundary[],
+    lane_boundary: DeepRequired<DetectedLaneBoundary>[],
     thickness: number,
   ): DeepPartial<LinePrimitive>[] => {
     return lane_boundary.map((b) => makeLinePrimitive(b, thickness));
@@ -444,84 +436,86 @@ function buildGroundTruthSceneEntities(osiSensorData: OsiSensorData): PartialSce
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
-  extensionContext.registerMessageConverter({
-    fromSchemaName: "osi_3_msgs/osi_GroundTruth",
-    toSchemaName: "foxglove.SceneUpdate",
-    converter: (osiGroundTruth: OsiGroundTruth) => {
-      let sceneEntities: PartialSceneEntity[] = [];
+  const convertGrountTruthToSceneUpdate = (
+    osiGroundTruth: GroundTruth,
+  ): DeepPartial<SceneUpdate> => {
+    let sceneEntities: PartialSceneEntity[] = [];
 
-      try {
-        sceneEntities = buildSceneEntities(osiGroundTruth);
-      } catch (error) {
-        console.error(
-          "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-          error,
-        );
+    try {
+      sceneEntities = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>);
+    } catch (error) {
+      console.error(
+        "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        error,
+      );
+    }
+    return {
+      deletions: [],
+      entities: sceneEntities,
+    };
+  };
+
+  const convertSensorDataToSceneUpdate = (osiSensorData: SensorData): DeepPartial<SceneUpdate> => {
+    let sceneEntities: PartialSceneEntity[] = [];
+
+    try {
+      sceneEntities = buildGroundTruthSceneEntities(osiSensorData as DeepRequired<SensorData>);
+    } catch (error) {
+      console.error(
+        "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        error,
+      );
+    }
+    return {
+      deletions: [],
+      entities: sceneEntities,
+    };
+  };
+
+  const convertGrountTruthToFrameTransform = (message: GroundTruth): FrameTransform => {
+    let transforms = {} as FrameTransform;
+    try {
+      if (message.host_vehicle_id) {
+        transforms = frameTransformator(message as DeepRequired<GroundTruth>);
       }
-      return {
-        deletions: [],
-        entities: sceneEntities,
-      };
-    },
+    } catch (error) {
+      console.error(
+        "DetectionListForSensors: Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        error,
+      );
+    }
+    return transforms;
+  };
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.GroundTruth",
+    toSchemaName: "foxglove.SceneUpdate",
+    converter: convertGrountTruthToSceneUpdate,
   });
 
   extensionContext.registerMessageConverter({
-    fromSchemaName: "astas_osi3.GroundTruth",
+    fromSchemaName: "osi3.SensorView",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: (osiGroundTruth: OsiGroundTruth) => {
-      let sceneEntities: PartialSceneEntity[] = [];
-
-      try {
-        sceneEntities = buildSceneEntities(osiGroundTruth);
-      } catch (error) {
-        console.error(
-          "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-          error,
-        );
-      }
-
-      return {
-        deletions: [],
-        entities: sceneEntities,
-      };
-    },
+    converter: (osiSensorView: SensorView) =>
+      convertGrountTruthToSceneUpdate(osiSensorView.global_ground_truth!),
   });
 
   extensionContext.registerMessageConverter({
-    fromSchemaName: "osi_3_msgs/osi_SensorData",
+    fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: (osiSensorData: OsiSensorData) => {
-      let sceneEntities: PartialSceneEntity[] = [];
-
-      try {
-        sceneEntities = buildGroundTruthSceneEntities(osiSensorData);
-      } catch (error) {
-        console.error(
-          "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-          error,
-        );
-      }
-      return {
-        deletions: [],
-        entities: sceneEntities,
-      };
-    },
+    converter: convertSensorDataToSceneUpdate,
   });
 
   extensionContext.registerMessageConverter({
-    fromSchemaName: "osi_3_msgs/osi_GroundTruth",
+    fromSchemaName: "osi3.GroundTruth",
     toSchemaName: "foxglove.FrameTransform",
-    converter: (message: OsiGroundTruth) => {
-      let transforms = {} as FrameTransform;
-      try {
-        transforms = frameTransformator(message);
-      } catch (error) {
-        console.error(
-          "DetectionListForSensors: Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-          error,
-        );
-      }
-      return transforms;
-    },
+    converter: convertGrountTruthToFrameTransform,
+  });
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorView",
+    toSchemaName: "foxglove.FrameTransform",
+    converter: (message: SensorView) =>
+      convertGrountTruthToFrameTransform(message.global_ground_truth!),
   });
 }

@@ -1,5 +1,5 @@
 import { Color } from "@foxglove/schemas";
-import { ColorCode } from "@utils/helper";
+import { ColorCode, ColorCodeName } from "@utils/helper";
 import {
   LaneBoundary_Classification_Type,
   MovingObject_Type,
@@ -40,10 +40,7 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Type, Color
   [LaneBoundary_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
 };
 
-export const TRAFFIC_LIGHT_COLOR: Record<
-  TrafficLight_Classification_Color,
-  { code: Color; name: string }
-> = {
+export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, ColorCodeName> = {
   [TrafficLight_Classification_Color.UNKNOWN]: { code: ColorCode("gray", 1), name: "Unknown" },
   [TrafficLight_Classification_Color.OTHER]: { code: ColorCode("c", 1), name: "Other" },
   [TrafficLight_Classification_Color.RED]: { code: ColorCode("r", 1), name: "Red" },
@@ -55,28 +52,26 @@ export const TRAFFIC_LIGHT_COLOR: Record<
 
 //// STATIONARY OBJECT MAPPING ////
 
-export const STATIONARY_OBJECT_COLOR: Record<
-  StationaryObject_Classification_Color,
-  { code: Color; name: string }
-> = {
-  [StationaryObject_Classification_Color.OTHER]: { code: ColorCode("c", 0.5), name: "Other" },
-  [StationaryObject_Classification_Color.YELLOW]: { code: ColorCode("y", 0.5), name: "Yellow" },
-  [StationaryObject_Classification_Color.GREEN]: { code: ColorCode("g", 0.5), name: "Green" },
-  [StationaryObject_Classification_Color.BLUE]: { code: ColorCode("b", 0.5), name: "Blue" },
-  [StationaryObject_Classification_Color.VIOLET]: { code: ColorCode("m", 0.5), name: "Violet" },
-  [StationaryObject_Classification_Color.RED]: { code: ColorCode("r", 0.5), name: "Red" },
-  [StationaryObject_Classification_Color.ORANGE]: {
-    code: ColorCode("orange", 0.5),
-    name: "Orange",
-  },
-  [StationaryObject_Classification_Color.BLACK]: { code: ColorCode("black", 0.5), name: "Black" },
-  [StationaryObject_Classification_Color.GREY]: { code: ColorCode("gray", 0.5), name: "Grey" },
-  [StationaryObject_Classification_Color.WHITE]: { code: ColorCode("w", 0.5), name: "White" },
-  [StationaryObject_Classification_Color.UNKNOWN]: {
-    code: ColorCode("gray", 0.5),
-    name: "Unknown",
-  },
-};
+export const STATIONARY_OBJECT_COLOR: Record<StationaryObject_Classification_Color, ColorCodeName> =
+  {
+    [StationaryObject_Classification_Color.OTHER]: { code: ColorCode("c", 0.5), name: "Other" },
+    [StationaryObject_Classification_Color.YELLOW]: { code: ColorCode("y", 0.5), name: "Yellow" },
+    [StationaryObject_Classification_Color.GREEN]: { code: ColorCode("g", 0.5), name: "Green" },
+    [StationaryObject_Classification_Color.BLUE]: { code: ColorCode("b", 0.5), name: "Blue" },
+    [StationaryObject_Classification_Color.VIOLET]: { code: ColorCode("m", 0.5), name: "Violet" },
+    [StationaryObject_Classification_Color.RED]: { code: ColorCode("r", 0.5), name: "Red" },
+    [StationaryObject_Classification_Color.ORANGE]: {
+      code: ColorCode("orange", 0.5),
+      name: "Orange",
+    },
+    [StationaryObject_Classification_Color.BLACK]: { code: ColorCode("black", 0.5), name: "Black" },
+    [StationaryObject_Classification_Color.GREY]: { code: ColorCode("gray", 0.5), name: "Grey" },
+    [StationaryObject_Classification_Color.WHITE]: { code: ColorCode("w", 0.5), name: "White" },
+    [StationaryObject_Classification_Color.UNKNOWN]: {
+      code: ColorCode("gray", 0.5),
+      name: "Unknown",
+    },
+  };
 
 export const STATIONARY_OBJECT_TYPE: Record<StationaryObject_Classification_Type, string> = {
   [StationaryObject_Classification_Type.UNKNOWN]:
