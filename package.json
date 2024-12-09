@@ -29,6 +29,7 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",
     "@foxglove/schemas": "^1.6.2",
+    "@lichtblick/asam-osi-types": "^3.7.0",
     "@lichtblick/eslint-plugin": "^1.0.1",
     "@lichtblick/suite": "^1.5.0",
     "@types/jest": "^29.5.12",
@@ -36,7 +37,6 @@
     "@types/react-dom": "18.2.19",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
-    "asam-osi-types": "github:Lichtblick-Suite/asam-osi-types",
     "create-foxglove-extension": "0.8.6",
     "esbuild": "^0.20.1",
     "esbuild-jest": "^0.5.0",

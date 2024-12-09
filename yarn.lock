@@ -856,6 +856,11 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@lichtblick/asam-osi-types@^3.7.0":
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/@lichtblick/asam-osi-types/-/asam-osi-types-3.7.0.tgz#08b09452d370bee0f17321644f9dfa6eb57ce68d"
+  integrity sha512-UnJr7/DmS9GqQxjGl5sIni4zsDYYrqxUg2t80oimDpux50fB0JAtla870Bjs1atVslb8d72y6QqnvLnaUjdnCg==
+
 "@lichtblick/eslint-plugin@^1.0.1":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@lichtblick/eslint-plugin/-/eslint-plugin-1.0.2.tgz#e40527a51ae04b258bf87c31f9f252efc2d0398d"
@@ -1619,10 +1624,6 @@ arraybuffer.prototype.slice@^1.0.3:
     get-intrinsic "^1.2.3"
     is-array-buffer "^3.0.4"
     is-shared-array-buffer "^1.0.2"
-
-"asam-osi-types@github:Lichtblick-Suite/asam-osi-types":
-  version "3.7.0"
-  resolved "https://codeload.github.com/Lichtblick-Suite/asam-osi-types/tar.gz/b91c4376a964c8b561bb862266763789ab78db62"
 
 assign-symbols@^1.0.0:
   version "1.0.0"

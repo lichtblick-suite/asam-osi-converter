@@ -1,7 +1,7 @@
 import {
   TrafficSign_MainSign_Classification_Type as MAIN_TYPE,
   TrafficSign_SupplementarySign_Classification_Type as SUPPLEMENTARY_TYPE,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 
 import SUP_LEFT_ARROW from "../../assets/images/1000_10_supp_arrow_left.png";
 import SUP_LEFT_BEND_ARROW from "../../assets/images/1000_11_supp_bendarrow_left.png";

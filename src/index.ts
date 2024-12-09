@@ -39,7 +39,7 @@ import {
   MovingObject_VehicleClassification_LightState_GenericLightState,
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   MovingObject_VehicleClassification_LightState_IndicatorState,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 import { DeepPartial, DeepRequired } from "ts-essentials";
 
 import {
@@ -205,7 +205,6 @@ const lightStateEnumStringMaps: IlightStateEnumStringMaps = {
   brake_light_state: MovingObject_VehicleClassification_LightState_BrakeLightState,
   generic_light_state: MovingObject_VehicleClassification_LightState_GenericLightState,
 };
-
 
 export function buildVehicleMetadata(
   vehicle_classification: DeepRequired<MovingObject_VehicleClassification>,

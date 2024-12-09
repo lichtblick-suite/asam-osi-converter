@@ -8,7 +8,7 @@ import {
   StationaryObject_Classification_Material,
   StationaryObject_Classification_Type,
   TrafficLight_Classification_Color,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 
 //// COLOR CONFIG ////
 

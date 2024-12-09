@@ -1,4 +1,4 @@
-import { TrafficLight } from "asam-osi-types";
+import { TrafficLight } from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
 import { TRAFFIC_LIGHT_COLOR } from "../config";

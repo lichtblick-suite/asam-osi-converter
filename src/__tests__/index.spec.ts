@@ -12,7 +12,7 @@ import {
   MovingObject_VehicleClassification_LightState_IndicatorState,
   MovingObject_VehicleClassification_Type,
   StationaryObject,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
 import {

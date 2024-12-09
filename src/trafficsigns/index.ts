@@ -6,7 +6,7 @@ import {
   TrafficSign_MainSign_Classification,
   TrafficSign_SupplementarySign,
   TrafficSign_SupplementarySign_Classification,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";

@@ -2,7 +2,7 @@ import {
   TrafficSign_MainSign_Classification_Type as MAIN_TYPE,
   TrafficSign_MainSign_Classification,
   TrafficSign_SupplementarySign_Classification,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 
 interface TrafficSignCustomization {
   getText: (

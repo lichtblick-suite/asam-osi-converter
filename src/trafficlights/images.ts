@@ -1,4 +1,4 @@
-import { TrafficLight_Classification_Icon as ICON } from "asam-osi-types";
+import { TrafficLight_Classification_Icon as ICON } from "@lichtblick/asam-osi-types";
 
 import ARROW_DIAG_LEFT from "../../assets/images/arrow_diag_left_one.png";
 import ARROW_DIAG_RIGHT from "../../assets/images/arrow_diag_right_one.png";

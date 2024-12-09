@@ -7,7 +7,7 @@ import {
   TrafficLight_Classification_Color,
   TrafficLight_Classification_Icon,
   TrafficLight_Classification_Mode,
-} from "asam-osi-types";
+} from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
