@@ -39,7 +39,12 @@ jobs:
       - name: Update changelog file
         run: |
           yarn commitizen init cz-conventional-changelog --save-dev --save-exact
-          yarn conventional-changelog --preset none -r 0 -i CHANGELOG.md -s
+          HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
+          yarn conventional-changelog -p angular -o NEW_CHANGELOG.md
+          echo "$HEADER" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          cat NEW_CHANGELOG.md >> CHANGELOG.md
+          rm NEW_CHANGELOG.md
 
       - name: Commit and push updated CHANGELOG.md
         env:
