@@ -44,12 +44,13 @@ jobs:
       - name: Commit and push updated CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "chore: update changelog for $GITHUB_REF"
-          git push origin docs--automate-changelog-creation
+          git commit -m "chore: update changelog for $BRANCH_NAME"
+          git push origin $BRANCH_NAME
 
       - name: Create GitHub Release
         id: create_release
