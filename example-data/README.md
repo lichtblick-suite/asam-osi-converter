@@ -4,6 +4,8 @@ The [multi trace format definition](https://github.com/OpenSimulationInterface/o
 You can use e.g. esmini to create `.osi` trace files.
 Take a look at the [OpenMSL actions](https://github.com/openMSL/sl-1-0-sensor-model-repository-template/tree/main/test/integration/003_output_osi_fields) how to run a complete co-simulation.
 
+Another option to create traces is the OpenPASS [gt-gen-simlator](https://gitlab.eclipse.org/eclipse/openpass/gt-gen-simulator).
+
 ## Example traces
 
 tbd
