@@ -40,11 +40,11 @@ jobs:
         run: |
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o NEW_CHANGELOG.md
+          yarn conventional-changelog  -p eslint -o TEMP.md -r o
           echo "$HEADER" > CHANGELOG.md
           echo "" >> CHANGELOG.md
-          cat NEW_CHANGELOG.md >> CHANGELOG.md
-          rm NEW_CHANGELOG.md
+          cat TEMP.md >> CHANGELOG.md
+          rm TEMP.md
 
       - name: Commit and push updated CHANGELOG.md
         env:
