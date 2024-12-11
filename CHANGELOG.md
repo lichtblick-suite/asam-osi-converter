@@ -30,5 +30,3 @@
 * Update release.yaml ([b7ded27](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/b7ded27))
 * Update release.yaml ([df1c44b](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/df1c44b))
 
-
-
