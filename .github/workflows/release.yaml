@@ -38,7 +38,7 @@ jobs:
 
       - name: Update changelog file
         run: |
-          yarn commitizen init cz-conventional-changelog --save-dev --save-exact
+          yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
           yarn conventional-changelog -p angular -o NEW_CHANGELOG.md
           echo "$HEADER" > CHANGELOG.md
