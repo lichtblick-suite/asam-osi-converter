@@ -2,7 +2,9 @@ name: release
 
 on:
   push:
-    tags: ['v[0-9].[0-9]+.[0-9]+']
+    tags: ["v[0-9].[0-9]+.[0-9]+"]
+  pull_request:
+    branches: "*"
 
 permissions:
   contents: write
@@ -20,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: "16"
 
       - name: Install dependencies
         run: npm install
@@ -34,7 +36,32 @@ jobs:
           version=$(node -p "require('./package.json').version")
           echo "version=$version" >> $GITHUB_ENV
 
+      - name: Update changelog file
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
+          HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
+          yarn conventional-changelog -p angular -o TEMP.md -r o
+          echo "$HEADER" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          cat TEMP.md >> CHANGELOG.md
+          rm TEMP.md
+
+      - name: Commit and push updated CHANGELOG.md
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout $BRANCH_NAME
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for $BRANCH_NAME"
+          git push origin $BRANCH_NAME
+
       - name: Create GitHub Release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -46,6 +73,7 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
