@@ -20,7 +20,8 @@
     "lint": "eslint --report-unused-disable-directives --fix .",
     "local-install": "foxglove-extension install",
     "package": "foxglove-extension package",
-    "test": "jest"
+    "test": "jest",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=16.0.0",
