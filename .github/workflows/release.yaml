@@ -40,7 +40,7 @@ jobs:
         run: |
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -o TEMP.md -r o
+          yarn conventional-changelog -p angular -o TEMP.md -r o
           echo "$HEADER" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           cat TEMP.md >> CHANGELOG.md
