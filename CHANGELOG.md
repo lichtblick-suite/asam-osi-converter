@@ -1,5 +1,36 @@
 # ASAM OSI Converter version history
 
+## <small>0.0.1 (2024-10-18)</small>
+
+* Add CHANGELOG & version ([5b06b82](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/5b06b82))
+* Create release with artifact on new tag (#3) ([07a9a61](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/07a9a61)), closes [#3](https://github.com/Lichtblick-Suite/asam-osi-converter/issues/3)
+* Fix buildVehicleMetadata lint issue ([c22b193](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/c22b193))
+* Fix trafficsign category modelCache ([e937766](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/e937766))
+* ignore foxe files ([d8595ea](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/d8595ea))
+* Implements TrafficSigns ([c4c2da8](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/c4c2da8))
+* Improves logic to prevent TrafficSign rerender ([caf3ebe](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/caf3ebe))
+* Initial commit ([ea99b2b](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/ea99b2b))
+* Initial state (#1) ([643e5ce](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/643e5ce)), closes [#1](https://github.com/Lichtblick-Suite/asam-osi-converter/issues/1)
+* Integrate ASAM OSI as Dependency for OSI Ground Truth Extension (#5) ([b540da1](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/b540da1)), closes [#5](https://github.com/Lichtblick-Suite/asam-osi-converter/issues/5)
+* Jest configuration ([d150e76](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/d150e76))
+* Jest initial unit tests ([0be70fc](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/0be70fc))
+* Lint command results ([d034f7c](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/d034f7c))
+* Lint synchronization ([34f8f19](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/34f8f19))
+* release on tag only, skip requirement for main branch ([eff154f](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/eff154f))
+* Remove foxe files ([7abd313](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/7abd313))
+* Remove unneeded prop of OsiObject ([f26fa40](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/f26fa40))
+* Synchronize OSI extension code ([05e7324](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/05e7324))
+* Traffic Lights Implementation ([591ca9c](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/591ca9c))
+* Update LICENSE ([77b5cbe](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/77b5cbe))
+* Update package.json ([5d16a24](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/5d16a24))
+* Update README ([9404cde](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/9404cde))
+* Update README.md ([40fce19](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/40fce19))
+* Update README.md ([fe7a791](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/fe7a791))
+* Update release.yaml ([51bdaf5](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/51bdaf5))
+* Update release.yaml ([ba73484](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/ba73484))
+* Update release.yaml ([85f565a](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/85f565a))
+* Update release.yaml ([b7ded27](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/b7ded27))
+* Update release.yaml ([df1c44b](https://github.com/Lichtblick-Suite/asam-osi-converter/commit/df1c44b))
 
 
 
