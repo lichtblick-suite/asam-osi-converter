@@ -45,6 +45,22 @@ jobs:
           cat TEMP.md >> CHANGELOG.md
           rm TEMP.md
 
+      - name: Commit changelog changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for $GITHUB_REF"
+
+      - name: Create a Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: update-changelog
+          commit-message: "chore: update changelog"
+          title: "Update Changelog"
+          body: "This pull request updates the changelog with the latest changes."
+          base: main
+
       - name: Create GitHub Release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         id: create_release
