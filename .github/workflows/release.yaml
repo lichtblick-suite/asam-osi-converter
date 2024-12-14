@@ -48,26 +48,32 @@ jobs:
       - name: Fetch initial commit history
         id: fetch_initial_commit_history
         run: |
-          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
-          echo "INITIAL_COMMIT_HISTORY<<EOF" >> $GITHUB_ENV
-          echo "$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "::set-output name=history::$(cat initial_commit_history.md)"
 
-      - name: Insert initial commit history in changelog file
+      - name: Update changelog
         run: |
           TARGET_TAG="0.0.1"
-          FILE="CHANGELOG.md"
+          CHANGELOG_FILE="CHANGELOG.md"
+          INITIAL_HISTORY="${{ steps.fetch_initial_commit_history.outputs.history }}"
 
-          INITIAL_COMMIT_HISTORY="$INITIAL_COMMIT_HISTORY"
+          ESCAPED_HISTORY=$(printf '%s\n' "$INITIAL_HISTORY" | sed 's/[&/\]/\\&/g')
 
-          if grep -q "## $TARGET_TAG \(([^)]*)\)" "$FILE"; then
-            sed -i "/## $TARGET_TAG \(([^)]*)\)/,/^## /{//!d}" "$FILE"
-            sed -i "/## $TARGET_TAG \(([^)]*)\)/a\\
-            $(echo "$INITIAL_COMMIT_HISTORY" | sed 's/[&/\]/\\&/g')" "$FILE"
+          if grep -q "## $TARGET_TAG (" "$CHANGELOG_FILE"; then
+            echo "Tag ## $TARGET_TAG found. Updating $CHANGELOG_FILE..."
+            sed -i "/## $TARGET_TAG (/,/^## /{//!d}" "$CHANGELOG_FILE"
 
-            echo "Initial commit history inserted under the ## $TARGET_TAG header in $FILE."
+            awk -v tag="## $TARGET_TAG " -v history="$INITIAL_HISTORY" '
+            {
+              print;
+              if ($0 ~ tag) {
+                print history;
+              }
+            }' "$CHANGELOG_FILE" > TEMP.md && mv TEMP.md "$CHANGELOG_FILE"
+
+            echo "Initial commit history inserted under ## $TARGET_TAG."
           else
-            echo "Tag ## $TARGET_TAG not found in $FILE."
+            echo "Error: Tag ## $TARGET_TAG not found in $CHANGELOG_FILE."
+            exit 1
           fi
 
       - name: Commit changelog changes
