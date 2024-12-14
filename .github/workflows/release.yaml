@@ -48,8 +48,10 @@ jobs:
       - name: Fetch initial commit history
         id: fetch_initial_commit_history
         run: |
-          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md | sed ':a;N;$!ba;s/\n/\\n/g')
-          echo "INITIAL_COMMIT_HISTORY=$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
+          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
+          echo "INITIAL_COMMIT_HISTORY<<EOF" >> $GITHUB_ENV
+          echo "$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Insert initial commit history in changelog file
         run: |
@@ -61,7 +63,7 @@ jobs:
           if grep -q "## $TARGET_TAG \(([^)]*)\)" "$FILE"; then
             sed -i "/## $TARGET_TAG \(([^)]*)\)/,/^## /{//!d}" "$FILE"
             sed -i "/## $TARGET_TAG \(([^)]*)\)/a\\
-            $(echo "$INITIAL_COMMIT_HISTORY" | sed 's/[&/\]/\\&/g' | sed ':a;N;$!ba;s/\n/\\n/g')" "$FILE"
+            $(echo "$INITIAL_COMMIT_HISTORY" | sed 's/[&/\]/\\&/g')" "$FILE"
 
             echo "Initial commit history inserted under the ## $TARGET_TAG header in $FILE."
           else
