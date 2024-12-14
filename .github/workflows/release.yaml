@@ -49,7 +49,7 @@ jobs:
         id: fetch_initial_commit_history
         run: |
           INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
-          echo "::set-output name=initial_commit_history::$ INITIAL_COMMIT_HISTORY"
+          echo "::set-output name=initial_commit_history::$INITIAL_COMMIT_HISTORY"
 
       - name: Insert initial commit history in changelog file
         run: |
