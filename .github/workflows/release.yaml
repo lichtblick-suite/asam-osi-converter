@@ -60,6 +60,7 @@ jobs:
 
           if grep -q "## $TARGET_TAG \(([^)]*)\)" "$FILE"; then
             sed -i "/## $TARGET_TAG \(([^)]*)\)/,/^## /{//!d}" "$FILE"
+
             sed -i "/## $TARGET_TAG \(([^)]*)\)/a\\
             $(echo "$INITIAL_COMMIT_HISTORY" | sed 's/[&/\]/\\&/g' | sed ':a;N;$!ba;s/\n/\\n/g')" "$FILE"
 
