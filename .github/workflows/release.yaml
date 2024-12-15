@@ -45,35 +45,26 @@ jobs:
           cat TEMP.md >> CHANGELOG.md
           rm TEMP.md
 
-      - name: Fetch initial commit history
-        id: fetch_initial_commit_history
-        run: |
-          echo "::set-output name=history::$(cat initial_commit_history.md)"
-
-      - name: Update changelog
+      - name: Insert initial commit history
         run: |
           TARGET_TAG="0.0.1"
-          CHANGELOG_FILE="CHANGELOG.md"
-          INITIAL_HISTORY="${{ steps.fetch_initial_commit_history.outputs.history }}"
+          FILE="CHANGELOG.md"
 
-          ESCAPED_HISTORY=$(printf '%s\n' "$INITIAL_HISTORY" | sed 's/[&/\]/\\&/g')
+          INITIAL_COMMIT_HISTORY="${{ env.INITIAL_COMMIT_HISTORY }}"
 
-          if grep -q "## $TARGET_TAG (" "$CHANGELOG_FILE"; then
-            echo "Tag ## $TARGET_TAG found. Updating $CHANGELOG_FILE..."
-            sed -i "/## $TARGET_TAG (/,/^## /{//!d}" "$CHANGELOG_FILE"
+          if grep -q "^## $TARGET_TAG " "$FILE"; then
+            sed -i "/^## $TARGET_TAG /,/^## /{//!d}" "$FILE"
 
-            awk -v tag="## $TARGET_TAG " -v history="$INITIAL_HISTORY" '
-            {
-              print;
-              if ($0 ~ tag) {
-                print history;
-              }
-            }' "$CHANGELOG_FILE" > TEMP.md && mv TEMP.md "$CHANGELOG_FILE"
+            awk -v content="$INITIAL_COMMIT_HISTORY" -v tag="## $TARGET_TAG " '
+            BEGIN { found=0 }
+            $0 ~ tag { print; print content; found=1; next }
+            { print }
+            END { if (!found) print "Tag header not found!" }
+            ' "$FILE" > TEMP.md && mv TEMP.md "$FILE"
 
-            echo "Initial commit history inserted under ## $TARGET_TAG."
+            echo "Initial commit history inserted under the ## $TARGET_TAG header in $FILE."
           else
-            echo "Error: Tag ## $TARGET_TAG not found in $CHANGELOG_FILE."
-            exit 1
+            echo "Tag ## $TARGET_TAG not found in $FILE."
           fi
 
       - name: Commit changelog changes

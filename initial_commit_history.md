@@ -1,29 +1,29 @@
--Initial commit
+Initial commit
 
--Update LICENSE
+Update LICENSE
 
--Update README
+Update README
 
--Create CODEOWNERS
+Create CODEOWNERS
 
--Jest configuration and initial unit tests
+Jest configuration and initial unit tests
 
--Implement TrafficSigns
+Implement TrafficSigns
 
--Improve logic to prevent TrafficSign rerender
+Improve logic to prevent TrafficSign rerender
 
--Synchronize OSI extension code
+Synchronize OSI extension code
 
--Fix trafficsign category modelCache
+Fix trafficsign category modelCache
 
--Traffic Lights Implementation
+Traffic Lights Implementation
 
--Create release with artifact on new tag (#3)
+Create release with artifact on new tag (#3)
 
--Integrate ASAM OSI as Dependency for OSI Ground Truth Extension (#5)
+Integrate ASAM OSI as Dependency for OSI Ground Truth Extension (#5)
 
--Remove old unneeded manually created types (#9)
+Remove old unneeded manually created types (#9)
 
--Migrate from npm to yarn (#10)
+Migrate from npm to yarn (#10)
 
--Install @lichtblick/asam-osi-types npm package and update imports. (#16)
+Install @lichtblick/asam-osi-types npm package and update imports. (#16)
