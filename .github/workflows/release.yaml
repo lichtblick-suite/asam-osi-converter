@@ -45,6 +45,14 @@ jobs:
           cat TEMP.md >> CHANGELOG.md
           rm TEMP.md
 
+      - name: Fetch initial commit history
+        id: fetch_initial_commit_history
+        run: |
+          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
+          echo "INITIAL_COMMIT_HISTORY<<EOF" >> $GITHUB_ENV
+          echo "$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Insert initial commit history
         run: |
           TARGET_TAG="0.0.1"
