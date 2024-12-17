@@ -83,7 +83,7 @@ jobs:
           git pull origin update-changelog
           git add --all
           git commit -m "chore: update changelog for $GITHUB_REF"
-          git push origin update-changelog
+          git push origin update-changelog --force
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
