@@ -86,7 +86,7 @@ jobs:
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
         with:
-          commit-message: "docs: Update CHANGELOG for release"
+          commit-message: "docs: update CHANGELOG for release"
           branch: "update-changelog"
           title: "Update CHANGELOG for new release"
           body: "This pull request updates the CHANGELOG file with details of the new release."
