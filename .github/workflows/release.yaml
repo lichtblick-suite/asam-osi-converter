@@ -40,7 +40,7 @@ jobs:
         run: |
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o TEMP.md -r o
+          yarn conventional-changelog -p angular -o TEMP.md -r 0
           echo "$HEADER" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           cat TEMP.md >> CHANGELOG.md
@@ -80,8 +80,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git restore --source=HEAD --worktree . 
+          git add --all
           git commit -m "chore: update changelog for $GITHUB_REF"
 
       - name: Create GitHub Release
@@ -123,59 +122,28 @@ jobs:
     needs: build_foxe
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Download changelog file
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+          path: ./
+
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: main
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Update changelog file
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      - name: Create update-changelog branch
         run: |
-          yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
-          HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o TEMP.md -r o
-          echo "$HEADER" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          cat TEMP.md >> CHANGELOG.md
-          rm TEMP.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b update-changelog
 
-      - name: Fetch initial commit history
-        id: fetch_initial_commit_history
+      - name: Commit changelog changes
         run: |
-          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
-          echo "INITIAL_COMMIT_HISTORY<<EOF" >> $GITHUB_ENV
-          echo "$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Insert initial commit history
-        run: |
-          TARGET_TAG="0.0.1"
-          FILE="CHANGELOG.md"
-
-          INITIAL_COMMIT_HISTORY="${{ env.INITIAL_COMMIT_HISTORY }}"
-
-          if grep -q "^## $TARGET_TAG " "$FILE"; then
-            sed -i "/^## $TARGET_TAG /,/^## /{//!d}" "$FILE"
-
-            awk -v content="$INITIAL_COMMIT_HISTORY" -v tag="## $TARGET_TAG " '
-            BEGIN { found=0 }
-            $0 ~ tag { print; print content; found=1; next }
-            { print }
-            END { if (!found) print "Tag header not found!" }
-            ' "$FILE" > TEMP.md && mv TEMP.md "$FILE"
-
-            echo "Initial commit history inserted under the ## $TARGET_TAG header in $FILE."
-          else
-            echo "Tag ## $TARGET_TAG not found in $FILE."
-          fi
+          git add --all
+          git commit -m "docs: update CHANGELOG for release"
+          git push origin update-changelog
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
@@ -187,5 +155,3 @@ jobs:
           body: "This pull request updates the CHANGELOG file with details of the new release."
           base: "main"
           delete-branch: true
-
-
