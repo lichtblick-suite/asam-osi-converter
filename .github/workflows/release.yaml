@@ -97,6 +97,7 @@ jobs:
           title: "Update CHANGELOG for new release"
           body: "This pull request updates the CHANGELOG file with details of the new release."
           base: "main"
+          delete-branch: true
 
       - name: Create GitHub Release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
