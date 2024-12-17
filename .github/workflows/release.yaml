@@ -75,6 +75,14 @@ jobs:
           else
             echo "Tag ## $TARGET_TAG not found in $FILE."
           fi
+      - name: Commit changelog changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b update-changelog
+          git add --all
+          git commit -m "chore: update changelog for $GITHUB_REF"
+          git push origin update-changelog
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
