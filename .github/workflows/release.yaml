@@ -18,14 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create and checkout update-changelog
-        run: |
-          BRANCH_NAME="update-changelog"
-
-          git checkout -b $BRANCH_NAME
-
-          git push -u origin $BRANCH_NAME
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -48,7 +40,7 @@ jobs:
         run: |
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o TEMP.md -r 0
+          yarn conventional-changelog -p angular -o TEMP.md -r o
           echo "$HEADER" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           cat TEMP.md >> CHANGELOG.md
@@ -90,8 +82,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
           git restore --source=HEAD --worktree . 
-          git commit -m "chore: update changelog for ${{ github.ref }}"
-          git push -u origin update-changelog --force
+          git commit -m "chore: update changelog for $GITHUB_REF"
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
