@@ -38,6 +38,12 @@ jobs:
       - name: Update changelog file
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout update-changelog || git checkout -b update-changelog origin/main
+          git stash || echo "No changes to stash"
+          git pull origin update-changelog --rebase
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
           yarn conventional-changelog -p angular -o TEMP.md -r o
@@ -75,17 +81,12 @@ jobs:
           else
             echo "Tag ## $TARGET_TAG not found in $FILE."
           fi
+
       - name: Commit changelog changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b update-changelog
-          git stash || echo "No changes to stash"
-          git pull origin update-changelog --rebase
-          git stash pop || echo "No changes to apply"
-          git add --all
+          git add CHANGELOG.md
           git commit -m "chore: update changelog for $GITHUB_REF"
-          git push origin update-changelog --force
+          git push origin update-changelog
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
