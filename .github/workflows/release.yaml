@@ -80,7 +80,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b update-changelog
+          git stash || echo "No changes to stash"
           git pull origin update-changelog --rebase
+          git stash pop || echo "No changes to apply"
           git add --all
           git commit -m "chore: update changelog for $GITHUB_REF"
           git push origin update-changelog --force
