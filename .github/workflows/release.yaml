@@ -40,17 +40,28 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin
-          git checkout update-changelog || git checkout -b update-changelog origin/main
-          git stash || echo "No changes to stash"
-          git pull origin update-changelog --rebase
+          git fetch origin main
+
+          if git ls-remote --heads origin update-changelog | grep -q "update-changelog"; then
+            echo "Branch 'update-changelog' exists. Checking it out and rebasing..."
+            git checkout update-changelog
+            git pull origin update-changelog --rebase
+          else
+            echo "Branch 'update-changelog' does not exist. Creating it..."
+            git checkout -b update-changelog origin/main
+          fi
+
           yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
           HEADER=$(awk '/^---/{exit} {print}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o TEMP.md -r o
+          yarn conventional-changelog -p angular -o TEMP.md -r 0
           echo "$HEADER" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           cat TEMP.md >> CHANGELOG.md
           rm TEMP.md
+
+          echo "Updated CHANGELOG.md:"
+          cat CHANGELOG.md
+          git diff || echo "No changes detected"
 
       - name: Fetch initial commit history
         id: fetch_initial_commit_history
@@ -85,8 +96,16 @@ jobs:
       - name: Commit changelog changes
         run: |
           git add CHANGELOG.md
-          git commit -m "chore: update changelog for $GITHUB_REF"
-          git push origin update-changelog
+          if git diff --cached --quiet; then
+          echo "No changes in CHANGELOG.md. Skipping commit."
+          exit 0
+          fi
+
+          git commit -m "chore: update changelog for ${{ github.ref }}"
+
+          git fetch origin main
+          git rebase origin/main
+          git push -u origin update-changelog --force
 
       - name: Create a Pull Request to update the changelog file
         uses: peter-evans/create-pull-request@v5
