@@ -8,17 +8,12 @@ export function eulerToQuaternion(roll: number, pitch: number, yaw: number): Qua
   const sy = Math.sin(yaw * 0.5);
   const cy = Math.cos(yaw * 0.5);
 
-  // ROS convention roll first, then pitch, then yaw
+  // Intrinsic Tait-Bryan convention z-y'-x''
+  // equivalent to extrinsic Tait-Bryan convention x-y-z
   const w = cr * cp * cy + sr * sp * sy;
   const x = sr * cp * cy - cr * sp * sy;
   const y = cr * sp * cy + sr * cp * sy;
   const z = cr * cp * sy - sr * sp * cy;
-
-  // DIN70000 yaw first, then pitch, then roll
-  // const w = cr * cp * cy - sr * sp * sy;
-  // const x = cr * sp * sy + sr * cp * cy;
-  // const y = cr * sp * cy - sr * cp * sy;
-  // const z = cr * cp * sy + sr * cy * sp;
 
   return { x, y, z, w };
 }
