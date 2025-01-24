@@ -4,7 +4,6 @@ import {
   CubePrimitive,
   Color,
   Point3,
-  Point2,
   ModelPrimitive,
   Vector3,
 } from "@foxglove/schemas";
@@ -20,7 +19,7 @@ export interface ArrowProperties {
 }
 
 export function pointListToLinePrimitive(
-  points: Point2[],
+  points: Point3[],
   thickness: number,
   color: Color,
 ): LinePrimitive {
@@ -33,7 +32,7 @@ export function pointListToLinePrimitive(
     thickness,
     scale_invariant: false,
     points: points.map((p) => {
-      return { x: p.x, y: p.y, z: 0.0 };
+      return { x: p.x, y: p.y, z: p.z };
     }),
     color,
     colors: [],
