@@ -1,6 +1,4 @@
 import { Color, KeyValuePair, ModelPrimitive } from "@foxglove/schemas";
-import { convertDataURIToBinary } from "@utils/helper";
-import { objectToModelPrimitive } from "@utils/marker";
 import {
   TrafficLight,
   TrafficLight_Classification,
@@ -8,6 +6,8 @@ import {
   TrafficLight_Classification_Icon,
   TrafficLight_Classification_Mode,
 } from "@lichtblick/asam-osi-types";
+import { convertDataURIToBinary } from "@utils/helper";
+import { objectToModelPrimitive } from "@utils/marker";
 import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
@@ -33,9 +33,9 @@ export const buildTrafficLightModel = (
     item.base.position.x,
     item.base.position.y,
     item.base.position.z,
+    item.base.orientation.roll,
+    item.base.orientation.pitch,
     item.base.orientation.yaw,
-    0,
-    0,
     item.base.dimension.width,
     item.base.dimension.length,
     item.base.dimension.height,

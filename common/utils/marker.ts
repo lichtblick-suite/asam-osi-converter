@@ -120,29 +120,23 @@ export function pointListToDashedLinePrimitive(
 export function objectToCubePrimitive(
   x: number,
   y: number,
-  theta: number,
-  x_reference_offset: number,
-  y_reference_offset: number,
+  z: number,
+  roll: number,
+  pitch: number,
+  yaw: number,
   width: number,
   length: number,
   height: number,
   color: Color,
 ): CubePrimitive {
-  const sin_theta = Math.sin(theta);
-  const cos_theta = Math.cos(theta);
-
-  // rotate
-  const processed_x = x + cos_theta * x_reference_offset - sin_theta * y_reference_offset;
-  const processed_y = y + sin_theta * x_reference_offset + cos_theta * y_reference_offset;
-
   return {
     pose: {
       position: {
-        x: processed_x,
-        y: processed_y,
-        z: height / 2.0,
+        x,
+        y,
+        z,
       },
-      orientation: eulerToQuaternion(0, 0, theta),
+      orientation: eulerToQuaternion(roll, pitch, yaw),
     },
     size: {
       x: length,
@@ -157,30 +151,23 @@ export function objectToModelPrimitive(
   x: number,
   y: number,
   z: number,
-  theta: number,
-  x_reference_offset: number,
-  y_reference_offset: number,
+  roll: number,
+  pitch: number,
+  yaw: number,
   width: number,
   length: number,
   height: number,
   color: Color,
   data: Uint8Array,
 ): ModelPrimitive {
-  const sin_theta = Math.sin(theta);
-  const cos_theta = Math.cos(theta);
-
-  // rotate
-  const processed_x = x + cos_theta * x_reference_offset - sin_theta * y_reference_offset;
-  const processed_y = y + sin_theta * x_reference_offset + cos_theta * y_reference_offset;
-
   return {
     pose: {
       position: {
-        x: processed_x,
-        y: processed_y,
+        x,
+        y,
         z,
       },
-      orientation: eulerToQuaternion(0, 0, theta + Math.PI),
+      orientation: eulerToQuaternion(roll, pitch, yaw),
     },
     scale: {
       x: length,

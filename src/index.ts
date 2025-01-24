@@ -65,16 +65,13 @@ function buildObjectEntity(
   time: Time,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
-  // Reference is center of object box.
-  const x_offset = 0;
-  const y_offset = 0;
-
   const cube = objectToCubePrimitive(
     osiObject.base.position.x,
     osiObject.base.position.y,
+    osiObject.base.position.z,
+    osiObject.base.orientation.roll,
+    osiObject.base.orientation.pitch,
     osiObject.base.orientation.yaw,
-    x_offset,
-    y_offset,
     osiObject.base.dimension.width,
     osiObject.base.dimension.length,
     osiObject.base.dimension.height,
