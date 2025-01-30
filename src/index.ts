@@ -3,15 +3,15 @@ import {
   SceneUpdate,
   type Color,
   type FrameTransform,
+  type FrameTransforms,
   type KeyValuePair,
   type LinePrimitive,
   type Point3,
-  type Quaternion,
   type Vector3,
 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas/schemas/typescript/Time";
 import { ExtensionContext } from "@lichtblick/suite";
-import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
+import { eulerToQuaternion } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
   pointListToLinePrimitive,
@@ -351,30 +351,47 @@ function buildSceneEntities(osiGroundTruth: DeepRequired<GroundTruth>): PartialS
   return sceneEntities;
 }
 
-export function frameTransformator(osiGroundTruth: DeepRequired<GroundTruth>): FrameTransform {
+export function buildEgoVehicleBBCenterFrameTransform(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+): FrameTransform {
   const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
-  const rollAngle = hostObject.base.orientation.roll;
-  const pitchAngle = hostObject.base.orientation.pitch;
-  const yawAngle = -hostObject.base.orientation.yaw;
-  const hostObjectBasePosition: Vector3 = {
-    x: -hostObject.base.position.x,
-    y: -hostObject.base.position.y,
-    z: -hostObject.base.position.z,
-  };
-  const quaternion: Quaternion = eulerToQuaternion(rollAngle, pitchAngle, yawAngle);
-  const translationResult = pointRotationByQuaternion(hostObjectBasePosition, quaternion);
-  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear.x;
-  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear.y;
-  translationResult.z = 0;
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: "ego_vehicle_rear_axis",
-    child_frame_id: "<root>",
-    translation: translationResult,
-    rotation: eulerToQuaternion(0, 0, yawAngle),
+    parent_frame_id: "<root>",
+    child_frame_id: "ego_vehicle_bb_center",
+    translation: {
+      x: hostObject.base.position.x,
+      y: hostObject.base.position.y,
+      z: hostObject.base.position.z,
+    },
+    rotation: eulerToQuaternion(
+      hostObject.base.orientation.roll,
+      hostObject.base.orientation.pitch,
+      hostObject.base.orientation.yaw,
+    ),
+  };
+}
+
+export function buildEgoVehicleRearAxleFrameTransform(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+): FrameTransform {
+  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
+  const hostObject = osiGroundTruth.moving_object.find((obj) => {
+    return obj.id.value === hostIdentifier;
+  })!;
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: "ego_vehicle_bb_center",
+    child_frame_id: "ego_vehicle_rear_axle",
+    translation: {
+      x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
+      y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
+      z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
+    },
+    rotation: eulerToQuaternion(0, 0, 0),
   };
 }
 
@@ -463,18 +480,54 @@ export function activate(extensionContext: ExtensionContext): void {
     };
   };
 
-  const convertGrountTruthToFrameTransform = (message: GroundTruth): FrameTransform => {
-    let transforms = {} as FrameTransform;
+  const convertGroundTruthToFrameTransforms = (message: GroundTruth): FrameTransforms => {
+    const transforms = { transforms: [] } as FrameTransforms;
+
     try {
-      if (message.host_vehicle_id) {
-        transforms = frameTransformator(message as DeepRequired<GroundTruth>);
+      // Return empty FrameTransforms if host vehicle id is not set
+      if (!message.host_vehicle_id) {
+        console.error(
+          "Missing host vehicle id GroundTruth message. Can not build FrameTransforms.",
+        );
+        return transforms;
+      }
+
+      // Return empty FrameTransforms if host vehicle is not contained in moving objects
+      if (
+        message.moving_object &&
+        message.moving_object.some((obj) => obj.id?.value === message.host_vehicle_id?.value)
+      ) {
+        transforms.transforms.push(
+          buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+      } else {
+        console.error("Host vehicle not found in moving objects");
+        return transforms;
+      }
+
+      // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+      if (
+        message.moving_object.some(
+          (obj) =>
+            obj.id?.value === message.host_vehicle_id?.value &&
+            obj.vehicle_attributes?.bbcenter_to_rear,
+        )
+      ) {
+        transforms.transforms.push(
+          buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+      } else {
+        console.warn(
+          "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axle FrameTransform.",
+        );
       }
     } catch (error) {
       console.error(
-        "DetectionListForSensors: Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        "Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
         error,
       );
     }
+
     return transforms;
   };
 
@@ -499,14 +552,14 @@ export function activate(extensionContext: ExtensionContext): void {
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.GroundTruth",
-    toSchemaName: "foxglove.FrameTransform",
-    converter: convertGrountTruthToFrameTransform,
+    toSchemaName: "foxglove.FrameTransforms",
+    converter: convertGroundTruthToFrameTransforms,
   });
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorView",
-    toSchemaName: "foxglove.FrameTransform",
+    toSchemaName: "foxglove.FrameTransforms",
     converter: (message: SensorView) =>
-      convertGrountTruthToFrameTransform(message.global_ground_truth!),
+      convertGroundTruthToFrameTransforms(message.global_ground_truth!),
   });
 }
