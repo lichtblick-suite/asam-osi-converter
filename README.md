@@ -4,6 +4,10 @@
 
 A converter extension which visualizes data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
+:warning: **Current version not compliant with official ASAM OSI**:
+
+Current ASAM OSI [tracefile formats](https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/interface/architecture/trace_file_formats.html) do not yet include the draft for the MCAP Multitrace Format. This will be officially completed in this [OpenX Project Proposal](https://code.asam.net/simulation/openx/-/issues/17). You can use the [ASAM OSI Utilities](https://github.com/Lichtblick-Suite/asam-osi-utilities/blob/main/examples/convert_osi2mcap.cpp) to create OSI MCAP traces according to the current [specification draft](https://github.com/OpenSimulationInterface/open-simulation-interface/pull/841).
+
 ## Getting started
 
 Get Lichtblick from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
