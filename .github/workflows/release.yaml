@@ -24,10 +24,10 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install
+        run: yarn install
 
       - name: Package
-        run: npm run package
+        run: yarn run package
 
       - name: Extract version
         id: extract_version
