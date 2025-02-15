@@ -24,10 +24,8 @@
     "prepare": "husky"
   },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=7.0.0",
-    "test": "jest",
-    "prepare": "husky"
+    "node": ">=18.0.0",
+    "npm": ">=10.0.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.23.3",

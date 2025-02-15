@@ -62,19 +62,19 @@ This guide explains the steps to manage commits, tags, and releases for this pro
 
 All commits must follow the **Conventional Commits** standard to ensure consistency and changelog generation.
 
-### Commit Message Format:
+### Commit Message Format
 
-```
+```bash
 <type>(<scope>): <description>
 ```
 
-#### Examples:
+#### Examples
 
 - `feat: add new feature`
 - `fix(auth): resolve a bug`
 - `docs: update README.md file`
 
-### Types:
+### Types
 
 - `feat`: New feature
 - `fix`: Bug fix
@@ -91,7 +91,7 @@ All commits must follow the **Conventional Commits** standard to ensure consiste
 
 Tags are used to create release points in the project.
 
-### Steps to Tag a Release:
+### Steps to Tag a Release
 
 1. Ensure all changes for the release are committed and pushed to the main branch.
 2. Use the following command to create a new tag:
@@ -107,6 +107,7 @@ Tags are used to create release points in the project.
    ```
 
 3. Push the tag to the remote repository:
+
    ```bash
    git push origin v<version>
    ```
