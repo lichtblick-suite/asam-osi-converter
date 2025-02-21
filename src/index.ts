@@ -65,6 +65,7 @@ import {
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
+import { SceneEntity as SceneEntityProto } from "../foxglove/SceneEntity";
 
 const ROOT_FRAME = "<root>";
 
@@ -689,6 +690,10 @@ export function activate(extensionContext: ExtensionContext): void {
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
   ): DeepPartial<SceneUpdate> => {
+    /* if (osiGroundTruth.proj_string === "") {
+      osiGroundTruth.proj_string = counter.toString();
+      counter++;
+    } */
     let sceneEntities: PartialSceneEntity[] = [];
     let updateFlags: OSISceneEntitesUpdate = {
       movingObjects: true,
@@ -766,6 +771,70 @@ export function activate(extensionContext: ExtensionContext): void {
         error,
       );
     }
+
+    /* let stacktrace = "";
+    try {
+      throw new Error("Error in try block");
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      stacktrace = (error as Error).stack!;
+    } */
+
+    /* log scene */
+    /* const date = new Date();
+    date.setTime(Date.now());
+    const exampleSceneEntity: SceneEntityProto = {
+      timestamp: date,
+      frameId: "example_frame",
+      id: "example_entity",
+      lifetime: { seconds: 10, nanos: 0 },
+      frameLocked: false,
+      cubes: [],
+      lines: [],
+      models: [],
+      texts: [],
+      metadata: [],
+      arrows: [],
+      spheres: [],
+      cylinders: [],
+      triangles: [],
+    }; */
+
+    const customReplacer = (_: string, value: unknown): unknown => {
+      if (typeof value === "bigint") {
+        return value.toString(); // Convert BigInt to string (or you can return any custom format)
+      }
+      return value;
+    };
+
+    const body = JSON.stringify(sceneEntities, customReplacer);
+
+    /* console.log("Example SceneEntity:", exampleSceneEntity); */
+
+    /* body = SceneEntityProto.encode(exampleSceneEntity).finish(); */
+    /* const sec = osiGroundTruth.timestamp?.seconds;
+    const nanos = osiGroundTruth.timestamp?.nanos; */
+
+    fetch("http://127.0.0.1:5000", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+      },
+      /* body: sec?.toString() + " " + nanos?.toString() + " " + body, */
+      body,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return await response.text();
+      })
+      .then((data) => {
+        console.log("Successfully sent encodedSceneEntity:", data);
+      })
+      .catch((error) => {
+        console.error("Failed to send encodedSceneEntity:", error);
+      });
 
     return {
       deletions: [],
