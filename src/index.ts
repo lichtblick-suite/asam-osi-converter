@@ -807,7 +807,9 @@ export function activate(extensionContext: ExtensionContext): void {
       return value;
     };
 
-    const body = JSON.stringify(sceneEntities, customReplacer);
+    const logObject = { sceneEntities };
+
+    body = JSON.stringify(logObject, customReplacer);
 
     /* console.log("Example SceneEntity:", exampleSceneEntity); */
 
