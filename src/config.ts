@@ -74,6 +74,9 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Color, Colo
   [LaneBoundary_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
 };
 
+export const LOGGING_ACTIVE = true; // log scene entities to flask logging server
+export const LOGGING_SERVER_URL = "http://127.0.0.1:5000"; // URL of the logging server
+
 export const LANE_BOUNDARY_MIN_RENDERING_WIDTH = 0.02; // minimum width for visualization of the lane boundary line even if width is set to 0
 export const LANE_BOUNDARY_ARROWS = true; // visualize arrows indicating the definition direction of boundary lines
 export const LANE_BOUNDARY_ARROWS_LENGTH = 0.3;

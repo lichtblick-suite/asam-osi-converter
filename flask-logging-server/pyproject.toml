@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "flask-logging-server"
+version = "0.0.1"
+description = "A Flask server for receiving and saving log messages from lichtblick asam-osi-converter extension."
+authors = ["Thomas Sedlmayer <tsedlmayer@pmsfit.de>"]
+license = "MIT"
+packages = [
+       { include = "flask-logging-server" },
+   ]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+flask = "^2.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

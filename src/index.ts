@@ -62,7 +62,9 @@ import {
   LANE_CENTERLINE_ARROWS,
   LANE_BOUNDARY_ARROWS,
   LANE_CENTERLINE_SHOW,
+  LOGGING_ACTIVE,
 } from "./config";
+import { logSceneEntitiesToServer } from "./logging";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 
@@ -735,6 +737,12 @@ export function activate(extensionContext: ExtensionContext): void {
         "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
         error,
       );
+    }
+
+    // Send scene entities to logging server
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (LOGGING_ACTIVE) {
+      logSceneEntitiesToServer(sceneEntities);
     }
 
     return {
