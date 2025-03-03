@@ -7,18 +7,8 @@ import {
   type KeyValuePair,
   type LinePrimitive,
   type Point3,
-  type Vector3,
 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas/schemas/typescript/Time";
-import { ExtensionContext } from "@lichtblick/suite";
-import { eulerToQuaternion } from "@utils/geometry";
-import { ColorCode } from "@utils/helper";
-import {
-  pointListToLinePrimitive,
-  pointListToDashedLinePrimitive,
-  objectToCubePrimitive,
-} from "@utils/marker";
-import { PartialSceneEntity } from "@utils/scene";
 import {
   DetectedLaneBoundary,
   GroundTruth,
@@ -38,18 +28,33 @@ import {
   MovingObject_VehicleClassification_LightState_GenericLightState,
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   MovingObject_VehicleClassification_LightState_IndicatorState,
+  LaneBoundary_Classification_Color,
+  Lane,
+  Lane_Classification_Type,
+  Lane_Classification_Subtype,
 } from "@lichtblick/asam-osi-types";
+import { ExtensionContext } from "@lichtblick/suite";
+import { eulerToQuaternion } from "@utils/geometry";
+import { ColorCode } from "@utils/helper";
+import {
+  objectToCubePrimitive,
+  boundaryPointsToTriangleListPrimitive,
+  laneToTriangleListPrimitive,
+  LaneBoundaryPoint,
+} from "@utils/marker";
+import { PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
 
 import {
   HOST_OBJECT_COLOR,
-  LANE_BOUNDARY_COLOR,
   MOVING_OBJECT_COLOR,
   STATIONARY_OBJECT_COLOR,
   STATIONARY_OBJECT_TYPE,
   STATIONARY_OBJECT_MATERIAL,
   STATIONARY_OBJECT_DENSITY,
   TRAFFIC_LIGHT_COLOR,
+  LANE_BOUNDARY_COLOR,
+  LANE_BOUNDARY_OPACITY,
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
@@ -140,50 +145,138 @@ function buildTrafficLightEntity(
   };
 }
 
+/**
+ * Builds a PartialSceneEntity representing an OSI lane boundary.
+ *
+ * @param osiLaneBoundary - The OSI object, which can be either a MovingObject or a StationaryObject.
+ * @param frame_id - The frame ID to be used for the entity.
+ * @param time - The timestamp for the entity.
+ * @returns A PartialSceneEntity representing the object.
+ */
 function buildLaneBoundaryEntity(
   osiLaneBoundary: DeepRequired<LaneBoundary>,
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
-  const color = LANE_BOUNDARY_COLOR[osiLaneBoundary.classification.type];
-  let line: LinePrimitive;
-  switch (osiLaneBoundary.classification.type) {
-    case LaneBoundary_Classification_Type.DASHED_LINE:
-      line = pointListToDashedLinePrimitive(
-        osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
-        1,
-        2.5,
-        osiLaneBoundary.boundary_line[0]?.width ?? 0,
-        color,
-      );
-      break;
-    case LaneBoundary_Classification_Type.BOTTS_DOTS:
-      line = pointListToDashedLinePrimitive(
-        osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
-        0.1,
-        1,
-        osiLaneBoundary.boundary_line[0]?.width ?? 0,
-        color,
-      );
-      break;
-    default:
-      line = pointListToLinePrimitive(
-        osiLaneBoundary.boundary_line.map((point) => point.position as Vector3),
-        osiLaneBoundary.boundary_line[0]?.width ?? 0,
-        color,
-      );
-      break;
-  }
-  const metadata = buildLaneBoundaryMetadata(osiLaneBoundary);
+  // Create LaneBoundaryPoint objects
+  const laneBoundaryPoints = osiLaneBoundary.boundary_line.map((point) => {
+    return {
+      position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+      width: point.width === 0 ? 0.02 : point.width, // prevent zero-width lane boundaries from being invisible
+      height: point.height,
+      dash: point.dash,
+    };
+  });
+
+  // Define color and opacity based on OSI classification
+  const rgb = LANE_BOUNDARY_COLOR[osiLaneBoundary.classification.color];
+  const a = LANE_BOUNDARY_OPACITY[osiLaneBoundary.classification.type];
+  const color = { r: rgb.r, g: rgb.g, b: rgb.b, a };
+
+  // Set option for dashed lines
+  const options = {
+    dashed: osiLaneBoundary.classification.type === LaneBoundary_Classification_Type.DASHED_LINE,
+  };
 
   return {
     timestamp: time,
     frame_id,
-    id: "boundary_" + osiLaneBoundary.id.value.toString(),
+    id: "lane_boundary_" + osiLaneBoundary.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    lines: [line],
-    metadata,
+    triangles: [boundaryPointsToTriangleListPrimitive(laneBoundaryPoints, color, options)],
+    metadata: buildLaneBoundaryMetadata(osiLaneBoundary),
+  };
+}
+
+function buildLaneEntity(
+  osiLane: DeepRequired<Lane>,
+  frame_id: string,
+  time: Time,
+  osiLeftLaneBoundaries: DeepRequired<LaneBoundary>[],
+  osiRightLaneBoundaries: DeepRequired<LaneBoundary>[],
+): PartialSceneEntity {
+  const leftLaneBoundaries: LaneBoundaryPoint[][] = [];
+  for (const lb of osiLeftLaneBoundaries) {
+    const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      return {
+        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        width: point.width === 0 ? 0.02 : point.width, // prevent zero-width lane boundaries from being invisible
+        height: point.height,
+        dash: point.dash,
+      };
+    });
+    leftLaneBoundaries.push(laneBoundaryPoints);
+  }
+  const rightLaneBoundaries: LaneBoundaryPoint[][] = [];
+  for (const lb of osiRightLaneBoundaries) {
+    const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      return {
+        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        width: point.width === 0 ? 0.02 : point.width, // prevent zero-width lane boundaries from being invisible
+        height: point.height,
+        dash: point.dash,
+      };
+    });
+    rightLaneBoundaries.push(laneBoundaryPoints);
+  }
+  const options = {
+    highlighted: osiLane.classification.is_host_vehicle_lane,
+  };
+
+  // SHOULD IT BE ALLOWED TO HAVE ONLY ONE ENTRY IN LANE PAIRING?
+  const lanePairing = osiLane.classification.lane_pairing
+    .map(
+      (pair) =>
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
+        `(${pair.antecessor_lane_id ? pair.antecessor_lane_id.value : ""}, ${pair.successor_lane_id ? pair.successor_lane_id.value : ""})`,
+    )
+    .join(", ");
+
+  return {
+    timestamp: time,
+    frame_id,
+    id: "lane_" + osiLane.id.value.toString(),
+    lifetime: { sec: 0, nsec: 0 },
+    frame_locked: true,
+    triangles: [
+      laneToTriangleListPrimitive(
+        leftLaneBoundaries,
+        rightLaneBoundaries,
+        osiLane.classification.type,
+        options,
+      ),
+    ],
+    metadata: [
+      {
+        key: "type",
+        value: Lane_Classification_Type[osiLane.classification.type],
+      },
+      {
+        key: "subtype",
+        value: Lane_Classification_Subtype[osiLane.classification.subtype],
+      },
+      {
+        key: "left_lane_boundary_ids",
+        value: osiLane.classification.left_lane_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "right_lane_boundary_ids",
+        value: osiLane.classification.right_lane_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "left_adjacent_lane_id",
+        value: osiLane.classification.left_adjacent_lane_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "right_adjacent_lane_id",
+        value: osiLane.classification.right_adjacent_lane_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "lane_pairing",
+        value: lanePairing,
+      },
+    ],
   };
 }
 
@@ -226,8 +319,16 @@ export function buildLaneBoundaryMetadata(
       value: LaneBoundary_Classification_Type[lane_boundary.classification.type],
     },
     {
+      key: "color",
+      value: LaneBoundary_Classification_Color[lane_boundary.classification.color],
+    },
+    {
       key: "width",
       value: lane_boundary.boundary_line[0]?.width!.toString() ?? "0",
+    },
+    {
+      key: "height",
+      value: lane_boundary.boundary_line[0]?.height!.toString() ?? "0",
     },
   ];
 
@@ -282,33 +383,54 @@ export function determineTheNeedToRerender(lastRenderTime: Time, currentRenderTi
   return !(diff >= 0 && diff <= 10000000);
 }
 
-function buildSceneEntities(osiGroundTruth: DeepRequired<GroundTruth>): PartialSceneEntity[] {
-  let sceneEntities: PartialSceneEntity[] = [];
+interface OSISceneEntities {
+  movingObjects: PartialSceneEntity[];
+  stationaryObjects: PartialSceneEntity[];
+  trafficSigns: PartialSceneEntity[];
+  trafficLights: PartialSceneEntity[];
+  laneBoundaries: PartialSceneEntity[];
+  lanes: PartialSceneEntity[];
+}
+
+interface OSISceneEntitesUpdate {
+  movingObjects: boolean;
+  stationaryObjects: boolean;
+  trafficSigns: boolean;
+  trafficLights: boolean;
+  laneBoundaries: boolean;
+  lanes: boolean;
+}
+
+function buildSceneEntities(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+  update: OSISceneEntitesUpdate,
+): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
   const needtoRerender =
     staticObjectsRenderCache.lastRenderTime != undefined &&
     determineTheNeedToRerender(staticObjectsRenderCache.lastRenderTime, time);
 
   // Moving objects
-  const movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
-    let entity;
-    if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
-      const metadata = buildVehicleMetadata(obj.vehicle_classification);
-      entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, "", ROOT_FRAME, time, metadata);
-    } else {
-      const objectType = MovingObject_Type[obj.type];
-      const objectColor = MOVING_OBJECT_COLOR[obj.type];
-      const prefix = `moving_object_${objectType}_`;
-      const metadata =
-        obj.type === MovingObject_Type.VEHICLE
-          ? buildVehicleMetadata(obj.vehicle_classification)
-          : [];
-      entity = buildObjectEntity(obj, objectColor, prefix, ROOT_FRAME, time, metadata);
-    }
-    return entity;
-  });
-
-  sceneEntities = sceneEntities.concat(movingObjectSceneEntities);
+  let movingObjectSceneEntities: PartialSceneEntity[] = [];
+  if (update.movingObjects) {
+    movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
+      let entity;
+      if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
+        const metadata = buildVehicleMetadata(obj.vehicle_classification);
+        entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, "", ROOT_FRAME, time, metadata);
+      } else {
+        const objectType = MovingObject_Type[obj.type];
+        const objectColor = MOVING_OBJECT_COLOR[obj.type];
+        const prefix = `moving_object_${objectType}_`;
+        const metadata =
+          obj.type === MovingObject_Type.VEHICLE
+            ? buildVehicleMetadata(obj.vehicle_classification)
+            : [];
+        entity = buildObjectEntity(obj, objectColor, prefix, ROOT_FRAME, time, metadata);
+      }
+      return entity;
+    });
+  }
 
   // Stationary objects
   const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
@@ -316,7 +438,6 @@ function buildSceneEntities(osiGroundTruth: DeepRequired<GroundTruth>): PartialS
     const metadata = buildStationaryMetadata(obj);
     return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
   });
-  sceneEntities = sceneEntities.concat(stationaryObjectSceneEntities);
 
   // Traffic Sign objects
   let filteredTrafficSigns: DeepRequired<TrafficSign>[];
@@ -333,22 +454,43 @@ function buildSceneEntities(osiGroundTruth: DeepRequired<GroundTruth>): PartialS
     return buildTrafficSignEntity(obj, "traffic_sign_", ROOT_FRAME, time);
   });
   staticObjectsRenderCache.lastRenderTime = time;
-  sceneEntities = sceneEntities.concat(trafficsignObjectSceneEntities);
 
   // Traffic Light objects
   const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
     const metadata = buildTrafficLightMetadata(obj);
     return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
   });
-  sceneEntities = sceneEntities.concat(trafficlightObjectSceneEntities);
 
   // Lane boundaries
   const laneBoundarySceneEntities = osiGroundTruth.lane_boundary.map((lane_boundary) => {
     return buildLaneBoundaryEntity(lane_boundary, ROOT_FRAME, time);
   });
-  sceneEntities = sceneEntities.concat(laneBoundarySceneEntities);
 
-  return sceneEntities;
+  // Lanes
+  let laneSceneEntities: PartialSceneEntity[] = [];
+  if (update.lanes) {
+    // Re-generate lanes only when update.lanes is true
+    laneSceneEntities = osiGroundTruth.lane.map((lane) => {
+      const rightLaneBoundaryIds = lane.classification.right_lane_boundary_id.map((id) => id.value);
+      const leftLaneBoundaryIds = lane.classification.left_lane_boundary_id.map((id) => id.value);
+      const leftLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
+        leftLaneBoundaryIds.includes(b.id.value),
+      );
+      const rightLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
+        rightLaneBoundaryIds.includes(b.id.value),
+      );
+      return buildLaneEntity(lane, ROOT_FRAME, time, leftLaneBoundaries, rightLaneBoundaries);
+    });
+  }
+
+  return {
+    movingObjects: movingObjectSceneEntities,
+    stationaryObjects: stationaryObjectSceneEntities,
+    trafficSigns: trafficsignObjectSceneEntities,
+    trafficLights: trafficlightObjectSceneEntities,
+    laneBoundaries: laneBoundarySceneEntities,
+    lanes: laneSceneEntities,
+  };
 }
 
 export function buildEgoVehicleBBCenterFrameTransform(
@@ -441,22 +583,80 @@ function buildGroundTruthSceneEntities(
   return [road_output_scene_update];
 }
 
+const hashLanes = (lanes: Lane[]): string => {
+  const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
+  let hashValue = 0;
+  for (let i = 0; i < hash.length; i++) {
+    const char = hash.charCodeAt(i);
+    hashValue = (hashValue << 5) - hashValue + char;
+    hashValue |= 0; // Convert to 32bit integer
+  }
+  return hashValue.toString();
+};
+
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
+  const sceneUpdateMemoizationMap = new WeakMap<GroundTruth, PartialSceneEntity[]>();
+  const laneMemoizationMap = new Map<string, PartialSceneEntity[]>();
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
   ): DeepPartial<SceneUpdate> => {
     let sceneEntities: PartialSceneEntity[] = [];
-
-    try {
-      sceneEntities = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>);
-    } catch (error) {
-      console.error(
-        "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-        error,
-      );
+    let updateMap: OSISceneEntitesUpdate = {
+      movingObjects: true,
+      stationaryObjects: true,
+      trafficSigns: true,
+      trafficLights: true,
+      laneBoundaries: true,
+      lanes: true,
+    };
+    if (sceneUpdateMemoizationMap.has(osiGroundTruth)) {
+      // Read from cache
+      sceneEntities = sceneUpdateMemoizationMap.get(osiGroundTruth)!;
+    } else {
+      try {
+        const laneHash = hashLanes(osiGroundTruth.lane!);
+        if (laneMemoizationMap.has(laneHash)) {
+          sceneEntities = sceneEntities.concat(laneMemoizationMap.get(laneHash)!);
+          updateMap = { ...updateMap, lanes: false };
+          console.log("Lane found in cache, do not re-generate");
+        } else {
+          console.log("Lane not found in cache");
+        }
+        const {
+          movingObjects,
+          stationaryObjects,
+          trafficSigns,
+          trafficLights,
+          laneBoundaries,
+          lanes,
+        } = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>, updateMap); // return values are potentially empty lists if updateMap is false for the corresponding entities
+        sceneEntities = [
+          ...sceneEntities,
+          ...movingObjects,
+          ...stationaryObjects,
+          ...trafficSigns,
+          ...trafficLights,
+          ...laneBoundaries,
+          ...lanes,
+        ];
+        // Store lanes in cache
+        if (updateMap.lanes) {
+          console.log("Store lanes in cache");
+          laneMemoizationMap.set(laneHash, lanes);
+          console.log(laneMemoizationMap);
+        }
+        // Write whole scene entity list to cache
+        sceneUpdateMemoizationMap.set(osiGroundTruth, sceneEntities);
+      } catch (error) {
+        console.error(
+          "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+          error,
+        );
+      }
     }
+
     return {
       deletions: [],
       entities: sceneEntities,

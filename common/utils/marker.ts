@@ -6,9 +6,16 @@ import {
   Point3,
   ModelPrimitive,
   Vector3,
+  TriangleListPrimitive,
 } from "@foxglove/schemas";
+import {
+  Lane_Classification_Type,
+  LaneBoundary_BoundaryPoint_Dash,
+  LaneBoundary_Classification_Type,
+} from "@lichtblick/asam-osi-types";
 
 import { eulerToQuaternion } from "./geometry";
+import { LANE_BOUNDARY_OPACITY } from "../../src/config";
 
 export interface ArrowProperties {
   shaft_diameter: number;
@@ -16,6 +23,426 @@ export interface ArrowProperties {
   head_diameter: number;
   head_length: number;
   color: Color;
+}
+
+export interface LaneBoundaryPoint {
+  position: Point3;
+  width: number;
+  height: number;
+  dash: LaneBoundary_BoundaryPoint_Dash;
+}
+
+/**
+ * Converts a list of lane boundary points into a triangle list primitive.
+ * This function generates a 3D representation of lane boundaries, optionally with dashed lines.
+ *
+ * @param points - An array of LaneBoundaryPoint objects representing the points of the lane boundary.
+ * @param color - The color to be used for the lane boundary.
+ * @param options - An object containing options for the conversion.
+ * @param options.dashed - A boolean indicating whether the lane boundary should be dashed.
+ * @returns A TriangleListPrimitive object representing the 3D lane boundary.
+ */
+export function boundaryPointsToTriangleListPrimitive(
+  points: LaneBoundaryPoint[],
+  color: Color,
+  { dashed }: { dashed: boolean },
+): TriangleListPrimitive {
+  const vertices: Point3[] = [];
+  const colors: Color[] = [];
+
+  let dashSectionFlag = true; // starts with a dash by default if not defined otherwise in 'dash' property of a boundary point
+  let currentColor = color; // opacity ('a' value) of the color alternates for dashed lines
+  let previousSectionWasExtrudedFlag = false; // flag is used to access the correct vertices from previous section
+
+  // Add vertices and colors for each lane boundary section between the current and next boundary point
+  for (let i = 0; i < points.length - 1; i++) {
+    // Handle dash opacity alternation
+    const dashProperty = points[i]!.dash;
+    if (dashed) {
+      // Use 'dash' property to determine if the current section is dash or gap; if UNKNOWN or OTHER the flag alternates every step
+      if (
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.GAP ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.END
+      ) {
+        dashSectionFlag = false; // override
+      } else if (
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.START ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.CONTINUE
+      ) {
+        dashSectionFlag = true; // override
+      }
+
+      // Set opacity based on the flag
+      if (dashSectionFlag) {
+        currentColor = color;
+      } else {
+        currentColor = {
+          ...color,
+          a: LANE_BOUNDARY_OPACITY[LaneBoundary_Classification_Type.NO_LINE],
+        };
+      }
+      dashSectionFlag = !dashSectionFlag; // alternate opacity for next section (will be overridden if 'dash' property is set)
+    }
+    const p1 = points[i]!.position;
+    const p2 = points[i + 1]!.position;
+    const w1 = points[i]!.width;
+    const w2 = points[i + 1]!.width;
+    const h1 = points[i]!.height;
+    const h2 = points[i + 1]!.height;
+
+    // Calculate the normal vector of the lane boundary
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dz = p2.z - p1.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const nx = dy / distance;
+    const ny = -dx / distance;
+
+    // Calculate top and bottom vertices for first boundary point of the lane boundary section
+    let bottomLeft1 = undefined;
+    let bottomRight1 = undefined;
+    let topLeft1 = undefined;
+    let topRight1 = undefined;
+    if (i === 0) {
+      // Do only for first lane boundary section otherwise use vertices from previous section
+      bottomLeft1 = {
+        x: p1.x + nx * (w1 / 2),
+        y: p1.y + ny * (w1 / 2),
+        z: p1.z,
+      };
+      bottomRight1 = {
+        x: p1.x - nx * (w1 / 2),
+        y: p1.y - ny * (w1 / 2),
+        z: p1.z,
+      };
+      topLeft1 = {
+        x: p1.x + nx * (w1 / 2),
+        y: p1.y + ny * (w1 / 2),
+        z: p1.z + h1,
+      };
+      topRight1 = {
+        x: p1.x - nx * (w1 / 2),
+        y: p1.y - ny * (w1 / 2),
+        z: p1.z + h1,
+      };
+
+      // Add front surface
+      if (h1 > 0 && h2 > 0) {
+        vertices.push(bottomLeft1);
+        vertices.push(bottomRight1);
+        vertices.push(topLeft1);
+        vertices.push(bottomRight1);
+        vertices.push(topLeft1);
+        vertices.push(topRight1);
+        for (let j = 0; j < 6; j++) {
+          colors.push(currentColor);
+        }
+      }
+    } else {
+      // Assign vertices from previous section as first four vertices of the current section
+      if (previousSectionWasExtrudedFlag) {
+        bottomLeft1 = vertices[vertices.length - 2]!;
+        bottomRight1 = vertices[vertices.length - 1]!;
+        topLeft1 = vertices[vertices.length - 8]!;
+        topRight1 = vertices[vertices.length - 7]!;
+      } else {
+        bottomLeft1 = vertices[vertices.length - 2]!;
+        bottomRight1 = vertices[vertices.length - 1]!;
+        topLeft1 = vertices[vertices.length - 2]!; // will only be used when current section is extruded again
+        topRight1 = vertices[vertices.length - 1]!; // will only be used when current section is extruded again
+      }
+    }
+
+    // Calculate top and bottom vertices for second boundary point of the lane boundary section
+    const bottomLeft2 = {
+      x: p2.x + nx * (w2 / 2),
+      y: p2.y + ny * (w2 / 2),
+      z: p2.z,
+    };
+    const bottomRight2 = {
+      x: p2.x - nx * (w2 / 2),
+      y: p2.y - ny * (w2 / 2),
+      z: p2.z,
+    };
+    const topLeft2 = {
+      x: p2.x + nx * (w2 / 2),
+      y: p2.y + ny * (w2 / 2),
+      z: p2.z + h2,
+    };
+    const topRight2 = {
+      x: p2.x - nx * (w2 / 2),
+      y: p2.y - ny * (w2 / 2),
+      z: p2.z + h2,
+    };
+
+    // Add left/right/top surfaces and corresponding colors only if extruded
+    if (h1 > 0 && h2 > 0) {
+      // Left surface
+      previousSectionWasExtrudedFlag = true;
+      vertices.push(bottomRight1);
+      vertices.push(topRight1);
+      vertices.push(topRight2);
+      vertices.push(bottomRight1);
+      vertices.push(bottomRight2);
+      vertices.push(topRight2);
+      for (let j = 0; j < 6; j++) {
+        colors.push(currentColor);
+      }
+
+      // Right surface
+      vertices.push(bottomLeft1);
+      vertices.push(topLeft1);
+      vertices.push(topLeft2);
+      vertices.push(bottomLeft1);
+      vertices.push(bottomLeft2);
+      vertices.push(topLeft2);
+      for (let j = 0; j < 6; j++) {
+        colors.push(currentColor);
+      }
+
+      // Top surface
+      vertices.push(topLeft1);
+      vertices.push(topRight1);
+      vertices.push(topLeft2);
+      vertices.push(topRight1);
+      vertices.push(topLeft2);
+      vertices.push(topRight2);
+      for (let j = 0; j < 6; j++) {
+        colors.push(currentColor);
+      }
+
+      // Add "end" surface for last lane boundary section to close the 3d polygon
+      if (i === points.length - 1) {
+        vertices.push(bottomLeft2);
+        vertices.push(bottomRight2);
+        vertices.push(topLeft2);
+        vertices.push(bottomRight2);
+        vertices.push(topLeft2);
+        vertices.push(topRight2);
+        for (let j = 0; j < 6; j++) {
+          colors.push(currentColor);
+        }
+      }
+    } else {
+      previousSectionWasExtrudedFlag = false;
+    }
+
+    // Add bottom surface and corresponding colors (also for non-extruded/0-height sections)
+    vertices.push(bottomLeft1);
+    vertices.push(bottomRight1);
+    vertices.push(bottomLeft2);
+    vertices.push(bottomRight1);
+    vertices.push(bottomLeft2);
+    vertices.push(bottomRight2);
+    for (let j = 0; j < 6; j++) {
+      colors.push(currentColor);
+    }
+  }
+  return {
+    pose: {
+      position: { x: 0, y: 0, z: 0 },
+      orientation: eulerToQuaternion(0, 0, 0),
+    },
+    points: vertices,
+    color,
+    colors,
+    indices: [],
+  };
+}
+
+export function laneToTriangleListPrimitive(
+  leftLaneBoundaries: LaneBoundaryPoint[][],
+  rightLaneBoundaries: LaneBoundaryPoint[][],
+  _type: Lane_Classification_Type,
+  { highlighted }: { highlighted: boolean },
+): TriangleListPrimitive {
+  // Set colors to be used for different types / highlighting
+  let color = { r: 1, g: 1, b: 0.1, a: 0.2 };
+  if (highlighted) {
+    color = { r: 1, g: 0.6, b: 0, a: 0.5 };
+  }
+  if (_type === Lane_Classification_Type.NONDRIVING) {
+    color = { r: 0.1, g: 0.8, b: 0.1, a: 0.1 };
+  }
+  const leftBoundaries = leftLaneBoundaries;
+  const rightBoundaries = rightLaneBoundaries;
+
+  // Order multiple left and right boundaries based on start/end point proximity
+  // Note that this sorting does not guarantee a correct order for all cases
+  leftBoundaries.sort((a, b) => {
+    const aStart = a[0]!.position;
+    const aEnd = a[a.length - 1]!.position;
+    const bStart = b[0]!.position;
+    const bEnd = b[b.length - 1]!.position;
+
+    const distanceAEndToBStart = Math.sqrt(
+      Math.pow(aEnd.x - bStart.x, 2) +
+        Math.pow(aEnd.y - bStart.y, 2) +
+        Math.pow(aEnd.z - bStart.z, 2),
+    );
+
+    const distanceBEndToAStart = Math.sqrt(
+      Math.pow(bEnd.x - aStart.x, 2) +
+        Math.pow(bEnd.y - aStart.y, 2) +
+        Math.pow(bEnd.z - aStart.z, 2),
+    );
+
+    return distanceAEndToBStart - distanceBEndToAStart;
+  });
+  rightBoundaries.sort((a, b) => {
+    const aStart = a[0]!.position;
+    const aEnd = a[a.length - 1]!.position;
+    const bStart = b[0]!.position;
+    const bEnd = b[b.length - 1]!.position;
+
+    const distanceAEndToBStart = Math.sqrt(
+      Math.pow(aEnd.x - bStart.x, 2) +
+        Math.pow(aEnd.y - bStart.y, 2) +
+        Math.pow(aEnd.z - bStart.z, 2),
+    );
+
+    const distanceBEndToAStart = Math.sqrt(
+      Math.pow(bEnd.x - aStart.x, 2) +
+        Math.pow(bEnd.y - aStart.y, 2) +
+        Math.pow(bEnd.z - aStart.z, 2),
+    );
+
+    return distanceAEndToBStart - distanceBEndToAStart;
+  });
+
+  // Merge multiple right/left boundaries into one left and one right boundary
+  const mergedLeftBoundaries: LaneBoundaryPoint[] = [];
+  for (const boundary of leftBoundaries) {
+    mergedLeftBoundaries.push(...boundary);
+  }
+  const mergedRightBoundaries: LaneBoundaryPoint[] = [];
+  for (const boundary of rightBoundaries) {
+    mergedRightBoundaries.push(...boundary);
+  }
+
+  // Draw surface area pointing from the boundary line to the side of the lane
+  const surfaceAreaWidth = 1;
+
+  // Create offset line for both left and right boundaries
+  const offsetLeftBoundaries: LaneBoundaryPoint[] = [];
+  let nx = -1000;
+  let ny = -1000;
+  for (let i = 0; i < mergedLeftBoundaries.length; i++) {
+    const p1 = mergedLeftBoundaries[i]!.position;
+    if (i < mergedLeftBoundaries.length - 1) {
+      const p2 = mergedLeftBoundaries[i + 1]!.position;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const dz = p2.z - p1.z;
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (distance !== 0) {
+        nx = dy / distance;
+        ny = -dx / distance;
+      }
+    } // else reuse previous nx and ny
+
+    const offsetPoint: LaneBoundaryPoint = {
+      position: {
+        x: p1.x + nx * surfaceAreaWidth, // offset to the right for left boundaries
+        y: p1.y + ny * surfaceAreaWidth, // offset to the right for left boundaries
+        z: p1.z,
+      },
+      width: 0,
+      height: 0,
+      dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+    };
+    offsetLeftBoundaries.push(offsetPoint);
+  }
+
+  // Create offset line for both left and right boundaries
+  const offsetRightBoundaries: LaneBoundaryPoint[] = [];
+  nx = -1000;
+  ny = -1000;
+  for (let i = 0; i < mergedRightBoundaries.length; i++) {
+    const p1 = mergedRightBoundaries[i]!.position;
+    if (i < mergedRightBoundaries.length - 1) {
+      const p2 = mergedRightBoundaries[i + 1]!.position;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const dz = p2.z - p1.z;
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (distance !== 0) {
+        nx = dy / distance;
+        ny = -dx / distance;
+      }
+    } // else reuse previous nx and ny
+
+    const offsetPoint: LaneBoundaryPoint = {
+      position: {
+        x: p1.x - nx * surfaceAreaWidth, // offset to the left for right boundaries
+        y: p1.y - ny * surfaceAreaWidth, // offset to the left for right boundaries
+        z: p1.z,
+      },
+      width: 0,
+      height: 0,
+      dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+    };
+    offsetRightBoundaries.push(offsetPoint);
+  }
+
+  const vertices: Point3[] = [];
+  const colors: Color[] = [];
+
+  // Create triangle list primitive that connect each left and right boundary point with their corresponding offset point list
+  for (let i = 0; i < mergedLeftBoundaries.length - 1; i++) {
+    const p1 = mergedLeftBoundaries[i]!.position;
+    const p2 = mergedLeftBoundaries[i + 1]!.position;
+
+    const op1 = offsetLeftBoundaries[i]!.position;
+    const op2 = offsetLeftBoundaries[i + 1]!.position;
+
+    // Add vertices and colors for the surface area between the current and next lane boundary points
+    vertices.push(p1);
+    colors.push(color);
+    vertices.push(p2);
+    colors.push(color);
+    vertices.push(op1);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 }); // create transparency gradient towards the offset line
+    vertices.push(p2);
+    colors.push(color);
+    vertices.push(op1);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+    vertices.push(op2);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+  }
+
+  for (let i = 0; i < mergedRightBoundaries.length - 1; i++) {
+    const p1 = mergedRightBoundaries[i]!.position;
+    const p2 = mergedRightBoundaries[i + 1]!.position;
+
+    const op1 = offsetRightBoundaries[i]!.position;
+    const op2 = offsetRightBoundaries[i + 1]!.position;
+
+    // Add vertices and colors for the surface area between the current and next lane boundary points
+    vertices.push(p1);
+    colors.push(color);
+    vertices.push(p2);
+    colors.push(color);
+    vertices.push(op1);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+    vertices.push(p2);
+    colors.push(color);
+    vertices.push(op1);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+    vertices.push(op2);
+    colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+  }
+
+  return {
+    pose: {
+      position: { x: 0, y: 0, z: 0 },
+      orientation: eulerToQuaternion(0, 0, 0),
+    },
+    points: vertices,
+    color,
+    colors,
+    indices: [],
+  };
 }
 
 export function pointListToLinePrimitive(
