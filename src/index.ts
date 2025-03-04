@@ -583,8 +583,43 @@ function buildGroundTruthSceneEntities(
   return [road_output_scene_update];
 }
 
+/* Temporary "hashing" function to create a unique hash for lane objects.
+
+The hashLanes function creates a hash by:
+
+- Concatenating the id values of all Lane objects.
+- Iterating over the concatenated string and updating a hash value using bitwise operations.
+
+Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
+This might not be the case when using partial chunking of lanes/lane boundaries.
+*/
 const hashLanes = (lanes: Lane[]): string => {
   const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
+  let hashValue = 0;
+  for (let i = 0; i < hash.length; i++) {
+    const char = hash.charCodeAt(i);
+    hashValue = (hashValue << 5) - hashValue + char;
+    hashValue |= 0; // Convert to 32bit integer
+  }
+  return hashValue.toString();
+};
+
+/* Temporary "hashing" function to create a unique hash for lane boundary objects.
+
+The hashLanes function creates a hash by:
+
+- Concatenating the id values of all LaneBoundary objects.
+- Iterating over the concatenated string and updating a hash value using bitwise operations.
+
+Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
+This might not be the case when using partial chunking of lanes/lane boundaries.
+*/
+
+const hashLaneBoundaries = (laneBoundaries: LaneBoundary[]): string => {
+  const hash = laneBoundaries.reduce(
+    (acc, laneBoundary) => acc + laneBoundary.id!.value!.toString(),
+    "",
+  );
   let hashValue = 0;
   for (let i = 0; i < hash.length; i++) {
     const char = hash.charCodeAt(i);
@@ -598,6 +633,7 @@ export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
   const sceneUpdateMemoizationMap = new WeakMap<GroundTruth, PartialSceneEntity[]>();
+  const laneBoundaryMemoizationMap = new Map<string, PartialSceneEntity[]>();
   const laneMemoizationMap = new Map<string, PartialSceneEntity[]>();
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
@@ -616,13 +652,23 @@ export function activate(extensionContext: ExtensionContext): void {
       sceneEntities = sceneUpdateMemoizationMap.get(osiGroundTruth)!;
     } else {
       try {
+        // Check if lane boundaries have changed
+        const laneBoundaryHash = hashLaneBoundaries(osiGroundTruth.lane_boundary!);
+        if (laneBoundaryMemoizationMap.has(laneBoundaryHash)) {
+          sceneEntities = sceneEntities.concat(laneBoundaryMemoizationMap.get(laneBoundaryHash)!);
+          updateMap = { ...updateMap, laneBoundaries: false };
+          console.log("Lane boundaries found in cache, do not re-generate");
+        } else {
+          console.log("Lane boundaries not found in cache");
+        }
+        // Check if lanes have changed
         const laneHash = hashLanes(osiGroundTruth.lane!);
         if (laneMemoizationMap.has(laneHash)) {
           sceneEntities = sceneEntities.concat(laneMemoizationMap.get(laneHash)!);
           updateMap = { ...updateMap, lanes: false };
-          console.log("Lane found in cache, do not re-generate");
+          console.log("Lanes found in cache, do not re-generate");
         } else {
-          console.log("Lane not found in cache");
+          console.log("Lanes not found in cache");
         }
         const {
           movingObjects,
@@ -641,9 +687,19 @@ export function activate(extensionContext: ExtensionContext): void {
           ...laneBoundaries,
           ...lanes,
         ];
+        // Store lane boundaries in cache
+        if (updateMap.laneBoundaries) {
+          console.log("Store lane boundaries in cache");
+          // Empty cache
+          laneBoundaryMemoizationMap.clear(); // keep only one lane boundary in cache
+          laneBoundaryMemoizationMap.set(laneBoundaryHash, laneBoundaries);
+          console.log(laneBoundaryMemoizationMap);
+        }
         // Store lanes in cache
         if (updateMap.lanes) {
           console.log("Store lanes in cache");
+          // Empty cache
+          laneMemoizationMap.clear(); // keep only one lane in cache
           laneMemoizationMap.set(laneHash, lanes);
           console.log(laneMemoizationMap);
         }
