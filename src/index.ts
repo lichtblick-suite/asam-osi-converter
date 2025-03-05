@@ -55,6 +55,7 @@ import {
   TRAFFIC_LIGHT_COLOR,
   LANE_BOUNDARY_COLOR,
   LANE_BOUNDARY_OPACITY,
+  LANE_BOUNDARY_MIN_RENDERING_WIDTH,
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
@@ -158,11 +159,11 @@ function buildLaneBoundaryEntity(
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
-  // Create LaneBoundaryPoint objects
+  // Create LaneBoundaryPoint objects using only necessary fields for rendering
   const laneBoundaryPoints = osiLaneBoundary.boundary_line.map((point) => {
     return {
       position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
-      width: point.width === 0 ? 0.02 : point.width, // prevent zero-width lane boundaries from being invisible
+      width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
       height: point.height,
       dash: point.dash,
     };
@@ -401,9 +402,18 @@ interface OSISceneEntitesUpdate {
   lanes: boolean;
 }
 
+/**
+ * Builds a PartialSceneEntity representing an OSI lane boundary.
+ *
+ * @param osiGroundTruth - The OSI GroundTruth object used to build scene entities.
+ * @param updateFlags - Object containing flags to determine which entities need to be updated.
+ * @returns A list of OSISceneEntities object containing scene entity lists for each entity type.
+ * For each entity type with its corresponding update flag set to true, the scene entity list will be updated.
+ * For each entity type with its corresponding update flag set to false, the scene entity list will be empty.
+ */
 function buildSceneEntities(
   osiGroundTruth: DeepRequired<GroundTruth>,
-  update: OSISceneEntitesUpdate,
+  updateFlags: OSISceneEntitesUpdate,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
   const needtoRerender =
@@ -412,7 +422,7 @@ function buildSceneEntities(
 
   // Moving objects
   let movingObjectSceneEntities: PartialSceneEntity[] = [];
-  if (update.movingObjects) {
+  if (updateFlags.movingObjects) {
     movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
       let entity;
       if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
@@ -433,11 +443,14 @@ function buildSceneEntities(
   }
 
   // Stationary objects
-  const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
-    const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
-    const metadata = buildStationaryMetadata(obj);
-    return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
-  });
+  let stationaryObjectSceneEntities: PartialSceneEntity[] = [];
+  if (updateFlags.stationaryObjects) {
+    stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
+      const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
+      const metadata = buildStationaryMetadata(obj);
+      return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
+    });
+  }
 
   // Traffic Sign objects
   let filteredTrafficSigns: DeepRequired<TrafficSign>[];
@@ -456,19 +469,25 @@ function buildSceneEntities(
   staticObjectsRenderCache.lastRenderTime = time;
 
   // Traffic Light objects
-  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
-    const metadata = buildTrafficLightMetadata(obj);
-    return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
-  });
+  let trafficlightObjectSceneEntities: PartialSceneEntity[] = [];
+  if (updateFlags.trafficLights) {
+    trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
+      const metadata = buildTrafficLightMetadata(obj);
+      return buildTrafficLightEntity(obj, "traffic_light_", ROOT_FRAME, time, metadata);
+    });
+  }
 
   // Lane boundaries
-  const laneBoundarySceneEntities = osiGroundTruth.lane_boundary.map((lane_boundary) => {
-    return buildLaneBoundaryEntity(lane_boundary, ROOT_FRAME, time);
-  });
+  let laneBoundarySceneEntities: PartialSceneEntity[] = [];
+  if (updateFlags.laneBoundaries) {
+    laneBoundarySceneEntities = osiGroundTruth.lane_boundary.map((lane_boundary) => {
+      return buildLaneBoundaryEntity(lane_boundary, ROOT_FRAME, time);
+    });
+  }
 
   // Lanes
   let laneSceneEntities: PartialSceneEntity[] = [];
-  if (update.lanes) {
+  if (updateFlags.lanes) {
     // Re-generate lanes only when update.lanes is true
     laneSceneEntities = osiGroundTruth.lane.map((lane) => {
       const rightLaneBoundaryIds = lane.classification.right_lane_boundary_id.map((id) => id.value);
@@ -583,16 +602,17 @@ function buildGroundTruthSceneEntities(
   return [road_output_scene_update];
 }
 
-/* Temporary "hashing" function to create a unique hash for lane objects.
-
-The hashLanes function creates a hash by:
-
-- Concatenating the id values of all Lane objects.
-- Iterating over the concatenated string and updating a hash value using bitwise operations.
-
-Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
-This might not be the case when using partial chunking of lanes/lane boundaries.
-*/
+/**
+ * Hashing function to create a unique hash for lane objects.
+ *
+ * The hashLanes function creates a hash by:
+ *
+ * - Concatenating the id values of all Lane objects.
+ * - Iterating over the concatenated string and updating a hash value using bitwise operations.
+ *
+ * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
+ * This might not be the case when using partial chunking of lanes/lane boundaries.
+ */
 const hashLanes = (lanes: Lane[]): string => {
   const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
   let hashValue = 0;
@@ -604,17 +624,17 @@ const hashLanes = (lanes: Lane[]): string => {
   return hashValue.toString();
 };
 
-/* Temporary "hashing" function to create a unique hash for lane boundary objects.
-
-The hashLanes function creates a hash by:
-
-- Concatenating the id values of all LaneBoundary objects.
-- Iterating over the concatenated string and updating a hash value using bitwise operations.
-
-Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
-This might not be the case when using partial chunking of lanes/lane boundaries.
-*/
-
+/**
+ * Hashing function to create a unique hash for lane boundary objects.
+ *
+ * The hashLanes function creates a hash by:
+ *
+ * - Concatenating the id values of all LaneBoundary objects.
+ * - Iterating over the concatenated string and updating a hash value using bitwise operations.
+ *
+ * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
+ * This might not be the case when using partial chunking of lanes/lane boundaries.
+ */
 const hashLaneBoundaries = (laneBoundaries: LaneBoundary[]): string => {
   const hash = laneBoundaries.reduce(
     (acc, laneBoundary) => acc + laneBoundary.id!.value!.toString(),
@@ -632,14 +652,15 @@ const hashLaneBoundaries = (laneBoundaries: LaneBoundary[]): string => {
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
-  const sceneUpdateMemoizationMap = new WeakMap<GroundTruth, PartialSceneEntity[]>();
-  const laneBoundaryMemoizationMap = new Map<string, PartialSceneEntity[]>();
-  const laneMemoizationMap = new Map<string, PartialSceneEntity[]>();
+  const groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
+  const laneBoundaryCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
+  const laneCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
+
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
   ): DeepPartial<SceneUpdate> => {
     let sceneEntities: PartialSceneEntity[] = [];
-    let updateMap: OSISceneEntitesUpdate = {
+    let updateFlags: OSISceneEntitesUpdate = {
       movingObjects: true,
       stationaryObjects: true,
       trafficSigns: true,
@@ -647,70 +668,73 @@ export function activate(extensionContext: ExtensionContext): void {
       laneBoundaries: true,
       lanes: true,
     };
-    if (sceneUpdateMemoizationMap.has(osiGroundTruth)) {
-      // Read from cache
-      sceneEntities = sceneUpdateMemoizationMap.get(osiGroundTruth)!;
-    } else {
-      try {
-        // Check if lane boundaries have changed
-        const laneBoundaryHash = hashLaneBoundaries(osiGroundTruth.lane_boundary!);
-        if (laneBoundaryMemoizationMap.has(laneBoundaryHash)) {
-          sceneEntities = sceneEntities.concat(laneBoundaryMemoizationMap.get(laneBoundaryHash)!);
-          updateMap = { ...updateMap, laneBoundaries: false };
-          console.log("Lane boundaries found in cache, do not re-generate");
-        } else {
-          console.log("Lane boundaries not found in cache");
-        }
-        // Check if lanes have changed
-        const laneHash = hashLanes(osiGroundTruth.lane!);
-        if (laneMemoizationMap.has(laneHash)) {
-          sceneEntities = sceneEntities.concat(laneMemoizationMap.get(laneHash)!);
-          updateMap = { ...updateMap, lanes: false };
-          console.log("Lanes found in cache, do not re-generate");
-        } else {
-          console.log("Lanes not found in cache");
-        }
-        const {
-          movingObjects,
-          stationaryObjects,
-          trafficSigns,
-          trafficLights,
-          laneBoundaries,
-          lanes,
-        } = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>, updateMap); // return values are potentially empty lists if updateMap is false for the corresponding entities
-        sceneEntities = [
-          ...sceneEntities,
-          ...movingObjects,
-          ...stationaryObjects,
-          ...trafficSigns,
-          ...trafficLights,
-          ...laneBoundaries,
-          ...lanes,
-        ];
-        // Store lane boundaries in cache
-        if (updateMap.laneBoundaries) {
-          console.log("Store lane boundaries in cache");
-          // Empty cache
-          laneBoundaryMemoizationMap.clear(); // keep only one lane boundary in cache
-          laneBoundaryMemoizationMap.set(laneBoundaryHash, laneBoundaries);
-          console.log(laneBoundaryMemoizationMap);
-        }
-        // Store lanes in cache
-        if (updateMap.lanes) {
-          console.log("Store lanes in cache");
-          // Empty cache
-          laneMemoizationMap.clear(); // keep only one lane in cache
-          laneMemoizationMap.set(laneHash, lanes);
-          console.log(laneMemoizationMap);
-        }
-        // Write whole scene entity list to cache
-        sceneUpdateMemoizationMap.set(osiGroundTruth, sceneEntities);
-      } catch (error) {
-        console.error(
-          "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
-          error,
-        );
+
+    // Use cached scene entities if that exact OSI ground truth frame is cached
+    if (groundTruthFrameCache.has(osiGroundTruth)) {
+      return {
+        deletions: [],
+        entities: groundTruthFrameCache.get(osiGroundTruth),
+      };
+    }
+
+    // Build scene entities from OSI ground truth or re-use partially cached entities
+    try {
+      // Check if lane boundary hash has changed
+      const laneBoundaryHash = hashLaneBoundaries(
+        osiGroundTruth.lane_boundary as DeepRequired<LaneBoundary[]>,
+      );
+      if (laneBoundaryCache.has(laneBoundaryHash)) {
+        sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+        updateFlags = { ...updateFlags, laneBoundaries: false };
       }
+
+      // Check if lane hash has changed
+      const laneHash = hashLanes(osiGroundTruth.lane as DeepRequired<Lane[]>);
+      if (laneCache.has(laneHash)) {
+        sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+        updateFlags = { ...updateFlags, lanes: false };
+      }
+
+      // Build scene entities from OSI ground truth for update flags set to true
+      const {
+        movingObjects,
+        stationaryObjects,
+        trafficSigns,
+        trafficLights,
+        laneBoundaries,
+        lanes,
+      } = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>, updateFlags);
+
+      // Concatenate newly generated and cached scene entities
+      sceneEntities = [
+        ...sceneEntities, // contains cached scene entities already
+        ...movingObjects,
+        ...stationaryObjects,
+        ...trafficSigns,
+        ...trafficLights,
+        ...laneBoundaries,
+        ...lanes,
+      ];
+
+      // Store lane boundaries in cache
+      if (updateFlags.laneBoundaries) {
+        laneBoundaryCache.clear(); // keep only one lane boundary in cache
+        laneBoundaryCache.set(laneBoundaryHash, laneBoundaries);
+      }
+
+      // Store lanes in cache
+      if (updateFlags.lanes) {
+        laneCache.clear(); // keep only one lane in cache
+        laneCache.set(laneHash, lanes);
+      }
+
+      // Store scene entities for current OSI ground truth frame in cache
+      groundTruthFrameCache.set(osiGroundTruth, sceneEntities);
+    } catch (error) {
+      console.error(
+        "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        error,
+      );
     }
 
     return {

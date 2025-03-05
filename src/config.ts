@@ -8,6 +8,7 @@ import {
   StationaryObject_Classification_Material,
   StationaryObject_Classification_Type,
   TrafficLight_Classification_Color,
+  Lane_Classification_Type,
 } from "@lichtblick/asam-osi-types";
 import { ColorCode, ColorCodeName } from "@utils/helper";
 
@@ -71,6 +72,20 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Color, Colo
   [LaneBoundary_Classification_Color.NONE]: ColorCode("black"),
   [LaneBoundary_Classification_Color.OTHER]: ColorCode("gray"),
   [LaneBoundary_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
+};
+
+export const LANE_BOUNDARY_MIN_RENDERING_WIDTH = 0.02; // minimum width for visualization of the lane boundary line even if width is set to 0
+
+export const LANE_VISUALIZATION_WIDTH = 0.75; // width of the gradient surface area pointing from the boundary line to the side of the lane
+
+export const LANE_COLOR_HIGHLIGHT = { r: 1, g: 0.6, b: 0, a: 0.5 }; // used for is_host_vehicle_lane flag
+
+export const LANE_TYPE: Record<Lane_Classification_Type, Color> = {
+  [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
+  [Lane_Classification_Type.OTHER]: ColorCode("c", 0.5),
+  [Lane_Classification_Type.DRIVING]: { r: 0, g: 1, b: 1, a: 0.4 },
+  [Lane_Classification_Type.INTERSECTION]: ColorCode("r", 0.2),
+  [Lane_Classification_Type.NONDRIVING]: { r: 1, g: 111 / 255, b: 91 / 255, a: 0.4 },
 };
 
 export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, ColorCodeName> = {
