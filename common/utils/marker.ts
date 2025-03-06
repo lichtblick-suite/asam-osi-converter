@@ -110,6 +110,7 @@ export function boundaryPointsToTriangleListPrimitive(
     let topRight1 = undefined;
     if (i === 0) {
       // Do only for first lane boundary section otherwise use vertices from previous section
+      // Note: Normal vector is perpendicular to the z-axis as OSI does not define any orientation of the lane boundary width/height
       bottomLeft1 = {
         x: p1.x + nx * (w1 / 2),
         y: p1.y + ny * (w1 / 2),
@@ -288,6 +289,67 @@ const compareStartToEnd = (a: LaneBoundaryPoint[], b: LaneBoundaryPoint[]) => {
   return distanceAEndToBStart - distanceBEndToAStart;
 };
 
+function add(a: number, b: number): number {
+  return a + b;
+}
+
+function subtract(a: number, b: number): number {
+  return a - b;
+}
+
+/**
+ * Creates an offset line from the original boundary line by applying a specified operation (add or subtract) and offset.
+ * To calculate the offset a normal vector perpendicular to the line orientation is used.
+ * This function generates a new list of points that are offset from the original boundary line.
+ *
+ * @param originalBoundaryLine - An array of LaneBoundaryPoint objects representing the original boundary line.
+ * @param operation - The passed function is used to calculate the normal vector perpendicular to the line orientation. ('add' is used for offset to the left, 'subtract' for offset to the right)
+ * @param offset - Optional offset distance to be applied to the original boundary line. If not given, half of the width of each boundary point is used.
+ * @returns An array of Point3 objects representing the offset boundary line.
+ */
+function createOffsetLine(
+  originalBoundaryLine: LaneBoundaryPoint[],
+  operation: (a: number, b: number) => number,
+  offset?: number,
+): Point3[] {
+  const offsetBoundaryLine: Point3[] = [];
+  let nx: number | undefined;
+  let ny: number | undefined;
+  let offsetValue: number;
+  for (let i = 0; i < originalBoundaryLine.length; i++) {
+    if (offset == undefined) {
+      offsetValue = originalBoundaryLine[i]!.width / 2;
+    } else {
+      offsetValue = offset;
+    }
+    const p1 = originalBoundaryLine[i]!.position;
+    if (i < originalBoundaryLine.length - 1) {
+      const p2 = originalBoundaryLine[i + 1]!.position;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const dz = p2.z - p1.z;
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (distance === 0) {
+        // two identical boundary points; add point without offset (should not happen because duplicates are removed beforehand)
+        offsetBoundaryLine.push(originalBoundaryLine[i]!.position);
+        continue;
+      }
+      nx = dy / distance;
+      ny = -dx / distance;
+    }
+
+    if (nx != undefined && ny != undefined) {
+      const offsetPoint: Point3 = {
+        x: operation(p1.x, nx * offsetValue),
+        y: operation(p1.y, ny * offsetValue),
+        z: p1.z, // Normal vector is perpendicular to the z-axis as OSI does not define any orientation of the lane boundary width/height
+      };
+      offsetBoundaryLine.push(offsetPoint);
+    }
+  }
+  return offsetBoundaryLine;
+}
+
 export function laneToTriangleListPrimitive(
   leftLaneBoundaries: LaneBoundaryPoint[][],
   rightLaneBoundaries: LaneBoundaryPoint[][],
@@ -295,27 +357,28 @@ export function laneToTriangleListPrimitive(
   { highlighted }: { highlighted: boolean },
 ): TriangleListPrimitive {
   try {
+    const vertices: Point3[] = [];
+    const colors: Color[] = [];
+
     // Set colors to be used for different types / highlighting
     let color = LANE_TYPE[type];
     if (highlighted) {
       color = LANE_COLOR_HIGHLIGHT;
     }
-    const leftBoundaries = leftLaneBoundaries;
-    const rightBoundaries = rightLaneBoundaries;
 
     // Order multiple left and right boundaries based on start/end point proximity
     // Note that this sorting might not guarantee a correct order for all cases
     // Maybe each boundary line should be considered separately and not be merged so that they're not connected with each other and don't have to be sorted
-    leftBoundaries.sort(compareStartToEnd);
-    rightBoundaries.sort(compareStartToEnd);
+    leftLaneBoundaries.sort(compareStartToEnd);
+    rightLaneBoundaries.sort(compareStartToEnd);
 
     // Merge multiple right/left boundaries into one left and one right boundary
     let mergedLeftBoundaries: LaneBoundaryPoint[] = [];
-    for (const boundary of leftBoundaries) {
+    for (const boundary of leftLaneBoundaries) {
       mergedLeftBoundaries.push(...boundary);
     }
     let mergedRightBoundaries: LaneBoundaryPoint[] = [];
-    for (const boundary of rightBoundaries) {
+    for (const boundary of rightLaneBoundaries) {
       mergedRightBoundaries.push(...boundary);
     }
 
@@ -342,73 +405,26 @@ export function laneToTriangleListPrimitive(
         ),
     );
 
+    // Create edge line for both left and right boundaries using lane boundary width to prevent z-fighting of lane surface are and lane boundaries and facilitate clicking interactions
+    const leftBoundariesEdge: Point3[] = createOffsetLine(mergedLeftBoundaries, add);
+    const rightBoundariesEdge: Point3[] = createOffsetLine(mergedRightBoundaries, subtract);
+
     // Draw surface area pointing from the boundary line to the side of the lane
     // Create offset line for both left and right boundaries
-    const offsetLeftBoundaries: Point3[] = [];
-    let nxLeft: number | undefined;
-    let nyLeft: number | undefined;
-    for (let i = 0; i < mergedLeftBoundaries.length; i++) {
-      const p1 = mergedLeftBoundaries[i]!.position;
-      if (i < mergedLeftBoundaries.length - 1) {
-        const p2 = mergedLeftBoundaries[i + 1]!.position;
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dz = p2.z - p1.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (distance === 0) {
-          // two identical boundary points; add point without offset (should not happen because duplicates are removed beforehand)
-          offsetLeftBoundaries.push(mergedLeftBoundaries[i]!.position);
-          continue;
-        }
-        nxLeft = dy / distance;
-        nyLeft = -dx / distance;
-      }
-
-      if (nxLeft != undefined && nyLeft != undefined) {
-        const offsetPoint: Point3 = {
-          x: p1.x + nxLeft * LANE_VISUALIZATION_WIDTH, // offset to the right for left boundaries
-          y: p1.y + nyLeft * LANE_VISUALIZATION_WIDTH, // offset to the right for left boundaries
-          z: p1.z,
-        };
-        offsetLeftBoundaries.push(offsetPoint);
-      }
-    }
-    const offsetRightBoundaries: Point3[] = [];
-    let nxRight: number | undefined;
-    let nyRight: number | undefined;
-    for (let i = 0; i < mergedRightBoundaries.length; i++) {
-      const p1 = mergedRightBoundaries[i]!.position;
-      if (i < mergedRightBoundaries.length - 1) {
-        const p2 = mergedRightBoundaries[i + 1]!.position;
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dz = p2.z - p1.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (distance === 0) {
-          // two identical boundary points; add point without offset (should not happen because duplicates are removed beforehand)
-          offsetRightBoundaries.push(mergedRightBoundaries[i]!.position);
-          continue;
-        }
-        nxRight = dy / distance;
-        nyRight = -dx / distance;
-      }
-
-      if (nxRight != undefined && nyRight != undefined) {
-        const offsetPoint: Point3 = {
-          x: p1.x - nxRight * LANE_VISUALIZATION_WIDTH, // offset to the left for right boundaries
-          y: p1.y - nyRight * LANE_VISUALIZATION_WIDTH, // offset to the left for right boundaries
-          z: p1.z,
-        };
-        offsetRightBoundaries.push(offsetPoint);
-      }
-    }
-
-    const vertices: Point3[] = [];
-    const colors: Color[] = [];
+    const offsetLeftBoundaries: Point3[] = createOffsetLine(
+      mergedLeftBoundaries,
+      add,
+      LANE_VISUALIZATION_WIDTH,
+    );
+    const offsetRightBoundaries: Point3[] = createOffsetLine(
+      mergedRightBoundaries,
+      subtract,
+      LANE_VISUALIZATION_WIDTH,
+    );
 
     // Check precondition for triangle list primitive creation
     if (
-      mergedLeftBoundaries.length !== offsetLeftBoundaries.length ||
+      leftBoundariesEdge.length !== offsetLeftBoundaries.length ||
       mergedRightBoundaries.length !== offsetRightBoundaries.length
     ) {
       throw new Error(
@@ -417,9 +433,9 @@ export function laneToTriangleListPrimitive(
     }
 
     // Create triangle list primitive that connect each left and right boundary point with their corresponding offset point list
-    for (let i = 0; i < mergedLeftBoundaries.length - 1; i++) {
-      const p1 = mergedLeftBoundaries[i]!.position;
-      const p2 = mergedLeftBoundaries[i + 1]!.position;
+    for (let i = 0; i < leftBoundariesEdge.length - 1; i++) {
+      const p1 = leftBoundariesEdge[i]!;
+      const p2 = leftBoundariesEdge[i + 1]!;
 
       const op1 = offsetLeftBoundaries[i]!;
       const op2 = offsetLeftBoundaries[i + 1]!;
@@ -439,9 +455,9 @@ export function laneToTriangleListPrimitive(
       colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
     }
 
-    for (let i = 0; i < mergedRightBoundaries.length - 1; i++) {
-      const p1 = mergedRightBoundaries[i]!.position;
-      const p2 = mergedRightBoundaries[i + 1]!.position;
+    for (let i = 0; i < rightBoundariesEdge.length - 1; i++) {
+      const p1 = rightBoundariesEdge[i]!;
+      const p2 = rightBoundariesEdge[i + 1]!;
 
       const op1 = offsetRightBoundaries[i]!;
       const op2 = offsetRightBoundaries[i + 1]!;
@@ -466,7 +482,7 @@ export function laneToTriangleListPrimitive(
         orientation: eulerToQuaternion(0, 0, 0),
       },
       points: vertices,
-      color,
+      color, // 'colors' is used instead of 'color' if both are given
       colors,
       indices: [],
     };
