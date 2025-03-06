@@ -34,7 +34,7 @@ export interface LaneBoundaryPoint {
   position: Point3;
   width: number;
   height: number;
-  dash: LaneBoundary_BoundaryPoint_Dash;
+  dash?: LaneBoundary_BoundaryPoint_Dash;
 }
 
 /**

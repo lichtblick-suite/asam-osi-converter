@@ -80,6 +80,9 @@ export const LANE_VISUALIZATION_WIDTH = 0.75; // width of the gradient surface a
 
 export const LANE_COLOR_HIGHLIGHT = { r: 1, g: 0.6, b: 0, a: 0.5 }; // used for is_host_vehicle_lane flag
 
+export const LANE_CENTERLINE_COLOR = { r: 1, g: 1, b: 0, a: 1 };
+export const LANE_CENTERLINE_WIDTH = 0.02;
+
 export const LANE_TYPE: Record<Lane_Classification_Type, Color> = {
   [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
   [Lane_Classification_Type.OTHER]: ColorCode("c", 0.5),

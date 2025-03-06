@@ -56,6 +56,8 @@ import {
   LANE_BOUNDARY_COLOR,
   LANE_BOUNDARY_OPACITY,
   LANE_BOUNDARY_MIN_RENDERING_WIDTH,
+  LANE_CENTERLINE_COLOR,
+  LANE_CENTERLINE_WIDTH,
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
@@ -221,6 +223,18 @@ function buildLaneEntity(
     });
     rightLaneBoundaries.push(laneBoundaryPoints);
   }
+  const centerlinePoints = osiLane.classification.centerline.map((point) => {
+    return {
+      position: { x: point.x, y: point.y, z: point.z } as Point3,
+      width: LANE_CENTERLINE_WIDTH,
+      height: 0,
+    };
+  });
+  const centerlineTrianglePrimitive = boundaryPointsToTriangleListPrimitive(
+    centerlinePoints,
+    LANE_CENTERLINE_COLOR,
+    { dashed: false },
+  );
   const options = {
     highlighted: osiLane.classification.is_host_vehicle_lane,
   };
@@ -247,6 +261,7 @@ function buildLaneEntity(
         osiLane.classification.type,
         options,
       ),
+      centerlineTrianglePrimitive,
     ],
     metadata: [
       {
