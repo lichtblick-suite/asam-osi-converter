@@ -75,13 +75,20 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Color, Colo
 };
 
 export const LANE_BOUNDARY_MIN_RENDERING_WIDTH = 0.02; // minimum width for visualization of the lane boundary line even if width is set to 0
+export const LANE_BOUNDARY_ARROWS = true; // visualize arrows indicating the definition direction of boundary lines
+export const LANE_BOUNDARY_ARROWS_LENGTH = 0.3;
+export const LANE_BOUNDARY_ARROWS_WIDTH = 0.2;
 
 export const LANE_VISUALIZATION_WIDTH = 0.75; // width of the gradient surface area pointing from the boundary line to the side of the lane
 
 export const LANE_COLOR_HIGHLIGHT = { r: 1, g: 0.6, b: 0, a: 0.5 }; // used for is_host_vehicle_lane flag
 
-export const LANE_CENTERLINE_COLOR = { r: 1, g: 1, b: 0, a: 1 };
+export const LANE_CENTERLINE_SHOW = true;
+export const LANE_CENTERLINE_COLOR = { r: 0.75, g: 0.75, b: 0, a: 1 };
 export const LANE_CENTERLINE_WIDTH = 0.02;
+export const LANE_CENTERLINE_ARROWS = true; // visualize arrows indicating the driving direction of a lane on the centerline
+export const LANE_CENTERLINE_ARROWS_LENGTH = 0.3;
+export const LANE_CENTERLINE_ARROWS_WIDTH = 0.2;
 
 export const LANE_TYPE: Record<Lane_Classification_Type, Color> = {
   [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),

@@ -20,6 +20,8 @@ import {
   LANE_TYPE,
   LANE_COLOR_HIGHLIGHT,
   LANE_VISUALIZATION_WIDTH,
+  LANE_BOUNDARY_ARROWS_LENGTH,
+  LANE_BOUNDARY_ARROWS_WIDTH,
 } from "../../src/config";
 
 export interface ArrowProperties {
@@ -30,7 +32,7 @@ export interface ArrowProperties {
   color: Color;
 }
 
-export interface LaneBoundaryPoint {
+export interface MarkerPoint {
   position: Point3;
   width: number;
   height: number;
@@ -38,19 +40,21 @@ export interface LaneBoundaryPoint {
 }
 
 /**
- * Converts a list of lane boundary points into a triangle list primitive.
- * This function generates a 3D representation of lane boundaries, optionally with dashed lines.
+ * Converts a point list with width/height/dash parameters into a triangle list primitive.
+ * This function generates a 3D representation of lines, optionally with dashes and (inverted) arrows.
  *
  * @param points - An array of LaneBoundaryPoint objects representing the points of the lane boundary.
  * @param color - The color to be used for the lane boundary.
  * @param options - An object containing options for the conversion.
  * @param options.dashed - A boolean indicating whether the lane boundary should be dashed.
+ * @param options.arrows - A boolean indicating whether arrows should be added to indicate the direction of the line.
+ * @param options.invertArrows - A boolean indicating whether the arrows should be pointing in the opposite position from point definition direction.
  * @returns A TriangleListPrimitive object representing the 3D lane boundary.
  */
-export function boundaryPointsToTriangleListPrimitive(
-  points: LaneBoundaryPoint[],
+export function pointListToTriangleListPrimitive(
+  points: MarkerPoint[],
   color: Color,
-  { dashed }: { dashed: boolean },
+  { dashed, arrows, invertArrows }: { dashed: boolean; arrows: boolean; invertArrows: boolean },
 ): TriangleListPrimitive {
   const vertices: Point3[] = [];
   const colors: Color[] = [];
@@ -181,6 +185,23 @@ export function boundaryPointsToTriangleListPrimitive(
       z: p2.z + h2,
     };
 
+    // Add arrow for each boundary point to indicate the direction of the line
+    if (arrows) {
+      let yaw = Math.atan2(dy, dx);
+      if (invertArrows) {
+        yaw = yaw + Math.PI;
+      }
+      appendArrowVerticesAndColors(
+        vertices,
+        colors,
+        color,
+        p1,
+        yaw,
+        LANE_BOUNDARY_ARROWS_LENGTH,
+        LANE_BOUNDARY_ARROWS_WIDTH,
+      );
+    }
+
     // Add left/right/top surfaces and corresponding colors only if extruded
     if (h1 > 0 && h2 > 0) {
       // Left surface
@@ -257,12 +278,57 @@ export function boundaryPointsToTriangleListPrimitive(
 }
 
 /**
+ * Creates vertices (and color objects) for a simple triangle arrow pointing in the direction of the yaw angle at the given position and appends it to the vertices/colors parameter.
+ *
+ * @param vertices - The list of vertices to which the arrow vertices are added.
+ * @param colors - The list of colors to which the arrow colors are added.
+ * @param color - The color of the arrow.
+ * @param position - The position that the arrow points at.
+ * @param yaw - The yaw angle of the arrow.
+ * @param arrowheadLength - The length of the arrowhead.
+ * @param arrowheadWidth - The width of the arrowhead.
+ * @returns No return value; the arrow vertices and colors are added to the given lists (vertices, colors).
+ */
+function appendArrowVerticesAndColors(
+  vertices: Point3[],
+  colors: Color[],
+  color: Color,
+  position: Point3,
+  yaw: number,
+  arrowheadLength = 0.3,
+  arrowheadWidth = 0.2,
+) {
+  // Calculate the direction vector based on the yaw angle
+  // Note: Does not yet consider pitch or roll, meaning the arrow will always be perpendicular to the xy-plane.
+  const directionX = Math.cos(yaw);
+  const directionY = Math.sin(yaw);
+
+  const base: Point3 = { x: position.x, y: position.y, z: position.z };
+
+  const leftHead: Point3 = {
+    x: base.x - arrowheadLength * directionX - arrowheadWidth * directionY,
+    y: base.y - arrowheadLength * directionY + arrowheadWidth * directionX,
+    z: position.z,
+  };
+  const rightHead: Point3 = {
+    x: base.x - arrowheadLength * directionX + arrowheadWidth * directionY,
+    y: base.y - arrowheadLength * directionY - arrowheadWidth * directionX,
+    z: position.z,
+  };
+
+  vertices.push(base, leftHead, rightHead);
+  for (let j = 0; j < 3; j++) {
+    colors.push(color);
+  }
+}
+
+/**
  * Compares two lists of LaneBoundaryPoints based on their proximity of start and end points.
  * The function is used to sort lane boundaries.
  *
  * @returns Negative value if the first argument is less than the second argument, zero if they're equal, and a positive value otherwise.
  */
-const compareStartToEnd = (a: LaneBoundaryPoint[], b: LaneBoundaryPoint[]) => {
+const compareStartToEnd = (a: MarkerPoint[], b: MarkerPoint[]) => {
   if (a.length === 0 || b.length === 0) {
     return 0; // return 0 to indicate that a and b are equal and don't have to be reordered
   }
@@ -308,7 +374,7 @@ function subtract(a: number, b: number): number {
  * @returns An array of Point3 objects representing the offset boundary line.
  */
 function createOffsetLine(
-  originalBoundaryLine: LaneBoundaryPoint[],
+  originalBoundaryLine: MarkerPoint[],
   operation: (a: number, b: number) => number,
   offset?: number,
 ): Point3[] {
@@ -351,8 +417,8 @@ function createOffsetLine(
 }
 
 export function laneToTriangleListPrimitive(
-  leftLaneBoundaries: LaneBoundaryPoint[][],
-  rightLaneBoundaries: LaneBoundaryPoint[][],
+  leftLaneBoundaries: MarkerPoint[][],
+  rightLaneBoundaries: MarkerPoint[][],
   type: Lane_Classification_Type,
   { highlighted }: { highlighted: boolean },
 ): TriangleListPrimitive {
@@ -373,11 +439,11 @@ export function laneToTriangleListPrimitive(
     rightLaneBoundaries.sort(compareStartToEnd);
 
     // Merge multiple right/left boundaries into one left and one right boundary
-    let mergedLeftBoundaries: LaneBoundaryPoint[] = [];
+    let mergedLeftBoundaries: MarkerPoint[] = [];
     for (const boundary of leftLaneBoundaries) {
       mergedLeftBoundaries.push(...boundary);
     }
-    let mergedRightBoundaries: LaneBoundaryPoint[] = [];
+    let mergedRightBoundaries: MarkerPoint[] = [];
     for (const boundary of rightLaneBoundaries) {
       mergedRightBoundaries.push(...boundary);
     }

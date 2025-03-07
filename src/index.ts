@@ -1,6 +1,7 @@
 import {
   LineType,
   SceneUpdate,
+  TriangleListPrimitive,
   type Color,
   type FrameTransform,
   type FrameTransforms,
@@ -38,9 +39,9 @@ import { eulerToQuaternion } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
   objectToCubePrimitive,
-  boundaryPointsToTriangleListPrimitive,
+  pointListToTriangleListPrimitive,
   laneToTriangleListPrimitive,
-  LaneBoundaryPoint,
+  MarkerPoint,
 } from "@utils/marker";
 import { PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
@@ -58,6 +59,9 @@ import {
   LANE_BOUNDARY_MIN_RENDERING_WIDTH,
   LANE_CENTERLINE_COLOR,
   LANE_CENTERLINE_WIDTH,
+  LANE_CENTERLINE_ARROWS,
+  LANE_BOUNDARY_ARROWS,
+  LANE_CENTERLINE_SHOW,
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
@@ -179,6 +183,8 @@ function buildLaneBoundaryEntity(
   // Set option for dashed lines
   const options = {
     dashed: osiLaneBoundary.classification.type === LaneBoundary_Classification_Type.DASHED_LINE,
+    arrows: LANE_BOUNDARY_ARROWS,
+    invertArrows: false,
   };
 
   return {
@@ -187,7 +193,7 @@ function buildLaneBoundaryEntity(
     id: "lane_boundary_" + osiLaneBoundary.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    triangles: [boundaryPointsToTriangleListPrimitive(laneBoundaryPoints, color, options)],
+    triangles: [pointListToTriangleListPrimitive(laneBoundaryPoints, color, options)],
     metadata: buildLaneBoundaryMetadata(osiLaneBoundary),
   };
 }
@@ -199,7 +205,7 @@ function buildLaneEntity(
   osiLeftLaneBoundaries: DeepRequired<LaneBoundary>[],
   osiRightLaneBoundaries: DeepRequired<LaneBoundary>[],
 ): PartialSceneEntity {
-  const leftLaneBoundaries: LaneBoundaryPoint[][] = [];
+  const leftLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiLeftLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
       return {
@@ -211,7 +217,7 @@ function buildLaneEntity(
     });
     leftLaneBoundaries.push(laneBoundaryPoints);
   }
-  const rightLaneBoundaries: LaneBoundaryPoint[][] = [];
+  const rightLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiRightLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
       return {
@@ -223,18 +229,27 @@ function buildLaneEntity(
     });
     rightLaneBoundaries.push(laneBoundaryPoints);
   }
-  const centerlinePoints = osiLane.classification.centerline.map((point) => {
-    return {
-      position: { x: point.x, y: point.y, z: point.z } as Point3,
-      width: LANE_CENTERLINE_WIDTH,
-      height: 0,
-    };
-  });
-  const centerlineTrianglePrimitive = boundaryPointsToTriangleListPrimitive(
-    centerlinePoints,
-    LANE_CENTERLINE_COLOR,
-    { dashed: false },
-  );
+
+  let centerlineTrianglePrimitive: TriangleListPrimitive | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (LANE_CENTERLINE_SHOW) {
+    const centerlinePoints = osiLane.classification.centerline.map((point) => {
+      return {
+        position: { x: point.x, y: point.y, z: point.z } as Point3,
+        width: LANE_CENTERLINE_WIDTH,
+        height: 0,
+      };
+    });
+    centerlineTrianglePrimitive = pointListToTriangleListPrimitive(
+      centerlinePoints,
+      LANE_CENTERLINE_COLOR,
+      {
+        dashed: false,
+        arrows: LANE_CENTERLINE_ARROWS,
+        invertArrows: !osiLane.classification.centerline_is_driving_direction,
+      },
+    );
+  }
   const options = {
     highlighted: osiLane.classification.is_host_vehicle_lane,
   };
