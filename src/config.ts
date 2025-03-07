@@ -1,14 +1,16 @@
 import { Color } from "@foxglove/schemas";
-import { ColorCode, ColorCodeName } from "@utils/helper";
 import {
   LaneBoundary_Classification_Type,
+  LaneBoundary_Classification_Color,
   MovingObject_Type,
   StationaryObject_Classification_Color,
   StationaryObject_Classification_Density,
   StationaryObject_Classification_Material,
   StationaryObject_Classification_Type,
   TrafficLight_Classification_Color,
+  Lane_Classification_Type,
 } from "@lichtblick/asam-osi-types";
+import { ColorCode, ColorCodeName } from "@utils/helper";
 
 //// COLOR CONFIG ////
 
@@ -21,7 +23,7 @@ export const MOVING_OBJECT_COLOR: Record<MovingObject_Type, Color> = {
   [MovingObject_Type.ANIMAL]: ColorCode("g", 0.5),
 };
 
-export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Type, Color> = {
+export const LANE_BOUNDARY_TYPE: Record<LaneBoundary_Classification_Type, Color> = {
   [LaneBoundary_Classification_Type.BARRIER]: ColorCode("gray", 0.5),
   [LaneBoundary_Classification_Type.BOTTS_DOTS]: ColorCode("y", 0.5),
   [LaneBoundary_Classification_Type.CURB]: ColorCode("c", 0.5),
@@ -38,6 +40,62 @@ export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Type, Color
   [LaneBoundary_Classification_Type.SOUND_BARRIER]: ColorCode("gray", 0.5),
   [LaneBoundary_Classification_Type.STRUCTURE]: ColorCode("c", 0.5),
   [LaneBoundary_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
+};
+
+export const LANE_BOUNDARY_OPACITY: Record<LaneBoundary_Classification_Type, number> = {
+  [LaneBoundary_Classification_Type.BARRIER]: 1,
+  [LaneBoundary_Classification_Type.BOTTS_DOTS]: 1,
+  [LaneBoundary_Classification_Type.CURB]: 1,
+  [LaneBoundary_Classification_Type.DASHED_LINE]: 1,
+  [LaneBoundary_Classification_Type.GRASS_EDGE]: 1,
+  [LaneBoundary_Classification_Type.GRAVEL_EDGE]: 1,
+  [LaneBoundary_Classification_Type.GUARD_RAIL]: 1,
+  [LaneBoundary_Classification_Type.NO_LINE]: 0.1,
+  [LaneBoundary_Classification_Type.OTHER]: 1,
+  [LaneBoundary_Classification_Type.ROAD_EDGE]: 1,
+  [LaneBoundary_Classification_Type.SNOW_EDGE]: 1,
+  [LaneBoundary_Classification_Type.SOIL_EDGE]: 1,
+  [LaneBoundary_Classification_Type.SOLID_LINE]: 1,
+  [LaneBoundary_Classification_Type.SOUND_BARRIER]: 1,
+  [LaneBoundary_Classification_Type.STRUCTURE]: 1,
+  [LaneBoundary_Classification_Type.UNKNOWN]: 1,
+};
+
+export const LANE_BOUNDARY_COLOR: Record<LaneBoundary_Classification_Color, Color> = {
+  [LaneBoundary_Classification_Color.BLUE]: ColorCode("b"),
+  [LaneBoundary_Classification_Color.GREEN]: ColorCode("g"),
+  [LaneBoundary_Classification_Color.RED]: ColorCode("r"),
+  [LaneBoundary_Classification_Color.YELLOW]: ColorCode("y"),
+  [LaneBoundary_Classification_Color.ORANGE]: ColorCode("orange"),
+  [LaneBoundary_Classification_Color.WHITE]: ColorCode("w"),
+  [LaneBoundary_Classification_Color.UNKNOWN]: ColorCode("gray"),
+  [LaneBoundary_Classification_Color.NONE]: ColorCode("black"),
+  [LaneBoundary_Classification_Color.OTHER]: ColorCode("gray"),
+  [LaneBoundary_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
+};
+
+export const LANE_BOUNDARY_MIN_RENDERING_WIDTH = 0.02; // minimum width for visualization of the lane boundary line even if width is set to 0
+export const LANE_BOUNDARY_ARROWS = true; // visualize arrows indicating the definition direction of boundary lines
+export const LANE_BOUNDARY_ARROWS_LENGTH = 0.3;
+export const LANE_BOUNDARY_ARROWS_WIDTH = 0.2;
+
+export const LANE_VISUALIZATION_WIDTH = 0.75; // width of the gradient surface area pointing from the boundary line to the side of the lane
+
+export const LANE_COLOR_HIGHLIGHT = { r: 1, g: 0.6, b: 0, a: 0.5 }; // used for is_host_vehicle_lane flag
+
+export const LANE_CENTERLINE_SHOW = true;
+export const LANE_CENTERLINE_COLOR = { r: 0.75, g: 0.75, b: 0, a: 1 };
+export const LANE_CENTERLINE_WIDTH = 0.02;
+export const LANE_CENTERLINE_ARROWS = true; // visualize arrows indicating the driving direction of a lane on the centerline
+export const LANE_CENTERLINE_ARROWS_LENGTH = 0.3;
+export const LANE_CENTERLINE_ARROWS_WIDTH = 0.2;
+
+export const LANE_TYPE: Record<Lane_Classification_Type, Color> = {
+  [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
+  [Lane_Classification_Type.OTHER]: ColorCode("c", 0.5),
+  [Lane_Classification_Type.DRIVING]: { r: 0, g: 1, b: 1, a: 0.4 },
+  [Lane_Classification_Type.INTERSECTION]: ColorCode("r", 0.2),
+  [Lane_Classification_Type.NONDRIVING]: { r: 1, g: 111 / 255, b: 91 / 255, a: 0.4 },
 };
 
 export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, ColorCodeName> = {
