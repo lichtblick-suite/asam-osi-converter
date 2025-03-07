@@ -5,7 +5,7 @@
 
 # root directory and default handling (repository maintainer). Subsequent definitions will overwrite a previous definition.
 # Create an issue if you are interested in becoming a maintainer.
-/* @jdsika @rmessaou
+/* @jdsika @thomassedlmayer
 
 # examples directory
-#/examples @user_1 @user_2
+# /examples @user_1 @user_2
