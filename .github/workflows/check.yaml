@@ -46,25 +46,3 @@ jobs:
 
       - name: Build Project
         run: yarn run build
-
-      - name: Download ScanCode Toolkit
-        run: |
-          curl -L -o scancode-toolkit.tar.gz https://github.com/aboutcode-org/scancode-toolkit/releases/download/v32.3.0/scancode-toolkit-v32.3.0_py3.12-linux.tar.gz
-          mkdir -p scancode-toolkit
-          tar -xzf scancode-toolkit.tar.gz -C scancode-toolkit --strip-components=1
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.12
-
-      - name: Run ScanCode
-        run: |
-          cd scancode-toolkit
-          ./scancode --json-pp ../scancode-result.json ../
-
-      - name: Upload ScanCode Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: scancode-results
-          path: scancode-result.json
