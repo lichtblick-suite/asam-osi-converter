@@ -65,7 +65,6 @@ import {
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
-import { SceneEntity as SceneEntityProto } from "../foxglove/SceneEntity";
 
 const ROOT_FRAME = "<root>";
 
@@ -807,9 +806,7 @@ export function activate(extensionContext: ExtensionContext): void {
       return value;
     };
 
-    const logObject = { sceneEntities };
-
-    body = JSON.stringify(logObject, customReplacer);
+    const body = JSON.stringify({ sceneEntities }, customReplacer);
 
     /* console.log("Example SceneEntity:", exampleSceneEntity); */
 
