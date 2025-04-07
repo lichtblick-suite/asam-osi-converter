@@ -1,5 +1,6 @@
 import {
   LineType,
+  SceneEntityDeletionType,
   SceneUpdate,
   TriangleListPrimitive,
   type Color,
@@ -71,7 +72,6 @@ const ROOT_FRAME = "<root>";
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
   color: Color,
-  id_prefix: string,
   frame_id: string,
   time: Time,
   metadata?: KeyValuePair[],
@@ -92,7 +92,7 @@ function buildObjectEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + osiObject.id.value.toString(),
+    id: osiObject.id.value.toString(),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
@@ -457,16 +457,15 @@ function buildSceneEntities(
       let entity;
       if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
         const metadata = buildVehicleMetadata(obj.vehicle_classification);
-        entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, "", ROOT_FRAME, time, metadata);
+        entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, ROOT_FRAME, time, metadata);
       } else {
-        const objectType = MovingObject_Type[obj.type];
+        //const objectType = MovingObject_Type[obj.type];
         const objectColor = MOVING_OBJECT_COLOR[obj.type];
-        const prefix = `moving_object_${objectType}_`;
         const metadata =
           obj.type === MovingObject_Type.VEHICLE
             ? buildVehicleMetadata(obj.vehicle_classification)
             : [];
-        entity = buildObjectEntity(obj, objectColor, prefix, ROOT_FRAME, time, metadata);
+        entity = buildObjectEntity(obj, objectColor, ROOT_FRAME, time, metadata);
       }
       return entity;
     });
@@ -478,7 +477,7 @@ function buildSceneEntities(
     stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
       const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
       const metadata = buildStationaryMetadata(obj);
-      return buildObjectEntity(obj, objectColor, "stationary_object_", ROOT_FRAME, time, metadata);
+      return buildObjectEntity(obj, objectColor, ROOT_FRAME, time, metadata);
     });
   }
 
@@ -686,6 +685,8 @@ export function activate(extensionContext: ExtensionContext): void {
   const laneBoundaryCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
   const laneCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
 
+  let previousFrameIds: number[] = []; // Array to store ids of moving objects (or other objects) across frames
+
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
   ): DeepPartial<SceneUpdate> => {
@@ -699,10 +700,23 @@ export function activate(extensionContext: ExtensionContext): void {
       lanes: true,
     };
 
+    const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
+
+    // Check for disappearing objects as compared to previous frame and delete them
+    // Note: This currently only checks moving objects; OSI ids are unique across object types, so this could be extended to other object types.
+    const currentIds = osiGroundTruthReq.moving_object.map((obj) => obj.id.value);
+    const deletedIds = previousFrameIds.filter((id) => !currentIds.includes(id));
+    previousFrameIds = currentIds; // store current ids for next frame
+    const deletions = deletedIds.map((id) => ({
+      id: id.toString(),
+      timestamp: osiTimestampToTime(osiGroundTruthReq.timestamp),
+      type: SceneEntityDeletionType.MATCHING_ID,
+    }));
+
     // Use cached scene entities if that exact OSI ground truth frame is cached
     if (groundTruthFrameCache.has(osiGroundTruth)) {
       return {
-        deletions: [],
+        deletions,
         entities: groundTruthFrameCache.get(osiGroundTruth),
       };
     }
@@ -710,16 +724,14 @@ export function activate(extensionContext: ExtensionContext): void {
     // Build scene entities from OSI ground truth or re-use partially cached entities
     try {
       // Check if lane boundary hash has changed
-      const laneBoundaryHash = hashLaneBoundaries(
-        osiGroundTruth.lane_boundary as DeepRequired<LaneBoundary[]>,
-      );
+      const laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
       if (laneBoundaryCache.has(laneBoundaryHash)) {
         sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
         updateFlags = { ...updateFlags, laneBoundaries: false };
       }
 
       // Check if lane hash has changed
-      const laneHash = hashLanes(osiGroundTruth.lane as DeepRequired<Lane[]>);
+      const laneHash = hashLanes(osiGroundTruthReq.lane);
       if (laneCache.has(laneHash)) {
         sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
         updateFlags = { ...updateFlags, lanes: false };
@@ -733,7 +745,7 @@ export function activate(extensionContext: ExtensionContext): void {
         trafficLights,
         laneBoundaries,
         lanes,
-      } = buildSceneEntities(osiGroundTruth as DeepRequired<GroundTruth>, updateFlags);
+      } = buildSceneEntities(osiGroundTruthReq, updateFlags);
 
       // Concatenate newly generated and cached scene entities
       sceneEntities = [
@@ -768,7 +780,7 @@ export function activate(extensionContext: ExtensionContext): void {
     }
 
     return {
-      deletions: [],
+      deletions,
       entities: sceneEntities,
     };
   };
