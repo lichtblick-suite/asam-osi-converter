@@ -18,12 +18,7 @@ import {
 import { ExtensionContext } from "@lichtblick/suite";
 import { DeepRequired } from "ts-essentials";
 
-import {
-  activate,
-  buildLaneBoundaryMetadata,
-  buildVehicleMetadata,
-  determineTheNeedToRerender,
-} from "../index";
+import { activate, buildLaneBoundaryMetadata, buildVehicleMetadata } from "../index";
 
 jest.mock(
   "../trafficsigns",
@@ -263,28 +258,5 @@ describe("OSI Visualizer: Lane Boundaries", () => {
         }),
       ]),
     );
-  });
-});
-
-describe("OsiGroundTruthVisualizer: Static Objects Render Cache", () => {
-  it("determines if the last render time is greater then the current render time", () => {
-    const pastNsec = { sec: 0, nsec: 980000000 };
-    const futureNsec = { sec: 0, nsec: 990000000 };
-    const futureSec = { sec: 1, nsec: 0 };
-    expect(
-      determineTheNeedToRerender(futureNsec, pastNsec), // SHOULD rerender when the current render time is in the past relative to the last render time
-    ).toBe(true);
-    expect(
-      determineTheNeedToRerender(pastNsec, futureNsec), // SHOULD NOT rerender when the current render time is in the future (by less than 10000000 nanoseconds) relative to the last render time
-    ).toBe(false);
-    expect(
-      determineTheNeedToRerender(futureNsec, futureNsec), // SHOULD NOT rerender when the current render time is the same as the last render time
-    ).toBe(false);
-    expect(
-      determineTheNeedToRerender(futureNsec, futureSec), // SHOULD NOT rerender when the current render time is in the future (the next second but less than 10000000 nanoseconds) relative to the last render time
-    ).toBe(false);
-    expect(
-      determineTheNeedToRerender(pastNsec, futureSec), // SHOULD rerender when the current render time is in the future (by more than 10000000 nanoseconds) relative to the last render time
-    ).toBe(true);
   });
 });
