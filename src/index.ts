@@ -455,16 +455,23 @@ function buildSceneEntities(
   if (updateFlags.movingObjects) {
     movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
       let entity;
+      let metadata = [
+        {
+          key: "moving_object_type",
+          value: MovingObject_Type[obj.type],
+        },
+      ];
       if (obj.id.value === osiGroundTruth.host_vehicle_id?.value) {
-        const metadata = buildVehicleMetadata(obj.vehicle_classification);
+        metadata = [...metadata, ...buildVehicleMetadata(obj.vehicle_classification)];
         entity = buildObjectEntity(obj, HOST_OBJECT_COLOR, ROOT_FRAME, time, metadata);
       } else {
         //const objectType = MovingObject_Type[obj.type];
         const objectColor = MOVING_OBJECT_COLOR[obj.type];
-        const metadata =
+        const vehicleMetadata =
           obj.type === MovingObject_Type.VEHICLE
             ? buildVehicleMetadata(obj.vehicle_classification)
             : [];
+        metadata = [...metadata, ...vehicleMetadata];
         entity = buildObjectEntity(obj, objectColor, ROOT_FRAME, time, metadata);
       }
       return entity;
