@@ -1,33 +1,46 @@
 from flask import Flask, request
-from datetime import datetime
+import logging
 import os
-import atexit
+import json
+from datetime import datetime
 
 app = Flask(__name__)
 
 log_dir = "logs"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_path = os.path.join(log_dir, f"log_{timestamp}.json")
+log_path = os.path.join(log_dir, f"log_{timestamp}.jsonl")
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-file = open(log_path, "ab")
-if os.path.getsize(log_path) == 0:
-    file.write(b'{"logs": [\n')
+logger = logging.getLogger("asam-osi-converter-logger")
+logger.setLevel(logging.INFO)
 
-def close_file():
-    file.seek(-2, os.SEEK_END)
-    file.truncate()
-    file.write(b"\n]}")
-    file.close()
+file_handler = logging.FileHandler(log_path)
+file_handler.setLevel(logging.INFO)
 
-atexit.register(close_file)
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        try:
+            message = json.loads(record.getMessage())
+        except json.JSONDecodeError:
+            message = record.getMessage()
+        
+        log_entry = {
+            "time": self.formatTime(record, self.datefmt),
+            "message": message,
+        }
+        return json.dumps(log_entry)
+
+formatter = JSONFormatter()
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 @app.route("/", methods=["POST"])
 def receive_data():
-    file.write(b"\t" + request.data + b",\n")
-    return "Data received and written to file", 200
+    data = request.data.decode("utf-8")
+    logger.info(data)
+    return "Data received and logged", 200
 
 if __name__ == "__main__":
     app.run(debug=True)

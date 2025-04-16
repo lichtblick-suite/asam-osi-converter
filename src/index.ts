@@ -771,34 +771,6 @@ export function activate(extensionContext: ExtensionContext): void {
       );
     }
 
-    /* let stacktrace = "";
-    try {
-      throw new Error("Error in try block");
-    } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      stacktrace = (error as Error).stack!;
-    } */
-
-    /* log scene */
-    /* const date = new Date();
-    date.setTime(Date.now());
-    const exampleSceneEntity: SceneEntityProto = {
-      timestamp: date,
-      frameId: "example_frame",
-      id: "example_entity",
-      lifetime: { seconds: 10, nanos: 0 },
-      frameLocked: false,
-      cubes: [],
-      lines: [],
-      models: [],
-      texts: [],
-      metadata: [],
-      arrows: [],
-      spheres: [],
-      cylinders: [],
-      triangles: [],
-    }; */
-
     const customReplacer = (_: string, value: unknown): unknown => {
       if (typeof value === "bigint") {
         return value.toString(); // Convert BigInt to string (or you can return any custom format)
@@ -808,18 +780,13 @@ export function activate(extensionContext: ExtensionContext): void {
 
     const body = JSON.stringify({ sceneEntities }, customReplacer);
 
-    /* console.log("Example SceneEntity:", exampleSceneEntity); */
-
-    /* body = SceneEntityProto.encode(exampleSceneEntity).finish(); */
-    /* const sec = osiGroundTruth.timestamp?.seconds;
-    const nanos = osiGroundTruth.timestamp?.nanos; */
+    //console.log(sceneEntities);
 
     fetch("http://127.0.0.1:5000", {
       method: "POST",
       headers: {
         "Content-Type": "application/octet-stream",
       },
-      /* body: sec?.toString() + " " + nanos?.toString() + " " + body, */
       body,
     })
       .then(async (response) => {
