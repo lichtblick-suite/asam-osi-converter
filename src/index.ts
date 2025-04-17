@@ -407,22 +407,6 @@ function osiTimestampToTime(time: DeepRequired<Timestamp>): Time {
   };
 }
 
-const staticObjectsRenderCache: {
-  lastRenderTime: Time | undefined;
-  lastRenderedObjects: Set<number>;
-} = {
-  lastRenderTime: undefined,
-  lastRenderedObjects: new Set<number>(),
-};
-
-export function determineTheNeedToRerender(lastRenderTime: Time, currentRenderTime: Time): boolean {
-  const diff =
-    Number(currentRenderTime.sec) * 1000000000 +
-    currentRenderTime.nsec -
-    (Number(lastRenderTime.sec) * 1000000000 + lastRenderTime.nsec);
-  return !(diff >= 0 && diff <= 10000000);
-}
-
 interface OSISceneEntities {
   movingObjects: PartialSceneEntity[];
   stationaryObjects: PartialSceneEntity[];
@@ -455,9 +439,6 @@ function buildSceneEntities(
   updateFlags: OSISceneEntitesUpdate,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
-  const needtoRerender =
-    staticObjectsRenderCache.lastRenderTime != undefined &&
-    determineTheNeedToRerender(staticObjectsRenderCache.lastRenderTime, time);
 
   // Moving objects
   let movingObjectSceneEntities: PartialSceneEntity[] = [];
@@ -519,20 +500,9 @@ function buildSceneEntities(
   }
 
   // Traffic Sign objects
-  let filteredTrafficSigns: DeepRequired<TrafficSign>[];
-  if (needtoRerender) {
-    staticObjectsRenderCache.lastRenderedObjects.clear();
-    filteredTrafficSigns = osiGroundTruth.traffic_sign;
-  } else {
-    filteredTrafficSigns = osiGroundTruth.traffic_sign.filter((obj) => {
-      return !staticObjectsRenderCache.lastRenderedObjects.has(obj.id.value);
-    });
-  }
-  const trafficsignObjectSceneEntities = filteredTrafficSigns.map((obj) => {
-    staticObjectsRenderCache.lastRenderedObjects.add(obj.id.value);
+  const trafficsignObjectSceneEntities = osiGroundTruth.traffic_sign.map((obj) => {
     return buildTrafficSignEntity(obj, PREFIX_TRAFFIC_SIGN, ROOT_FRAME, time);
   });
-  staticObjectsRenderCache.lastRenderTime = time;
 
   // Traffic Light objects
   let trafficlightObjectSceneEntities: PartialSceneEntity[] = [];
