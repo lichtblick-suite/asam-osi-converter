@@ -70,12 +70,28 @@ import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 const ROOT_FRAME = "<root>";
 
 // Object-specific prefixes for scene entity ids
-const PREFIX_MOVING_OBJECT = "moving_object_";
-const PREFIX_STATIONARY_OBJECT = "stationary_object_";
-const PREFIX_LANE_BOUNDARY = "lane_boundary_";
-const PREFIX_LANE = "lane_";
-const PREFIX_TRAFFIC_SIGN = "traffic_sign_";
-const PREFIX_TRAFFIC_LIGHT = "traffic_light_";
+const PREFIX_MOVING_OBJECT = "moving_object";
+const PREFIX_STATIONARY_OBJECT = "stationary_object";
+const PREFIX_LANE_BOUNDARY = "lane_boundary";
+const PREFIX_LANE = "lane";
+const PREFIX_TRAFFIC_SIGN = "traffic_sign";
+const PREFIX_TRAFFIC_LIGHT = "traffic_light";
+
+/**
+ * Generates a unique scene entity ID by combining a predefined object-type-specific prefix
+ * with the given numeric ID.
+ *
+ * This function, together with the predefined object-type-specific prefixes,
+ * must be used when creating scene entity IDs to ensure consistency and uniqueness
+ * across different entity types.
+ *
+ * @param prefix - The object-type-specific prefix to prepend to the ID.
+ * @param id - The numeric ID of the entity.
+ * @returns A string representing the unique scene entity ID.
+ */
+function generateSceneEntityId(prefix: string, id: number): string {
+  return `${prefix}_${id.toString()}`;
+}
 
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
@@ -101,7 +117,7 @@ function buildObjectEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + osiObject.id.value.toString(),
+    id: generateSceneEntityId(id_prefix, osiObject.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
@@ -129,7 +145,7 @@ function buildTrafficSignEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value.toString(),
+    id: generateSceneEntityId(id_prefix, obj.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -152,7 +168,7 @@ function buildTrafficLightEntity(
   return {
     timestamp: time,
     frame_id,
-    id: id_prefix + obj.id.value.toString(),
+    id: generateSceneEntityId(id_prefix, obj.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
@@ -199,7 +215,7 @@ function buildLaneBoundaryEntity(
   return {
     timestamp: time,
     frame_id,
-    id: PREFIX_LANE_BOUNDARY + osiLaneBoundary.id.value.toString(),
+    id: generateSceneEntityId(PREFIX_LANE_BOUNDARY, osiLaneBoundary.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     triangles: [pointListToTriangleListPrimitive(laneBoundaryPoints, color, options)],
@@ -275,7 +291,7 @@ function buildLaneEntity(
   return {
     timestamp: time,
     frame_id,
-    id: PREFIX_LANE + osiLane.id.value.toString(),
+    id: generateSceneEntityId(PREFIX_LANE, osiLane.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     triangles: [
@@ -710,7 +726,7 @@ function getDeletedEntities<T extends { id: { value: number } }>(
   previousFrameIds.clear();
   currentIds.forEach((id) => previousFrameIds.add(id));
   return deletedIds.map((id) => ({
-    id: `${entityPrefix}${id.toString()}`,
+    id: generateSceneEntityId(entityPrefix, id),
     timestamp,
     type: SceneEntityDeletionType.MATCHING_ID,
   }));
