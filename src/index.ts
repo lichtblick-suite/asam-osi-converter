@@ -35,7 +35,7 @@ import {
   Lane_Classification_Type,
   Lane_Classification_Subtype,
 } from "@lichtblick/asam-osi-types";
-import { ExtensionContext } from "@lichtblick/suite";
+import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import { eulerToQuaternion } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
@@ -735,7 +735,7 @@ function getDeletedEntities<T extends { id: { value: number } }>(
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
-  const groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
+  let groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
   const laneBoundaryCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
   const laneCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
 
@@ -746,10 +746,12 @@ export function activate(extensionContext: ExtensionContext): void {
     previousLaneIds: new Set<number>(),
     previousTrafficSignIds: new Set<number>(),
     previousTrafficLightIds: new Set<number>(),
+    previousConfig: {} as Config | undefined,
   };
 
   const convertGrountTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
+    event: Immutable<MessageEvent<GroundTruth>>,
   ): DeepPartial<SceneUpdate> => {
     let sceneEntities: PartialSceneEntity[] = [];
     let updateFlags: OSISceneEntitesUpdate = {
@@ -760,6 +762,16 @@ export function activate(extensionContext: ExtensionContext): void {
       laneBoundaries: true,
       lanes: true,
     };
+
+    const config = event.topicConfig as Config | undefined;
+    if (config && config !== state.previousConfig) {
+      // Reset caches if configuration changed
+      laneBoundaryCache.clear();
+      laneCache.clear();
+      groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>();
+    }
+    state.previousConfig = config;
+    const caching = config?.caching;
 
     const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
     const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
@@ -821,18 +833,25 @@ export function activate(extensionContext: ExtensionContext): void {
 
     // Build scene entities from OSI ground truth or re-use partially cached entities
     try {
-      // Check if lane boundary hash has changed
-      const laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
-      if (laneBoundaryCache.has(laneBoundaryHash)) {
-        sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
-        updateFlags = { ...updateFlags, laneBoundaries: false };
-      }
+      let laneBoundaryHash: string | undefined;
+      let laneHash: string | undefined;
+      if (caching === true) {
+        // Check if lane boundary hash has changed
+        console.log("check cache");
+        laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
+        if (laneBoundaryCache.has(laneBoundaryHash)) {
+          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+          updateFlags = { ...updateFlags, laneBoundaries: false };
+        }
 
-      // Check if lane hash has changed
-      const laneHash = hashLanes(osiGroundTruthReq.lane);
-      if (laneCache.has(laneHash)) {
-        sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
-        updateFlags = { ...updateFlags, lanes: false };
+        // Check if lane hash has changed
+        laneHash = hashLanes(osiGroundTruthReq.lane);
+        if (laneCache.has(laneHash)) {
+          sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+          updateFlags = { ...updateFlags, lanes: false };
+        }
+      } else {
+        console.log("don't check cache");
       }
 
       // Build scene entities from OSI ground truth for update flags set to true
@@ -857,13 +876,15 @@ export function activate(extensionContext: ExtensionContext): void {
       ];
 
       // Store lane boundaries in cache
-      if (updateFlags.laneBoundaries) {
+      if (caching === true && updateFlags.laneBoundaries && laneBoundaryHash) {
+        console.log("clear cache lb");
         laneBoundaryCache.clear(); // keep only one lane boundary in cache
         laneBoundaryCache.set(laneBoundaryHash, laneBoundaries);
       }
 
       // Store lanes in cache
-      if (updateFlags.lanes) {
+      if (caching === true && updateFlags.lanes && laneHash) {
+        console.log("clear cache l");
         laneCache.clear(); // keep only one lane in cache
         laneCache.set(laneHash, lanes);
       }
@@ -951,6 +972,10 @@ export function activate(extensionContext: ExtensionContext): void {
     return transforms;
   };
 
+  const generatePanelSettings = <T>(obj: PanelSettings<T>) => obj as PanelSettings<unknown>;
+
+  type Config = { caching: boolean };
+
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.GroundTruth",
     toSchemaName: "foxglove.SceneUpdate",
@@ -960,8 +985,35 @@ export function activate(extensionContext: ExtensionContext): void {
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorView",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: (osiSensorView: SensorView) =>
-      convertGrountTruthToSceneUpdate(osiSensorView.global_ground_truth!),
+    converter: (osiSensorView: SensorView, event: Immutable<MessageEvent<SensorView>>) =>
+      convertGrountTruthToSceneUpdate(osiSensorView.global_ground_truth!, event),
+    panelSettings: {
+      "3D": generatePanelSettings({
+        settings: (config) => ({
+          fields: {
+            caching: {
+              label: "Caching",
+              input: "boolean",
+              value: config?.caching,
+              help: "Enables caching of lanes and lane boundaries.",
+            },
+          },
+        }),
+        handler: (action, config: Config | undefined) => {
+          console.log("action", action);
+          console.log("config", config);
+          if (config == undefined) {
+            return;
+          }
+          if (action.action === "update" && action.payload.path[2] === "caching") {
+            config.caching = action.payload.value as boolean;
+          }
+        },
+        defaultConfig: {
+          caching: true,
+        },
+      }),
+    },
   });
 
   extensionContext.registerMessageConverter({
