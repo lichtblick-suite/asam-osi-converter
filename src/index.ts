@@ -3,6 +3,7 @@ import {
   SceneEntityDeletionType,
   SceneUpdate,
   TriangleListPrimitive,
+  Vector3,
   type Color,
   type FrameTransform,
   type FrameTransforms,
@@ -36,7 +37,7 @@ import {
   Lane_Classification_Subtype,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
-import { eulerToQuaternion } from "@utils/geometry";
+import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
   objectToCubePrimitive,
@@ -93,12 +94,15 @@ function generateSceneEntityId(prefix: string, id: number): string {
   return `${prefix}_${id.toString()}`;
 }
 
+type Config = { caching: boolean; showAxes: boolean };
+
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
   color: Color,
   id_prefix: string,
   frame_id: string,
   time: Time,
+  config: Config | undefined,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
   const cube = objectToCubePrimitive(
@@ -114,6 +118,48 @@ function buildObjectEntity(
     color,
   );
 
+  const SHAFT_LENGTH = 0.154;
+  const SHAFT_DIAMETER = 0.02;
+  const HEAD_LENGTH = 0.046;
+  const HEAD_DIAMETER = 0.05;
+  const SCALE = 2.0;
+
+  function buildAxisArrow(axis_color: Color, orientation: Vector3 = { x: 0, y: 0, z: 0 }) {
+    const baseOrientation = eulerToQuaternion(
+      osiObject.base.orientation.roll,
+      osiObject.base.orientation.pitch,
+      osiObject.base.orientation.yaw,
+    );
+    const localAxisOrientation = eulerToQuaternion(orientation.x, orientation.y, orientation.z);
+    const globalAxisOrientation = quaternionMultiplication(baseOrientation, localAxisOrientation);
+    return {
+      pose: {
+        position: {
+          x: osiObject.base.position.x,
+          y: osiObject.base.position.y,
+          z: osiObject.base.position.z,
+        },
+        orientation: globalAxisOrientation,
+      },
+      shaft_length: SHAFT_LENGTH * SCALE,
+      shaft_diameter: SHAFT_DIAMETER * SCALE,
+      head_length: HEAD_LENGTH * SCALE,
+      head_diameter: HEAD_DIAMETER * SCALE,
+      color: axis_color,
+    };
+  }
+
+  function buildAxes() {
+    if (!(config?.showAxes ?? false)) {
+      return [];
+    }
+    return [
+      buildAxisArrow(ColorCode("r", 1), { x: 0, y: 0, z: 0 }),
+      buildAxisArrow(ColorCode("g", 1), { x: 0, y: 0, z: Math.PI / 2 }),
+      buildAxisArrow(ColorCode("b", 1), { x: 0, y: -Math.PI / 2, z: 0 }),
+    ];
+  }
+
   return {
     timestamp: time,
     frame_id,
@@ -121,6 +167,7 @@ function buildObjectEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
+    arrows: buildAxes(),
     metadata,
   };
 }
@@ -453,6 +500,7 @@ interface OSISceneEntitesUpdate {
 function buildSceneEntities(
   osiGroundTruth: DeepRequired<GroundTruth>,
   updateFlags: OSISceneEntitesUpdate,
+  config: Config | undefined,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
 
@@ -475,6 +523,7 @@ function buildSceneEntities(
           PREFIX_MOVING_OBJECT,
           ROOT_FRAME,
           time,
+          config,
           metadata,
         );
       } else {
@@ -491,6 +540,7 @@ function buildSceneEntities(
           PREFIX_MOVING_OBJECT,
           ROOT_FRAME,
           time,
+          config,
           metadata,
         );
       }
@@ -510,6 +560,7 @@ function buildSceneEntities(
         PREFIX_STATIONARY_OBJECT,
         ROOT_FRAME,
         time,
+        config,
         metadata,
       );
     });
@@ -862,7 +913,7 @@ export function activate(extensionContext: ExtensionContext): void {
         trafficLights,
         laneBoundaries,
         lanes,
-      } = buildSceneEntities(osiGroundTruthReq, updateFlags);
+      } = buildSceneEntities(osiGroundTruthReq, updateFlags, config);
 
       // Concatenate newly generated and cached scene entities
       sceneEntities = [
@@ -974,8 +1025,6 @@ export function activate(extensionContext: ExtensionContext): void {
 
   const generatePanelSettings = <T>(obj: PanelSettings<T>) => obj as PanelSettings<unknown>;
 
-  type Config = { caching: boolean };
-
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.GroundTruth",
     toSchemaName: "foxglove.SceneUpdate",
@@ -997,6 +1046,11 @@ export function activate(extensionContext: ExtensionContext): void {
               value: config?.caching,
               help: "Enables caching of lanes and lane boundaries.",
             },
+            showAxes: {
+              label: "Show axes",
+              input: "boolean",
+              value: config?.showAxes,
+            },
           },
         }),
         handler: (action, config: Config | undefined) => {
@@ -1008,9 +1062,13 @@ export function activate(extensionContext: ExtensionContext): void {
           if (action.action === "update" && action.payload.path[2] === "caching") {
             config.caching = action.payload.value as boolean;
           }
+          if (action.action === "update" && action.payload.path[2] === "showAxes") {
+            config.showAxes = action.payload.value as boolean;
+          }
         },
         defaultConfig: {
           caching: true,
+          showAxes: true,
         },
       }),
     },
