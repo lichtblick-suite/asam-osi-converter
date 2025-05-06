@@ -1,6 +1,7 @@
 import {
   LineType,
   SceneUpdate,
+  TextPrimitive,
   TriangleListPrimitive,
   type Color,
   type FrameTransform,
@@ -556,7 +557,7 @@ export function buildEgoVehicleRearAxleFrameTransform(
   };
 }
 
-function buildGroundTruthSceneEntities(
+function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
 ): PartialSceneEntity[] {
   const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
@@ -591,6 +592,20 @@ function buildGroundTruthSceneEntities(
     return lane_boundary.map((b) => makeLinePrimitive(b, thickness));
   };
 
+  const makeInfoText = (): DeepPartial<TextPrimitive> => {
+    return {
+      pose: {
+        position: { x: 0, y: 0, z: 0 },
+        orientation: { x: 0, y: 0, z: 0, w: -10 },
+      },
+      billboard: true,
+      font_size: 30,
+      scale_invariant: true,
+      color: ColorCode("green", 1),
+      text: "SensorData not supported yet",
+    };
+  };
+
   const road_output_scene_update: PartialSceneEntity = {
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
     frame_id: "ego_vehicle_rear_axis",
@@ -598,6 +613,7 @@ function buildGroundTruthSceneEntities(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
+    texts: [makeInfoText()],
   };
   return [road_output_scene_update];
 }
@@ -747,10 +763,10 @@ export function activate(extensionContext: ExtensionContext): void {
     let sceneEntities: PartialSceneEntity[] = [];
 
     try {
-      sceneEntities = buildGroundTruthSceneEntities(osiSensorData as DeepRequired<SensorData>);
+      sceneEntities = buildSensorDataSceneEntities(osiSensorData as DeepRequired<SensorData>);
     } catch (error) {
       console.error(
-        "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
+        "OsiSensorDataVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
         error,
       );
     }
