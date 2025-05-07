@@ -2,7 +2,9 @@ import {
   TrafficSign_MainSign_Classification_Type as MAIN_TYPE,
   TrafficSign_MainSign_Classification,
   TrafficSign_SupplementarySign_Classification,
+  TrafficSignValue,
 } from "@lichtblick/asam-osi-types";
+import { DeepRequired } from "ts-essentials";
 
 interface TrafficSignCustomization {
   getText: (
@@ -64,7 +66,8 @@ const getValueAsText = (
     | TrafficSign_MainSign_Classification
     | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  return classification.value?.toString() ?? "";
+  const tsValue = classification.value as DeepRequired<TrafficSignValue>;
+  return tsValue.value.toString();
 };
 
 const textures = {

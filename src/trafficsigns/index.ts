@@ -6,6 +6,7 @@ import {
   TrafficSign_MainSign_Classification,
   TrafficSign_SupplementarySign,
   TrafficSign_SupplementarySign_Classification,
+  TrafficSignValue,
 } from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
@@ -113,7 +114,8 @@ const getTextureMapKey = (
     | TrafficSign_MainSign_Classification
     | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  return `${classification.type}|${classification.value?.toString()}`;
+  const tsValue = classification.value as DeepRequired<TrafficSignValue>;
+  return `${classification.type}|${tsValue.value.toString()}`;
 };
 
 const getImage = (file: string): HTMLImageElement => {
