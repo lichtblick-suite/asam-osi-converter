@@ -4,6 +4,7 @@ import {
   SceneUpdate,
   TextPrimitive,
   TriangleListPrimitive,
+  Vector3,
   type Color,
   type FrameTransform,
   type FrameTransforms,
@@ -36,8 +37,8 @@ import {
   Lane_Classification_Type,
   Lane_Classification_Subtype,
 } from "@lichtblick/asam-osi-types";
-import { ExtensionContext } from "@lichtblick/suite";
-import { eulerToQuaternion } from "@utils/geometry";
+import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
+import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
 import { ColorCode } from "@utils/helper";
 import {
   objectToCubePrimitive,
@@ -94,12 +95,15 @@ function generateSceneEntityId(prefix: string, id: number): string {
   return `${prefix}_${id.toString()}`;
 }
 
+type Config = { caching: boolean; showAxes: boolean };
+
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
   color: Color,
   id_prefix: string,
   frame_id: string,
   time: Time,
+  config: Config | undefined,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
   const cube = objectToCubePrimitive(
@@ -115,6 +119,48 @@ function buildObjectEntity(
     color,
   );
 
+  const SHAFT_LENGTH = 0.154;
+  const SHAFT_DIAMETER = 0.02;
+  const HEAD_LENGTH = 0.046;
+  const HEAD_DIAMETER = 0.05;
+  const SCALE = 2.0;
+
+  function buildAxisArrow(axis_color: Color, orientation: Vector3 = { x: 0, y: 0, z: 0 }) {
+    const baseOrientation = eulerToQuaternion(
+      osiObject.base.orientation.roll,
+      osiObject.base.orientation.pitch,
+      osiObject.base.orientation.yaw,
+    );
+    const localAxisOrientation = eulerToQuaternion(orientation.x, orientation.y, orientation.z);
+    const globalAxisOrientation = quaternionMultiplication(baseOrientation, localAxisOrientation);
+    return {
+      pose: {
+        position: {
+          x: osiObject.base.position.x,
+          y: osiObject.base.position.y,
+          z: osiObject.base.position.z,
+        },
+        orientation: globalAxisOrientation,
+      },
+      shaft_length: SHAFT_LENGTH * SCALE,
+      shaft_diameter: SHAFT_DIAMETER * SCALE,
+      head_length: HEAD_LENGTH * SCALE,
+      head_diameter: HEAD_DIAMETER * SCALE,
+      color: axis_color,
+    };
+  }
+
+  function buildAxes() {
+    if (!(config?.showAxes ?? false)) {
+      return [];
+    }
+    return [
+      buildAxisArrow(ColorCode("r", 1), { x: 0, y: 0, z: 0 }),
+      buildAxisArrow(ColorCode("g", 1), { x: 0, y: 0, z: Math.PI / 2 }),
+      buildAxisArrow(ColorCode("b", 1), { x: 0, y: -Math.PI / 2, z: 0 }),
+    ];
+  }
+
   return {
     timestamp: time,
     frame_id,
@@ -122,6 +168,7 @@ function buildObjectEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
+    arrows: buildAxes(),
     metadata,
   };
 }
@@ -454,6 +501,7 @@ interface OSISceneEntitesUpdate {
 function buildSceneEntities(
   osiGroundTruth: DeepRequired<GroundTruth>,
   updateFlags: OSISceneEntitesUpdate,
+  config: Config | undefined,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
 
@@ -476,6 +524,7 @@ function buildSceneEntities(
           PREFIX_MOVING_OBJECT,
           ROOT_FRAME,
           time,
+          config,
           metadata,
         );
       } else {
@@ -492,6 +541,7 @@ function buildSceneEntities(
           PREFIX_MOVING_OBJECT,
           ROOT_FRAME,
           time,
+          config,
           metadata,
         );
       }
@@ -511,6 +561,7 @@ function buildSceneEntities(
         PREFIX_STATIONARY_OBJECT,
         ROOT_FRAME,
         time,
+        config,
         metadata,
       );
     });
@@ -751,7 +802,7 @@ function getDeletedEntities<T extends { id: { value: number } }>(
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
-  const groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
+  let groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
   const laneBoundaryCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
   const laneCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
 
@@ -762,10 +813,12 @@ export function activate(extensionContext: ExtensionContext): void {
     previousLaneIds: new Set<number>(),
     previousTrafficSignIds: new Set<number>(),
     previousTrafficLightIds: new Set<number>(),
+    previousConfig: {} as Config | undefined,
   };
 
-  const convertGrountTruthToSceneUpdate = (
+  const convertGroundTruthToSceneUpdate = (
     osiGroundTruth: GroundTruth,
+    event?: Immutable<MessageEvent<GroundTruth>>,
   ): DeepPartial<SceneUpdate> => {
     let sceneEntities: PartialSceneEntity[] = [];
     let updateFlags: OSISceneEntitesUpdate = {
@@ -776,6 +829,16 @@ export function activate(extensionContext: ExtensionContext): void {
       laneBoundaries: true,
       lanes: true,
     };
+
+    const config = event?.topicConfig as Config | undefined;
+    if (config && config !== state.previousConfig) {
+      // Reset caches if configuration changed
+      laneBoundaryCache.clear();
+      laneCache.clear();
+      groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>();
+    }
+    state.previousConfig = config;
+    const caching = config?.caching;
 
     const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
     const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
@@ -837,18 +900,22 @@ export function activate(extensionContext: ExtensionContext): void {
 
     // Build scene entities from OSI ground truth or re-use partially cached entities
     try {
-      // Check if lane boundary hash has changed
-      const laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
-      if (laneBoundaryCache.has(laneBoundaryHash)) {
-        sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
-        updateFlags = { ...updateFlags, laneBoundaries: false };
-      }
+      let laneBoundaryHash: string | undefined;
+      let laneHash: string | undefined;
+      if (caching === true) {
+        // Check if lane boundary hash has changed
+        laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
+        if (laneBoundaryCache.has(laneBoundaryHash)) {
+          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+          updateFlags = { ...updateFlags, laneBoundaries: false };
+        }
 
-      // Check if lane hash has changed
-      const laneHash = hashLanes(osiGroundTruthReq.lane);
-      if (laneCache.has(laneHash)) {
-        sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
-        updateFlags = { ...updateFlags, lanes: false };
+        // Check if lane hash has changed
+        laneHash = hashLanes(osiGroundTruthReq.lane);
+        if (laneCache.has(laneHash)) {
+          sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+          updateFlags = { ...updateFlags, lanes: false };
+        }
       }
 
       // Build scene entities from OSI ground truth for update flags set to true
@@ -859,7 +926,7 @@ export function activate(extensionContext: ExtensionContext): void {
         trafficLights,
         laneBoundaries,
         lanes,
-      } = buildSceneEntities(osiGroundTruthReq, updateFlags);
+      } = buildSceneEntities(osiGroundTruthReq, updateFlags, config);
 
       // Concatenate newly generated and cached scene entities
       sceneEntities = [
@@ -873,13 +940,13 @@ export function activate(extensionContext: ExtensionContext): void {
       ];
 
       // Store lane boundaries in cache
-      if (updateFlags.laneBoundaries) {
+      if (caching === true && updateFlags.laneBoundaries && laneBoundaryHash) {
         laneBoundaryCache.clear(); // keep only one lane boundary in cache
         laneBoundaryCache.set(laneBoundaryHash, laneBoundaries);
       }
 
       // Store lanes in cache
-      if (updateFlags.lanes) {
+      if (caching === true && updateFlags.lanes && laneHash) {
         laneCache.clear(); // keep only one lane in cache
         laneCache.set(laneHash, lanes);
       }
@@ -967,17 +1034,53 @@ export function activate(extensionContext: ExtensionContext): void {
     return transforms;
   };
 
+  const generatePanelSettings = <T>(obj: PanelSettings<T>) => obj as PanelSettings<unknown>;
+
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.GroundTruth",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: convertGrountTruthToSceneUpdate,
+    converter: convertGroundTruthToSceneUpdate,
   });
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorView",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: (osiSensorView: SensorView) =>
-      convertGrountTruthToSceneUpdate(osiSensorView.global_ground_truth!),
+    converter: (osiSensorView: SensorView, event: Immutable<MessageEvent<SensorView>>) =>
+      convertGroundTruthToSceneUpdate(osiSensorView.global_ground_truth!, event),
+    panelSettings: {
+      "3D": generatePanelSettings({
+        settings: (config) => ({
+          fields: {
+            caching: {
+              label: "Caching",
+              input: "boolean",
+              value: config?.caching,
+              help: "Enables caching of lanes and lane boundaries.",
+            },
+            showAxes: {
+              label: "Show axes",
+              input: "boolean",
+              value: config?.showAxes,
+            },
+          },
+        }),
+        handler: (action, config: Config | undefined) => {
+          if (config == undefined) {
+            return;
+          }
+          if (action.action === "update" && action.payload.path[2] === "caching") {
+            config.caching = action.payload.value as boolean;
+          }
+          if (action.action === "update" && action.payload.path[2] === "showAxes") {
+            config.showAxes = action.payload.value as boolean;
+          }
+        },
+        defaultConfig: {
+          caching: true,
+          showAxes: true,
+        },
+      }),
+    },
   });
 
   extensionContext.registerMessageConverter({
