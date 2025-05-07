@@ -1,6 +1,6 @@
 import { DeepRequired } from "ts-essentials";
 import { buildTrafficSignModel, preloadDynamicTextures } from "../trafficsigns";
-import { TrafficSign_MainSign } from "@lichtblick/asam-osi-types";
+import { TrafficSign_MainSign, TrafficSignValue_Unit } from "@lichtblick/asam-osi-types";
 
 const mockImage =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -103,7 +103,11 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
       },
       classification: {
         type: 1,
-        value: 1,
+        value: {
+          value: 10,
+          unit: TrafficSignValue_Unit.KILOMETER_PER_HOUR,
+          text: "",
+        },
       },
     } as unknown as DeepRequired<TrafficSign_MainSign>;
 
