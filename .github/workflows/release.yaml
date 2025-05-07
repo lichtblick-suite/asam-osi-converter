@@ -92,7 +92,7 @@ jobs:
           tar -xzf scancode-toolkit.tar.gz -C scancode-toolkit --strip-components=1
   
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.12
   
@@ -137,7 +137,7 @@ jobs:
           path: ./
 
       - name: Create a Pull Request to update the changelog file
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.PAT_TOKEN }}
           commit-message: "docs: update CHANGELOG for release"
