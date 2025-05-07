@@ -252,6 +252,8 @@ const plane = {
     {
       magFilter: 9729,
       minFilter: 9987,
+      wrapS: 33648, // MIRRORED_REPEAT
+      wrapT: 33648, // MIRRORED_REPEAT
     },
   ],
   buffers: [
