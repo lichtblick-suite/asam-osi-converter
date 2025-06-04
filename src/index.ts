@@ -670,7 +670,7 @@ export function buildEgoVehicleRearAxisFrameTransform(
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
     parent_frame_id: "ego_vehicle_bb_center",
-    child_frame_id: "ego_vehicle_rear_axie",
+    child_frame_id: "ego_vehicle_rear_axis",
     translation: {
       x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
       y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
@@ -1045,7 +1045,7 @@ export function activate(extensionContext: ExtensionContext): void {
         );
       }
 
-      // Add rear axie FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+      // Add rear axis FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
       if (
         message.moving_object.some(
           (obj) =>
