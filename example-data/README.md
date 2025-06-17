@@ -8,4 +8,8 @@ Another option to create traces is the OpenPASS [gt-gen-simlator](https://gitlab
 
 ## Example traces
 
-tbd
+### Moving Host with Stop Line
+
+**File Name:** MovingHostWithStopLine.mcap
+
+With this MCAP you can simply test stop line road marking.

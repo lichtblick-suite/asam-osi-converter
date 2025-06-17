@@ -9,6 +9,7 @@ import {
   StationaryObject_Classification_Type,
   TrafficLight_Classification_Color,
   Lane_Classification_Type,
+  RoadMarking_Classification_Color,
 } from "@lichtblick/asam-osi-types";
 import { ColorCode, ColorCodeName } from "@utils/helper";
 
@@ -106,6 +107,18 @@ export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, Colo
   [TrafficLight_Classification_Color.GREEN]: { code: ColorCode("g", 1), name: "Green" },
   [TrafficLight_Classification_Color.BLUE]: { code: ColorCode("b", 1), name: "Blue" },
   [TrafficLight_Classification_Color.WHITE]: { code: ColorCode("w", 1), name: "White" },
+};
+
+export const ROAD_MARKING_COLOR: Record<RoadMarking_Classification_Color, Color> = {
+  [RoadMarking_Classification_Color.BLUE]: ColorCode("b"),
+  [RoadMarking_Classification_Color.GREEN]: ColorCode("g"),
+  [RoadMarking_Classification_Color.RED]: ColorCode("r"),
+  [RoadMarking_Classification_Color.YELLOW]: ColorCode("y"),
+  [RoadMarking_Classification_Color.ORANGE]: ColorCode("orange"),
+  [RoadMarking_Classification_Color.WHITE]: ColorCode("w"),
+  [RoadMarking_Classification_Color.UNKNOWN]: ColorCode("gray"),
+  [RoadMarking_Classification_Color.OTHER]: ColorCode("gray"),
+  [RoadMarking_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
 };
 
 //// STATIONARY OBJECT MAPPING ////
