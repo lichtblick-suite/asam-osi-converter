@@ -40,6 +40,9 @@ import {
   RoadMarking_Classification_Type,
   RoadMarking_Classification_Color,
   TrafficSign_MainSign_Classification_Type,
+  LogicalLane,
+  LogicalLaneBoundary,
+  LogicalLane_Type,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
@@ -81,6 +84,7 @@ const PREFIX_MOVING_OBJECT = "moving_object";
 const PREFIX_STATIONARY_OBJECT = "stationary_object";
 const PREFIX_LANE_BOUNDARY = "lane_boundary";
 const PREFIX_LANE = "lane";
+const PREFIX_LOGICAL_LANE = "logical_lane";
 const PREFIX_TRAFFIC_SIGN = "traffic_sign";
 const PREFIX_TRAFFIC_LIGHT = "traffic_light";
 const PREFIX_ROAD_MARKING = "road_marking";
@@ -101,7 +105,7 @@ function generateSceneEntityId(prefix: string, id: number): string {
   return `${prefix}_${id.toString()}`;
 }
 
-type Config = { caching: boolean; showAxes: boolean };
+type Config = { caching: boolean; showAxes: boolean; showLogicalLanes: boolean };
 
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
@@ -445,6 +449,79 @@ function buildLaneEntity(
   };
 }
 
+function buildLogicalLaneEntity(
+  osiLogicalLane: DeepRequired<LogicalLane>,
+  frame_id: string,
+  time: Time,
+  osiLeftLaneBoundaries: DeepRequired<LogicalLaneBoundary>[],
+  osiRightLaneBoundaries: DeepRequired<LogicalLaneBoundary>[],
+): PartialSceneEntity {
+  const leftLaneBoundaries: MarkerPoint[][] = [];
+  for (const lb of osiLeftLaneBoundaries) {
+    const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      return {
+        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        width: 0.02, // prevent zero-width lane boundaries from being invisible
+        height: 1,
+      };
+    });
+    leftLaneBoundaries.push(laneBoundaryPoints);
+  }
+  const rightLaneBoundaries: MarkerPoint[][] = [];
+  for (const lb of osiRightLaneBoundaries) {
+    const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      return {
+        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        width: 0.02, // prevent zero-width lane boundaries from being invisible
+        height: 1,
+      };
+    });
+    rightLaneBoundaries.push(laneBoundaryPoints);
+  }
+
+  const options = {
+    highlighted: true,
+  };
+
+  return {
+    timestamp: time,
+    frame_id,
+    id: generateSceneEntityId(PREFIX_LOGICAL_LANE, osiLogicalLane.id.value),
+    lifetime: { sec: 0, nsec: 0 },
+    frame_locked: true,
+    triangles: [
+      laneToTriangleListPrimitive(
+        leftLaneBoundaries,
+        rightLaneBoundaries,
+        Lane_Classification_Type.DRIVING,
+        options,
+      ),
+    ],
+    metadata: [
+      {
+        key: "type",
+        value: LogicalLane_Type[osiLogicalLane.type],
+      },
+      {
+        key: "left_lane_boundary_ids",
+        value: osiLogicalLane.left_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "right_lane_boundary_ids",
+        value: osiLogicalLane.right_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "left_adjacent_lane_id",
+        value: osiLogicalLane.left_adjacent_lane.map((id) => id.other_lane_id.value).join(", "),
+      },
+      {
+        key: "right_adjacent_lane_id",
+        value: osiLogicalLane.right_adjacent_lane.map((id) => id.other_lane_id.value).join(", "),
+      },
+    ],
+  };
+}
+
 interface IlightStateEnumStringMaps {
   generic_light_state: typeof MovingObject_VehicleClassification_LightState_GenericLightState;
   [key: string]: Record<number, string>;
@@ -563,6 +640,7 @@ interface OSISceneEntities {
   roadMarkings: PartialSceneEntity[];
   laneBoundaries: PartialSceneEntity[];
   lanes: PartialSceneEntity[];
+  logicalLanes: PartialSceneEntity[];
 }
 
 interface OSISceneEntitesUpdate {
@@ -573,6 +651,7 @@ interface OSISceneEntitesUpdate {
   roadMarkings: boolean;
   laneBoundaries: boolean;
   lanes: boolean;
+  logicalLanes: boolean;
 }
 
 /**
@@ -692,7 +771,7 @@ function buildSceneEntities(
 
   // Lanes
   let laneSceneEntities: PartialSceneEntity[] = [];
-  if (updateFlags.lanes) {
+  if (updateFlags.lanes && config != undefined && !config.showLogicalLanes) {
     // Re-generate lanes only when update.lanes is true
     laneSceneEntities = osiGroundTruth.lane.map((lane) => {
       const rightLaneBoundaryIds = lane.classification.right_lane_boundary_id.map((id) => id.value);
@@ -707,6 +786,29 @@ function buildSceneEntities(
     });
   }
 
+  // Logical lanes
+  let logicalLaneSceneEntities: PartialSceneEntity[] = [];
+  if (updateFlags.logicalLanes && config != undefined && config.showLogicalLanes) {
+    logicalLaneSceneEntities = osiGroundTruth.logical_lane.map((logical_lane) => {
+      const rightLaneBoundaryIds = logical_lane.right_boundary_id.map((id) => id.value);
+      const leftLaneBoundaryIds = logical_lane.left_boundary_id.map((id) => id.value);
+      const leftLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
+        leftLaneBoundaryIds.includes(b.id.value),
+      );
+      const rightLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
+        rightLaneBoundaryIds.includes(b.id.value),
+      );
+
+      return buildLogicalLaneEntity(
+        logical_lane,
+        ROOT_FRAME,
+        time,
+        leftLaneBoundaries,
+        rightLaneBoundaries,
+      );
+    });
+  }
+
   return {
     movingObjects: movingObjectSceneEntities,
     stationaryObjects: stationaryObjectSceneEntities,
@@ -715,6 +817,7 @@ function buildSceneEntities(
     roadMarkings: roadMarkingObjectSceneEntities,
     laneBoundaries: laneBoundarySceneEntities,
     lanes: laneSceneEntities,
+    logicalLanes: logicalLaneSceneEntities,
   };
 }
 
@@ -933,6 +1036,7 @@ export function activate(extensionContext: ExtensionContext): void {
     previousStationaryObjectIds: new Set<number>(),
     previousLaneBoundaryIds: new Set<number>(),
     previousLaneIds: new Set<number>(),
+    previousLogicalLaneIds: new Set<number>(),
     previousTrafficSignIds: new Set<number>(),
     previousTrafficLightIds: new Set<number>(),
     previousRoadMarkingIds: new Set<number>(),
@@ -952,6 +1056,7 @@ export function activate(extensionContext: ExtensionContext): void {
       roadMarkings: true,
       laneBoundaries: true,
       lanes: true,
+      logicalLanes: true,
     };
 
     const config = event?.topicConfig as Config | undefined;
@@ -1010,6 +1115,12 @@ export function activate(extensionContext: ExtensionContext): void {
       PREFIX_LANE,
       timestamp,
     );
+    const deletionsLogicalLanes = getDeletedEntities(
+      osiGroundTruthReq.logical_lane,
+      state.previousLogicalLaneIds,
+      PREFIX_LOGICAL_LANE,
+      timestamp,
+    );
 
     const deletions = [
       ...deletionsMovingObjects,
@@ -1019,6 +1130,7 @@ export function activate(extensionContext: ExtensionContext): void {
       ...deletionsRoadMarkings,
       ...deletionsLaneBoundaries,
       ...deletionsLanes,
+      ...deletionsLogicalLanes,
     ];
 
     // Use cached scene entities if that exact OSI ground truth frame is cached
@@ -1058,6 +1170,7 @@ export function activate(extensionContext: ExtensionContext): void {
         roadMarkings,
         laneBoundaries,
         lanes,
+        logicalLanes,
       } = buildSceneEntities(osiGroundTruthReq, updateFlags, config);
 
       // Concatenate newly generated and cached scene entities
@@ -1070,6 +1183,7 @@ export function activate(extensionContext: ExtensionContext): void {
         ...roadMarkings,
         ...laneBoundaries,
         ...lanes,
+        ...logicalLanes,
       ];
 
       // Store lane boundaries in cache
@@ -1212,6 +1326,11 @@ export function activate(extensionContext: ExtensionContext): void {
               input: "boolean",
               value: config?.showAxes,
             },
+            showLogicalLanes: {
+              label: "Show Logical Lanes",
+              input: "boolean",
+              value: config?.showLogicalLanes,
+            },
           },
         }),
         handler: (action, config: Config | undefined) => {
@@ -1224,10 +1343,14 @@ export function activate(extensionContext: ExtensionContext): void {
           if (action.action === "update" && action.payload.path[2] === "showAxes") {
             config.showAxes = action.payload.value as boolean;
           }
+          if (action.action === "update" && action.payload.path[2] === "showLogicalLanes") {
+            config.showLogicalLanes = action.payload.value as boolean;
+          }
         },
         defaultConfig: {
           caching: true,
           showAxes: true,
+          showLogicalLanes: false,
         },
       }),
     },

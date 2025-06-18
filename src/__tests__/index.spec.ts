@@ -158,6 +158,7 @@ describe("OSI Visualizer: Message Converter", () => {
     stationary_object: [mockStationaryObject],
     lane_boundary: [mockLaneBoundary],
     lane: [mockLane],
+    logical_lane: [],
     traffic_sign: [],
     traffic_light: [],
     road_marking: [],
