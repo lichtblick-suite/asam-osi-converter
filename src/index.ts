@@ -36,6 +36,10 @@ import {
   Lane,
   Lane_Classification_Type,
   Lane_Classification_Subtype,
+  RoadMarking,
+  RoadMarking_Classification_Type,
+  RoadMarking_Classification_Color,
+  TrafficSign_MainSign_Classification_Type,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
@@ -65,6 +69,7 @@ import {
   LANE_CENTERLINE_ARROWS,
   LANE_BOUNDARY_ARROWS,
   LANE_CENTERLINE_SHOW,
+  ROAD_MARKING_COLOR,
 } from "./config";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
@@ -78,6 +83,7 @@ const PREFIX_LANE_BOUNDARY = "lane_boundary";
 const PREFIX_LANE = "lane";
 const PREFIX_TRAFFIC_SIGN = "traffic_sign";
 const PREFIX_TRAFFIC_LIGHT = "traffic_light";
+const PREFIX_ROAD_MARKING = "road_marking";
 
 /**
  * Generates a unique scene entity ID by combining a predefined object-type-specific prefix
@@ -222,6 +228,61 @@ function buildTrafficLightEntity(
     // texts,
     models,
     metadata,
+  };
+}
+
+function buildRoadMarkingEntity(
+  roadMarking: DeepRequired<RoadMarking>,
+  frame_id: string,
+  time: Time,
+): PartialSceneEntity | undefined {
+  if (
+    roadMarking.classification.traffic_main_sign_type !==
+    TrafficSign_MainSign_Classification_Type.STOP
+  ) {
+    return undefined;
+  }
+
+  const roadMarkingPoints = [
+    {
+      position: {
+        x: roadMarking.base.position.x,
+        y: roadMarking.base.position.y,
+        z: roadMarking.base.position.z,
+      } as Point3,
+      width: roadMarking.base.dimension.width,
+      height: roadMarking.base.dimension.height,
+    },
+    {
+      position: {
+        x: roadMarking.base.position.x + roadMarking.base.dimension.length,
+        y: roadMarking.base.position.y,
+        z: roadMarking.base.position.z,
+      } as Point3,
+      width: roadMarking.base.dimension.width,
+      height: roadMarking.base.dimension.height,
+    },
+  ];
+
+  // Define color and opacity based on OSI classification
+  const rgb = ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color];
+  const color = { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
+
+  // Set option for dashed lines
+  const options = {
+    dashed: false,
+    arrows: false,
+    invertArrows: false,
+  };
+
+  return {
+    timestamp: time,
+    frame_id,
+    id: generateSceneEntityId(PREFIX_ROAD_MARKING, roadMarking.id.value),
+    lifetime: { sec: 0, nsec: 0 },
+    frame_locked: true,
+    triangles: [pointListToTriangleListPrimitive(roadMarkingPoints, color, options)],
+    metadata: buildRoadMarkingMetadata(roadMarking),
   };
 }
 
@@ -464,6 +525,29 @@ export function buildStationaryMetadata(obj: DeepRequired<StationaryObject>): Ke
   return metadata;
 }
 
+export function buildRoadMarkingMetadata(road_marking: DeepRequired<RoadMarking>): KeyValuePair[] {
+  const metadata: KeyValuePair[] = [
+    {
+      key: "type",
+      value: RoadMarking_Classification_Type[road_marking.classification.type],
+    },
+    {
+      key: "color",
+      value: RoadMarking_Classification_Color[road_marking.classification.monochrome_color],
+    },
+    {
+      key: "width",
+      value: road_marking.base.dimension.width.toString(),
+    },
+    {
+      key: "height",
+      value: road_marking.base.dimension.height.toString(),
+    },
+  ];
+
+  return metadata;
+}
+
 function osiTimestampToTime(time: DeepRequired<Timestamp>): Time {
   return {
     sec: time.seconds,
@@ -476,6 +560,7 @@ interface OSISceneEntities {
   stationaryObjects: PartialSceneEntity[];
   trafficSigns: PartialSceneEntity[];
   trafficLights: PartialSceneEntity[];
+  roadMarkings: PartialSceneEntity[];
   laneBoundaries: PartialSceneEntity[];
   lanes: PartialSceneEntity[];
 }
@@ -485,6 +570,7 @@ interface OSISceneEntitesUpdate {
   stationaryObjects: boolean;
   trafficSigns: boolean;
   trafficLights: boolean;
+  roadMarkings: boolean;
   laneBoundaries: boolean;
   lanes: boolean;
 }
@@ -581,6 +667,21 @@ function buildSceneEntities(
     });
   }
 
+  // Road Marking objects
+  let roadMarkingObjectSceneEntities: PartialSceneEntity[] = [];
+  if (updateFlags.roadMarkings) {
+    roadMarkingObjectSceneEntities = osiGroundTruth.road_marking.flatMap((road_marking) => {
+      const result = buildRoadMarkingEntity(road_marking, ROOT_FRAME, time);
+
+      if (result != undefined) {
+        const partialEntity: PartialSceneEntity = result;
+        return partialEntity;
+      }
+
+      return [];
+    });
+  }
+
   // Lane boundaries
   let laneBoundarySceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.laneBoundaries) {
@@ -611,6 +712,7 @@ function buildSceneEntities(
     stationaryObjects: stationaryObjectSceneEntities,
     trafficSigns: trafficsignObjectSceneEntities,
     trafficLights: trafficlightObjectSceneEntities,
+    roadMarkings: roadMarkingObjectSceneEntities,
     laneBoundaries: laneBoundarySceneEntities,
     lanes: laneSceneEntities,
   };
@@ -833,6 +935,7 @@ export function activate(extensionContext: ExtensionContext): void {
     previousLaneIds: new Set<number>(),
     previousTrafficSignIds: new Set<number>(),
     previousTrafficLightIds: new Set<number>(),
+    previousRoadMarkingIds: new Set<number>(),
     previousConfig: {} as Config | undefined,
   };
 
@@ -846,6 +949,7 @@ export function activate(extensionContext: ExtensionContext): void {
       stationaryObjects: true,
       trafficSigns: true,
       trafficLights: true,
+      roadMarkings: true,
       laneBoundaries: true,
       lanes: true,
     };
@@ -888,6 +992,12 @@ export function activate(extensionContext: ExtensionContext): void {
       PREFIX_TRAFFIC_LIGHT,
       timestamp,
     );
+    const deletionsRoadMarkings = getDeletedEntities(
+      osiGroundTruthReq.road_marking,
+      state.previousRoadMarkingIds,
+      PREFIX_ROAD_MARKING,
+      timestamp,
+    );
     const deletionsLaneBoundaries = getDeletedEntities(
       osiGroundTruthReq.lane_boundary,
       state.previousLaneBoundaryIds,
@@ -906,6 +1016,7 @@ export function activate(extensionContext: ExtensionContext): void {
       ...deletionsStationaryObjects,
       ...deletionsTrafficSigns,
       ...deletionsTrafficLights,
+      ...deletionsRoadMarkings,
       ...deletionsLaneBoundaries,
       ...deletionsLanes,
     ];
@@ -944,6 +1055,7 @@ export function activate(extensionContext: ExtensionContext): void {
         stationaryObjects,
         trafficSigns,
         trafficLights,
+        roadMarkings,
         laneBoundaries,
         lanes,
       } = buildSceneEntities(osiGroundTruthReq, updateFlags, config);
@@ -955,6 +1067,7 @@ export function activate(extensionContext: ExtensionContext): void {
         ...stationaryObjects,
         ...trafficSigns,
         ...trafficLights,
+        ...roadMarkings,
         ...laneBoundaries,
         ...lanes,
       ];

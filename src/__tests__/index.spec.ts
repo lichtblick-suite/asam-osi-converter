@@ -160,6 +160,7 @@ describe("OSI Visualizer: Message Converter", () => {
     lane: [mockLane],
     traffic_sign: [],
     traffic_light: [],
+    road_marking: [],
   } as GroundTruth;
 
   beforeEach(() => {
