@@ -660,6 +660,26 @@ export function buildEgoVehicleRearAxleFrameTransform(
   };
 }
 
+export function buildEgoVehicleRearAxisFrameTransform(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+): FrameTransform {
+  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
+  const hostObject = osiGroundTruth.moving_object.find((obj) => {
+    return obj.id.value === hostIdentifier;
+  })!;
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: "ego_vehicle_bb_center",
+    child_frame_id: "ego_vehicle_rear_axis",
+    translation: {
+      x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
+      y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
+      z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
+    },
+    rotation: eulerToQuaternion(0, 0, 0),
+  };
+}
+
 function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
 ): PartialSceneEntity[] {
@@ -1022,6 +1042,23 @@ export function activate(extensionContext: ExtensionContext): void {
       } else {
         console.warn(
           "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axle FrameTransform.",
+        );
+      }
+
+      // Add rear axis FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+      if (
+        message.moving_object.some(
+          (obj) =>
+            obj.id?.value === message.host_vehicle_id?.value &&
+            obj.vehicle_attributes?.bbcenter_to_rear,
+        )
+      ) {
+        transforms.transforms.push(
+          buildEgoVehicleRearAxisFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+      } else {
+        console.warn(
+          "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axis FrameTransform.",
         );
       }
     } catch (error) {
