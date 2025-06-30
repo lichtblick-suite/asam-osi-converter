@@ -92,12 +92,19 @@ export const LANE_CENTERLINE_ARROWS_LENGTH = 0.3;
 export const LANE_CENTERLINE_ARROWS_WIDTH = 0.2;
 
 export const LANE_TYPE: Record<Lane_Classification_Type, Color> = {
-  [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.5),
-  [Lane_Classification_Type.OTHER]: ColorCode("c", 0.5),
-  [Lane_Classification_Type.DRIVING]: { r: 0, g: 1, b: 1, a: 0.4 },
-  [Lane_Classification_Type.INTERSECTION]: ColorCode("r", 0.2),
-  [Lane_Classification_Type.NONDRIVING]: { r: 1, g: 111 / 255, b: 91 / 255, a: 0.4 },
+  [Lane_Classification_Type.UNKNOWN]: ColorCode("gray", 0.6),
+  [Lane_Classification_Type.OTHER]: ColorCode("c", 0.6),
+  [Lane_Classification_Type.DRIVING]: { r: 0, g: 1, b: 1, a: 0.5 },
+  [Lane_Classification_Type.INTERSECTION]: ColorCode("r", 0.3),
+  [Lane_Classification_Type.NONDRIVING]: { r: 1, g: 111 / 255, b: 91 / 255, a: 0.5 },
 };
+
+export const LOGICAL_LANE_BOUNDARY_RENDERING_WIDTH = 0.09; // width for visualization of the logical lane boundary line
+export const LOGICAL_LANE_BOUNDARY_COLOR = { r: 0.7, g: 0, b: 0, a: 0.6 }; // rendering color of the logical lane boundary
+
+export const LOGICAL_LANE_RENDERING_HEIGHT_OFFSET = 0.02; // height offset for visualization of the logical lane and logical lane boundary line
+export const LOGICAL_LANE_COLOR = { r: 0.1, g: 1, b: 0.1, a: 0.3 }; // rendering color of the logical lane
+export const LOGICAL_LANE_VISUALIZATION_WIDTH = 1.2; // width of the gradient surface area pointing from the boundary line to the side of the logical lane
 
 export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, ColorCodeName> = {
   [TrafficLight_Classification_Color.UNKNOWN]: { code: ColorCode("gray", 1), name: "Unknown" },

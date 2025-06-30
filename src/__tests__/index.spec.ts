@@ -18,7 +18,8 @@ import {
 import { ExtensionContext } from "@lichtblick/suite";
 import { DeepRequired } from "ts-essentials";
 
-import { activate, buildLaneBoundaryMetadata, buildVehicleMetadata } from "../index";
+import { activate, buildVehicleMetadata } from "../index";
+import { buildLaneBoundaryMetadata } from "../lanes";
 
 jest.mock(
   "../trafficsigns",
@@ -159,6 +160,7 @@ describe("OSI Visualizer: Message Converter", () => {
     lane_boundary: [mockLaneBoundary],
     lane: [mockLane],
     logical_lane: [],
+    logical_lane_boundary: [],
     traffic_sign: [],
     traffic_light: [],
     road_marking: [],
