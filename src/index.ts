@@ -755,6 +755,23 @@ function getDeletedEntities<T extends { id: { value: number } }>(
   }));
 }
 
+function getDeletedSceneEntities(
+  sceneEntities: PartialSceneEntity[],
+  previousFrameIds: Set<number>,
+  entityPrefix: string,
+  timestamp: Time,
+): PartialSceneEntity[] {
+  const currentIds = new Set(sceneEntities.map((entity) => entity.id));
+  const deletedIds = Array.from(previousFrameIds).filter(
+    (id) => !currentIds.has(generateSceneEntityId(entityPrefix, id)),
+  );
+  return deletedIds.map((id) => ({
+    id: generateSceneEntityId(entityPrefix, id),
+    timestamp,
+    type: SceneEntityDeletionType.MATCHING_ID,
+  }));
+}
+
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
@@ -927,6 +944,39 @@ export function activate(extensionContext: ExtensionContext): void {
         ...lanes,
         ...logicalLanes,
       ];
+
+      // Frame clenup for scene entities
+      const deletedLaneBoundaries = getDeletedSceneEntities(
+        laneBoundaries,
+        state.previousLaneBoundaryIds,
+        PREFIX_LANE_BOUNDARY,
+        timestamp,
+      );
+      deletions.push(...deletedLaneBoundaries);
+
+      const deletedLogicalLaneBoundaries = getDeletedSceneEntities(
+        logicalLaneBoundaries,
+        state.previousLogicalLaneBoundaryIds,
+        PREFIX_LOGICAL_LANE_BOUNDARY,
+        timestamp,
+      );
+      deletions.push(...deletedLogicalLaneBoundaries);
+
+      const deletedLanes = getDeletedSceneEntities(
+        lanes,
+        state.previousLaneIds,
+        PREFIX_LANE,
+        timestamp,
+      );
+      deletions.push(...deletedLanes);
+
+      const deletedLogicalLanes = getDeletedSceneEntities(
+        logicalLanes,
+        state.previousLogicalLaneIds,
+        PREFIX_LOGICAL_LANE,
+        timestamp,
+      );
+      deletions.push(...deletedLogicalLanes);
 
       // Store lane boundaries in cache
       if (caching === true && updateFlags.laneBoundaries && laneBoundaryHash) {
