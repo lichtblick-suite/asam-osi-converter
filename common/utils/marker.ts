@@ -9,7 +9,6 @@ import {
   TriangleListPrimitive,
 } from "@foxglove/schemas";
 import {
-  Lane_Classification_Type,
   LaneBoundary_BoundaryPoint_Dash,
   LaneBoundary_Classification_Type,
 } from "@lichtblick/asam-osi-types";
@@ -17,9 +16,6 @@ import {
 import { eulerToQuaternion } from "./geometry";
 import {
   LANE_BOUNDARY_OPACITY,
-  LANE_TYPE,
-  LANE_COLOR_HIGHLIGHT,
-  LANE_VISUALIZATION_WIDTH,
   LANE_BOUNDARY_ARROWS_LENGTH,
   LANE_BOUNDARY_ARROWS_WIDTH,
 } from "../../src/config";
@@ -419,18 +415,12 @@ function createOffsetLine(
 export function laneToTriangleListPrimitive(
   leftLaneBoundaries: MarkerPoint[][],
   rightLaneBoundaries: MarkerPoint[][],
-  type: Lane_Classification_Type,
-  { highlighted }: { highlighted: boolean },
+  color: Color,
+  laneWidth: number,
 ): TriangleListPrimitive {
   try {
     const vertices: Point3[] = [];
     const colors: Color[] = [];
-
-    // Set colors to be used for different types / highlighting
-    let color = LANE_TYPE[type];
-    if (highlighted) {
-      color = LANE_COLOR_HIGHLIGHT;
-    }
 
     // Order multiple left and right boundaries based on start/end point proximity
     // Note that this sorting might not guarantee a correct order for all cases
@@ -477,15 +467,11 @@ export function laneToTriangleListPrimitive(
 
     // Draw surface area pointing from the boundary line to the side of the lane
     // Create offset line for both left and right boundaries
-    const offsetLeftBoundaries: Point3[] = createOffsetLine(
-      mergedLeftBoundaries,
-      add,
-      LANE_VISUALIZATION_WIDTH,
-    );
+    const offsetLeftBoundaries: Point3[] = createOffsetLine(mergedLeftBoundaries, add, laneWidth);
     const offsetRightBoundaries: Point3[] = createOffsetLine(
       mergedRightBoundaries,
       subtract,
-      LANE_VISUALIZATION_WIDTH,
+      laneWidth,
     );
 
     // Check precondition for triangle list primitive creation

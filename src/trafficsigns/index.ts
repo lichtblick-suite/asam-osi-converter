@@ -1,6 +1,4 @@
 import { ModelPrimitive } from "@foxglove/schemas";
-import { convertDataURIToBinary } from "@utils/helper";
-import { objectToModelPrimitive } from "@utils/marker";
 import {
   TrafficSign_MainSign,
   TrafficSign_MainSign_Classification,
@@ -8,6 +6,8 @@ import {
   TrafficSign_SupplementarySign_Classification,
   TrafficSignValue,
 } from "@lichtblick/asam-osi-types";
+import { convertDataURIToBinary } from "@utils/helper";
+import { objectToModelPrimitive } from "@utils/marker";
 import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
