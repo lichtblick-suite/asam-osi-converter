@@ -11,7 +11,7 @@ import {
   type LinePrimitive,
   type Point3,
 } from "@foxglove/schemas";
-import { Time } from "@foxglove/schemas/dist/types/Time";
+import type { Time } from "@foxglove/schemas/dist/types/Time";
 import {
   DetectedLaneBoundary,
   GroundTruth,
