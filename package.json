@@ -4,7 +4,7 @@
   "description": "Visualises data following the standard of the ASAM Open Simulation Interface (ASAM OSI) using the native 3D panel of Lichtblick",
   "publisher": "Lichtblick",
   "homepage": "https://www.asam.net/standards/detail/osi/",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "license": "MIT",
   "main": "./dist/extension.js",
   "keywords": [
@@ -31,7 +31,7 @@
     "@babel/preset-typescript": "^7.23.3",
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
-    "@foxglove/schemas": "^1.6.2",
+    "@foxglove/schemas": "^1.7.2",
     "@lichtblick/asam-osi-types": "^3.7.0",
     "@lichtblick/eslint-plugin": "^1.0.2",
     "@lichtblick/suite": "^1.5.0",
@@ -45,7 +45,7 @@
     "create-lichtblick-extension": "^1.0.0",
     "cz-conventional-changelog": "^3.3.0",
     "esbuild": "^0.25.0",
-    "esbuild-jest": "^0.5.0",
+    "esbuild-jest": "^0.4.0",
     "eslint": "8.56.0",
     "eslint-config-prettier": "8.10.0",
     "eslint-plugin-es": "4.1.0",
@@ -70,5 +70,8 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "minimatch": "^10.0.3"
   }
 }

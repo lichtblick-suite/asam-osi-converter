@@ -1,5 +1,5 @@
 import { TriangleListPrimitive, type KeyValuePair, type Point3 } from "@foxglove/schemas";
-import { Time } from "@foxglove/schemas/schemas/typescript/Time";
+import { Time } from "@foxglove/schemas/dist/types/Time";
 import {
   LogicalLane,
   LogicalLaneBoundary,
