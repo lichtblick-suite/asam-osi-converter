@@ -1,6 +1,5 @@
 import {
   LineType,
-  SceneEntityDeletionType,
   SceneUpdate,
   TextPrimitive,
   Vector3,
@@ -53,18 +52,8 @@ import {
   TRAFFIC_LIGHT_COLOR,
   ROAD_MARKING_COLOR,
 } from "./config";
-import {
-  buildLaneEntity,
-  buildLaneBoundaryEntity,
-  PREFIX_LANE,
-  PREFIX_LANE_BOUNDARY,
-} from "./lanes";
-import {
-  buildLogicalLaneEntity,
-  buildLogicalLaneBoundaryEntity,
-  PREFIX_LOGICAL_LANE,
-  PREFIX_LOGICAL_LANE_BOUNDARY,
-} from "./logical-lanes";
+import { buildLaneEntity, buildLaneBoundaryEntity } from "./lanes";
+import { buildLogicalLaneEntity, buildLogicalLaneBoundaryEntity } from "./logical-lanes";
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 
@@ -152,7 +141,6 @@ function buildObjectEntity(
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(id_prefix, osiObject.id.value),
-    lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
     arrows: buildAxes(),
@@ -181,7 +169,6 @@ function buildTrafficSignEntity(
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(id_prefix, obj.id.value),
-    lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
     models,
@@ -204,7 +191,6 @@ function buildTrafficLightEntity(
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(id_prefix, obj.id.value),
-    lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     // texts,
     models,
@@ -260,7 +246,6 @@ function buildRoadMarkingEntity(
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(PREFIX_ROAD_MARKING, roadMarking.id.value),
-    lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     triangles: [pointListToTriangleListPrimitive(roadMarkingPoints, color, options)],
     metadata: buildRoadMarkingMetadata(roadMarking),
@@ -286,7 +271,7 @@ export function buildVehicleMetadata(
       key: "type",
       value: MovingObject_VehicleClassification_Type[vehicle_classification.type],
     },
-    ...Object.entries(vehicle_classification.light_state ?? {}).map(([key, value]) => {
+    ...Object.entries(vehicle_classification.light_state).map(([key, value]) => {
       return {
         key: `light_state.${key}`,
         value:
@@ -669,7 +654,6 @@ function buildSensorDataSceneEntities(
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
     frame_id: "ego_vehicle_rear_axis",
     id: "ra_ground_truth",
-    lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
     texts: [makeInfoText()],
@@ -724,54 +708,6 @@ const hashLaneBoundaries = (laneBoundaries: LaneBoundary[]): string => {
   return hashValue.toString();
 };
 
-/**
- * Identifies and returns entities that have been deleted between frames based on their IDs.
- * Updates the set of IDs from the current frame for future comparisons.
- *
- * @template T - The type of the entities, which must include an `id` property with a `value` of type `number`.
- *
- * @param osiEntities - The array of entities from the current frame, with all properties deeply required.
- * @param previousFrameIds - A set of IDs from the previous frame to compare against.
- * @param entityPrefix - A string prefix to prepend to the deleted entity IDs in the result.
- * @param timestamp - The timestamp to associate with the deleted entities.
- *
- * @returns An array of partial scene entities representing the deleted entities,
- *          each containing an ID, timestamp, and deletion type.
- */
-function getDeletedEntities<T extends { id: { value: number } }>(
-  osiEntities: DeepRequired<T[]>,
-  previousFrameIds: Set<number>,
-  entityPrefix: string,
-  timestamp: Time,
-): PartialSceneEntity[] {
-  const currentIds = new Set(osiEntities.map((entity) => entity.id.value));
-  const deletedIds = Array.from(previousFrameIds).filter((id) => !currentIds.has(id));
-  previousFrameIds.clear();
-  currentIds.forEach((id) => previousFrameIds.add(id));
-  return deletedIds.map((id) => ({
-    id: generateSceneEntityId(entityPrefix, id),
-    timestamp,
-    type: SceneEntityDeletionType.MATCHING_ID,
-  }));
-}
-
-function getDeletedSceneEntities(
-  sceneEntities: PartialSceneEntity[],
-  previousFrameIds: Set<number>,
-  entityPrefix: string,
-  timestamp: Time,
-): PartialSceneEntity[] {
-  const currentIds = new Set(sceneEntities.map((entity) => entity.id));
-  const deletedIds = Array.from(previousFrameIds).filter(
-    (id) => !currentIds.has(generateSceneEntityId(entityPrefix, id)),
-  );
-  return deletedIds.map((id) => ({
-    id: generateSceneEntityId(entityPrefix, id),
-    timestamp,
-    type: SceneEntityDeletionType.MATCHING_ID,
-  }));
-}
-
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
 
@@ -820,80 +756,11 @@ export function activate(extensionContext: ExtensionContext): void {
     const caching = config?.caching;
 
     const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
-    const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
-
-    // Check OSI ground truth object deletions and store ids in state for next frame
-    const deletionsMovingObjects = getDeletedEntities(
-      osiGroundTruthReq.moving_object,
-      state.previousMovingObjectIds,
-      PREFIX_MOVING_OBJECT,
-      timestamp,
-    );
-    const deletionsStationaryObjects = getDeletedEntities(
-      osiGroundTruthReq.stationary_object,
-      state.previousStationaryObjectIds,
-      PREFIX_STATIONARY_OBJECT,
-      timestamp,
-    );
-    const deletionsTrafficSigns = getDeletedEntities(
-      osiGroundTruthReq.traffic_sign,
-      state.previousTrafficSignIds,
-      PREFIX_TRAFFIC_SIGN,
-      timestamp,
-    );
-    const deletionsTrafficLights = getDeletedEntities(
-      osiGroundTruthReq.traffic_light,
-      state.previousTrafficLightIds,
-      PREFIX_TRAFFIC_LIGHT,
-      timestamp,
-    );
-    const deletionsRoadMarkings = getDeletedEntities(
-      osiGroundTruthReq.road_marking,
-      state.previousRoadMarkingIds,
-      PREFIX_ROAD_MARKING,
-      timestamp,
-    );
-    const deletionsLaneBoundaries = getDeletedEntities(
-      osiGroundTruthReq.lane_boundary,
-      state.previousLaneBoundaryIds,
-      PREFIX_LANE_BOUNDARY,
-      timestamp,
-    );
-    const deletionsLogicalLaneBoundaries = getDeletedEntities(
-      osiGroundTruthReq.logical_lane_boundary,
-      state.previousLogicalLaneBoundaryIds,
-      PREFIX_LOGICAL_LANE_BOUNDARY,
-      timestamp,
-    );
-    const deletionsLanes = getDeletedEntities(
-      osiGroundTruthReq.lane,
-      state.previousLaneIds,
-      PREFIX_LANE,
-      timestamp,
-    );
-    const deletionsLogicalLanes = getDeletedEntities(
-      osiGroundTruthReq.logical_lane,
-      state.previousLogicalLaneIds,
-      PREFIX_LOGICAL_LANE,
-      timestamp,
-    );
-
-    const deletions = [
-      ...deletionsMovingObjects,
-      ...deletionsStationaryObjects,
-      ...deletionsTrafficSigns,
-      ...deletionsTrafficLights,
-      ...deletionsRoadMarkings,
-      ...deletionsLaneBoundaries,
-      ...deletionsLogicalLaneBoundaries,
-      ...deletionsLanes,
-      ...deletionsLogicalLanes,
-    ];
 
     // Use cached scene entities if that exact OSI ground truth frame is cached
     if (groundTruthFrameCache.has(osiGroundTruth)) {
       return {
-        deletions,
+        deletions: [],
         entities: groundTruthFrameCache.get(osiGroundTruth),
       };
     }
@@ -945,39 +812,6 @@ export function activate(extensionContext: ExtensionContext): void {
         ...logicalLanes,
       ];
 
-      // Frame clenup for scene entities
-      const deletedLaneBoundaries = getDeletedSceneEntities(
-        laneBoundaries,
-        state.previousLaneBoundaryIds,
-        PREFIX_LANE_BOUNDARY,
-        timestamp,
-      );
-      deletions.push(...deletedLaneBoundaries);
-
-      const deletedLogicalLaneBoundaries = getDeletedSceneEntities(
-        logicalLaneBoundaries,
-        state.previousLogicalLaneBoundaryIds,
-        PREFIX_LOGICAL_LANE_BOUNDARY,
-        timestamp,
-      );
-      deletions.push(...deletedLogicalLaneBoundaries);
-
-      const deletedLanes = getDeletedSceneEntities(
-        lanes,
-        state.previousLaneIds,
-        PREFIX_LANE,
-        timestamp,
-      );
-      deletions.push(...deletedLanes);
-
-      const deletedLogicalLanes = getDeletedSceneEntities(
-        logicalLanes,
-        state.previousLogicalLaneIds,
-        PREFIX_LOGICAL_LANE,
-        timestamp,
-      );
-      deletions.push(...deletedLogicalLanes);
-
       // Store lane boundaries in cache
       if (caching === true && updateFlags.laneBoundaries && laneBoundaryHash) {
         laneBoundaryCache.clear(); // keep only one lane boundary in cache
@@ -1000,7 +834,7 @@ export function activate(extensionContext: ExtensionContext): void {
     }
 
     return {
-      deletions,
+      deletions: [],
       entities: sceneEntities,
     };
   };
