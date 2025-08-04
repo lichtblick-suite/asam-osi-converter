@@ -21,20 +21,28 @@ export enum IndicatorLightSide {
   RearRight,
 }
 
+const BRAKE_LIGHT_DIMENSIONS: Vector3 = { x: 0.5, y: 0.25, z: 0.25 };
+const BRAKE_LIGHT_POSITION_Y_OFFSET = 0.25;
+
 const INDICATOR_ON_COLOR: Color = { r: 1.0, g: 0.8, b: 0.0, a: 0.7 };
 const INDICATOR_OFF_COLOR: Color = { r: 0.5, g: 0.5, b: 0.0, a: 0.7 };
+const INDICATOR_LIGHT_DIMENSIONS: Vector3 = { x: 0.25, y: 0.25, z: 0.25 };
+const INDICATOR_LIGHT_POSITION_Y_OFFSET = 0.125;
+const INDICATOR_LIGHT_POSITION_Z_OFFSET = 0.25;
 
 export const buildBrakeLight = (
   moving_obj: DeepRequired<MovingObject>,
   side: BrakeLightSide,
 ): CubePrimitive => {
-  const brakelightcolor =
+  const brakeLightColor =
     BRAKE_LIGHT_COLOR[moving_obj.vehicle_classification.light_state.brake_light_state];
 
   const directionMultiplier = side === BrakeLightSide.Left ? 1 : -1;
   const localAxisOffset: Vector3 = {
     x: -(moving_obj.base.dimension.length / 2),
-    y: directionMultiplier * (moving_obj.base.dimension.width / 2) - 0.25 * directionMultiplier,
+    y:
+      directionMultiplier * (moving_obj.base.dimension.width / 2) -
+      BRAKE_LIGHT_POSITION_Y_OFFSET * directionMultiplier,
     z: 0.0,
   };
   const baseOrientation = eulerToQuaternion(
@@ -51,10 +59,10 @@ export const buildBrakeLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    0.5,
-    0.25,
-    0.25,
-    brakelightcolor,
+    BRAKE_LIGHT_DIMENSIONS.x,
+    BRAKE_LIGHT_DIMENSIONS.y,
+    BRAKE_LIGHT_DIMENSIONS.z,
+    brakeLightColor,
   );
 };
 
@@ -93,9 +101,9 @@ export const buildIndicatorLight = (
         : -(moving_obj.base.dimension.length / 2),
     y:
       side === IndicatorLightSide.FrontLeft || side === IndicatorLightSide.RearLeft
-        ? moving_obj.base.dimension.width / 2 - 0.125
-        : -moving_obj.base.dimension.width / 2 + 0.125,
-    z: 0.25,
+        ? moving_obj.base.dimension.width / 2 - INDICATOR_LIGHT_POSITION_Y_OFFSET
+        : -moving_obj.base.dimension.width / 2 + INDICATOR_LIGHT_POSITION_Y_OFFSET,
+    z: INDICATOR_LIGHT_POSITION_Z_OFFSET,
   };
   const baseOrientation = eulerToQuaternion(
     moving_obj.base.orientation.roll,
@@ -111,9 +119,9 @@ export const buildIndicatorLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    0.25,
-    0.25,
-    0.25,
+    INDICATOR_LIGHT_DIMENSIONS.x,
+    INDICATOR_LIGHT_DIMENSIONS.y,
+    INDICATOR_LIGHT_DIMENSIONS.z,
     lightOn ? INDICATOR_ON_COLOR : INDICATOR_OFF_COLOR,
   );
 };
