@@ -10,6 +10,7 @@ import {
   TrafficLight_Classification_Color,
   Lane_Classification_Type,
   RoadMarking_Classification_Color,
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
 } from "@lichtblick/asam-osi-types";
 import { ColorCode, ColorCodeName } from "@utils/helper";
 
@@ -126,6 +127,42 @@ export const ROAD_MARKING_COLOR: Record<RoadMarking_Classification_Color, Color>
   [RoadMarking_Classification_Color.UNKNOWN]: ColorCode("gray"),
   [RoadMarking_Classification_Color.OTHER]: ColorCode("gray"),
   [RoadMarking_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
+};
+
+export const BRAKE_LIGHT_COLOR: Record<
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
+  Color
+> = {
+  [MovingObject_VehicleClassification_LightState_BrakeLightState.OFF]: {
+    r: 0.3,
+    g: 0.0,
+    b: 0.0,
+    a: 0.7,
+  },
+  [MovingObject_VehicleClassification_LightState_BrakeLightState.OTHER]: {
+    r: 0.3,
+    g: 0.0,
+    b: 0.0,
+    a: 0.7,
+  },
+  [MovingObject_VehicleClassification_LightState_BrakeLightState.UNKNOWN]: {
+    r: 0.3,
+    g: 0.0,
+    b: 0.0,
+    a: 0.7,
+  },
+  [MovingObject_VehicleClassification_LightState_BrakeLightState.NORMAL]: {
+    r: 0.7,
+    g: 0.0,
+    b: 0.0,
+    a: 0.7,
+  },
+  [MovingObject_VehicleClassification_LightState_BrakeLightState.STRONG]: {
+    r: 0.9,
+    g: 0.0,
+    b: 0.0,
+    a: 0.7,
+  },
 };
 
 //// STATIONARY OBJECT MAPPING ////
