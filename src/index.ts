@@ -60,6 +60,12 @@ import {
   PREFIX_LANE_BOUNDARY,
 } from "./lanes";
 import {
+  buildBrakeLight,
+  BrakeLightSide,
+  buildIndicatorLight,
+  IndicatorLightSide,
+} from "./lightstates";
+import {
   buildLogicalLaneEntity,
   buildLogicalLaneBoundaryEntity,
   PREFIX_LOGICAL_LANE,
@@ -148,13 +154,28 @@ function buildObjectEntity(
     ];
   }
 
+  function buildVehicleLights() {
+    if ("vehicle_classification" in osiObject) {
+      return [
+        buildBrakeLight(osiObject, BrakeLightSide.Left),
+        buildBrakeLight(osiObject, BrakeLightSide.Right),
+        buildIndicatorLight(osiObject, IndicatorLightSide.FrontLeft),
+        buildIndicatorLight(osiObject, IndicatorLightSide.FrontRight),
+        buildIndicatorLight(osiObject, IndicatorLightSide.RearLeft),
+        buildIndicatorLight(osiObject, IndicatorLightSide.RearRight),
+      ];
+    } else {
+      return [];
+    }
+  }
+
   return {
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(id_prefix, osiObject.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    cubes: [cube],
+    cubes: [cube, ...buildVehicleLights()],
     arrows: buildAxes(),
     metadata,
   };
