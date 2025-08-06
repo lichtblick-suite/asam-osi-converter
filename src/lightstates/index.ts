@@ -2,6 +2,7 @@ import { CubePrimitive, Vector3, type Color } from "@foxglove/schemas";
 import {
   MovingObject,
   MovingObject_VehicleClassification_LightState_IndicatorState,
+  Dimension3d,
 } from "@lichtblick/asam-osi-types";
 import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
 import { objectToCubePrimitive } from "@utils/marker";
@@ -21,14 +22,16 @@ export enum IndicatorLightSide {
   RearRight,
 }
 
-const BRAKE_LIGHT_DIMENSIONS: Vector3 = { x: 0.5, y: 0.25, z: 0.25 };
-const BRAKE_LIGHT_POSITION_Y_OFFSET = 0.25;
+const BRAKE_LIGHT_DIMENSIONS: Dimension3d = { width: 0.5, length: 0.25, height: 0.25 };
+const BRAKE_LIGHT_POSITION_X_OFFSET = BRAKE_LIGHT_DIMENSIONS.length! / 2;
+const BRAKE_LIGHT_POSITION_Y_OFFSET = BRAKE_LIGHT_DIMENSIONS.width! / 2;
 
 const INDICATOR_ON_COLOR: Color = { r: 1.0, g: 0.8, b: 0.0, a: 0.7 };
 const INDICATOR_OFF_COLOR: Color = { r: 0.5, g: 0.5, b: 0.0, a: 0.7 };
-const INDICATOR_LIGHT_DIMENSIONS: Vector3 = { x: 0.25, y: 0.25, z: 0.25 };
-const INDICATOR_LIGHT_POSITION_Y_OFFSET = 0.125;
-const INDICATOR_LIGHT_POSITION_Z_OFFSET = 0.25;
+const INDICATOR_LIGHT_DIMENSIONS: Dimension3d = { width: 0.25, length: 0.25, height: 0.25 };
+const INDICATOR_LIGHT_POSITION_X_OFFSET = INDICATOR_LIGHT_DIMENSIONS.length! / 2;
+const INDICATOR_LIGHT_POSITION_Y_OFFSET = INDICATOR_LIGHT_DIMENSIONS.width! / 2;
+const INDICATOR_LIGHT_POSITION_Z_OFFSET = BRAKE_LIGHT_DIMENSIONS.height!;
 
 export const buildBrakeLight = (
   moving_obj: DeepRequired<MovingObject>,
@@ -39,7 +42,7 @@ export const buildBrakeLight = (
 
   const directionMultiplier = side === BrakeLightSide.Left ? 1 : -1;
   const localAxisOffset: Vector3 = {
-    x: -(moving_obj.base.dimension.length / 2),
+    x: -(moving_obj.base.dimension.length / 2) + BRAKE_LIGHT_POSITION_X_OFFSET,
     y:
       directionMultiplier * (moving_obj.base.dimension.width / 2) -
       BRAKE_LIGHT_POSITION_Y_OFFSET * directionMultiplier,
@@ -59,9 +62,9 @@ export const buildBrakeLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    BRAKE_LIGHT_DIMENSIONS.x,
-    BRAKE_LIGHT_DIMENSIONS.y,
-    BRAKE_LIGHT_DIMENSIONS.z,
+    BRAKE_LIGHT_DIMENSIONS.width!,
+    BRAKE_LIGHT_DIMENSIONS.length!,
+    BRAKE_LIGHT_DIMENSIONS.height!,
     brakeLightColor,
   );
 };
@@ -97,8 +100,8 @@ export const buildIndicatorLight = (
   const localAxisOffset: Vector3 = {
     x:
       side === IndicatorLightSide.FrontLeft || side === IndicatorLightSide.FrontRight
-        ? moving_obj.base.dimension.length / 2
-        : -(moving_obj.base.dimension.length / 2),
+        ? moving_obj.base.dimension.length / 2 - INDICATOR_LIGHT_POSITION_X_OFFSET
+        : -(moving_obj.base.dimension.length / 2) + INDICATOR_LIGHT_POSITION_X_OFFSET,
     y:
       side === IndicatorLightSide.FrontLeft || side === IndicatorLightSide.RearLeft
         ? moving_obj.base.dimension.width / 2 - INDICATOR_LIGHT_POSITION_Y_OFFSET
@@ -119,9 +122,9 @@ export const buildIndicatorLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    INDICATOR_LIGHT_DIMENSIONS.x,
-    INDICATOR_LIGHT_DIMENSIONS.y,
-    INDICATOR_LIGHT_DIMENSIONS.z,
+    INDICATOR_LIGHT_DIMENSIONS.width!,
+    INDICATOR_LIGHT_DIMENSIONS.length!,
+    INDICATOR_LIGHT_DIMENSIONS.height!,
     lightOn ? INDICATOR_ON_COLOR : INDICATOR_OFF_COLOR,
   );
 };
