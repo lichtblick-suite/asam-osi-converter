@@ -13,3 +13,13 @@ Another option to create traces is the OpenPASS [gt-gen-simlator](https://gitlab
 **File Name:** MovingHostWithStopLine.mcap
 
 With this MCAP you can simply test stop line road marking.
+
+### Moving Host with 3D Model
+
+**File Name:** MovingHostWith3DModel.mcap
+
+With this MCAP you can test 3D model visualization of moving objects. To do test properly, you should copy the `models/MilkTruck.glTF` file to `/opt/models/vehicles/MilkTruck.glTF` in your file system. Also don't forget to start Lichtblick with `--allow-file-access-from-files` argument:
+
+```
+lichtblick --allow-file-access-from-files
+```
