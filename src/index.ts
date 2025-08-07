@@ -154,8 +154,12 @@ function buildObjectEntity(
     ];
   }
 
+  function isMovingObject(obj: MovingObject | StationaryObject): obj is MovingObject {
+    return "vehicle_classification" in obj && !!obj.vehicle_classification?.light_state;
+  }
+
   function buildVehicleLights() {
-    if ("vehicle_classification" in osiObject) {
+    if (isMovingObject(osiObject)) {
       return [
         buildBrakeLight(osiObject, BrakeLightSide.Left),
         buildBrakeLight(osiObject, BrakeLightSide.Right),
