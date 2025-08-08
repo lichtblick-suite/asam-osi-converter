@@ -1,4 +1,5 @@
 import {
+  CubePrimitive,
   LineType,
   ModelPrimitive,
   SceneEntityDeletionType,
@@ -179,19 +180,34 @@ function buildObjectEntity(
     ];
   }
 
+  function hasBrakeLightState(obj: MovingObject | StationaryObject): obj is MovingObject {
+    return (
+      "vehicle_classification" in obj &&
+      obj.vehicle_classification?.light_state?.brake_light_state != undefined
+    );
+  }
+
+  function hasIndicatorState(obj: MovingObject | StationaryObject): obj is MovingObject {
+    return (
+      "vehicle_classification" in obj &&
+      obj.vehicle_classification?.light_state?.indicator_state != undefined
+    );
+  }
+
   function buildVehicleLights() {
-    if ("vehicle_classification" in osiObject) {
-      return [
-        buildBrakeLight(osiObject, BrakeLightSide.Left),
-        buildBrakeLight(osiObject, BrakeLightSide.Right),
-        buildIndicatorLight(osiObject, IndicatorLightSide.FrontLeft),
-        buildIndicatorLight(osiObject, IndicatorLightSide.FrontRight),
-        buildIndicatorLight(osiObject, IndicatorLightSide.RearLeft),
-        buildIndicatorLight(osiObject, IndicatorLightSide.RearRight),
-      ];
-    } else {
-      return [];
+    const lights: CubePrimitive[] = [];
+
+    if (hasBrakeLightState(osiObject)) {
+      lights.push(buildBrakeLight(osiObject, BrakeLightSide.Left));
+      lights.push(buildBrakeLight(osiObject, BrakeLightSide.Right));
     }
+    if (hasIndicatorState(osiObject)) {
+      lights.push(buildIndicatorLight(osiObject, IndicatorLightSide.FrontLeft));
+      lights.push(buildIndicatorLight(osiObject, IndicatorLightSide.FrontRight));
+      lights.push(buildIndicatorLight(osiObject, IndicatorLightSide.RearLeft));
+      lights.push(buildIndicatorLight(osiObject, IndicatorLightSide.RearRight));
+    }
+    return lights;
   }
 
   function getUpdatedModelPrimitives(): ModelPrimitive[] {
