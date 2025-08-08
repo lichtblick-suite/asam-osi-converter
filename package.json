@@ -31,7 +31,7 @@
     "@babel/preset-typescript": "^7.23.3",
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
-    "@foxglove/schemas": "^1.7.2",
+    "@foxglove/schemas": "^1.6.2",
     "@lichtblick/asam-osi-types": "^3.7.0",
     "@lichtblick/eslint-plugin": "^1.0.2",
     "@lichtblick/suite": "^1.5.0",
