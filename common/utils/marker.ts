@@ -692,7 +692,8 @@ export function objectToModelPrimitive(
   length: number,
   height: number,
   color: Color,
-  data: Uint8Array,
+  url = "",
+  data: Uint8Array = new Uint8Array(),
 ): ModelPrimitive {
   return {
     pose: {
@@ -710,8 +711,8 @@ export function objectToModelPrimitive(
     },
     color,
     override_color: false,
-    url: "",
+    url,
     media_type: "model/gltf-binary",
-    data,
+    data: url.length === 0 ? data : new Uint8Array(),
   };
 }

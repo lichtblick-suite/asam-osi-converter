@@ -40,7 +40,8 @@ export const buildTrafficLightModel = (
     item.base.dimension.length,
     item.base.dimension.height,
     color,
-    modelCacheMap.get(mapKey)!,
+    "",
+    modelCacheMap.get(mapKey),
   );
 };
 
