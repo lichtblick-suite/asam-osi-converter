@@ -23,3 +23,5 @@ With this MCAP you can test 3D model visualization of moving objects. To do test
 ```
 lichtblick --allow-file-access-from-files
 ```
+
+[Milk Truck](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck) model has taken from [Khronos glTF Examples](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0).

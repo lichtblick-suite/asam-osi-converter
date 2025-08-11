@@ -40,7 +40,7 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
-import { ColorCode } from "@utils/helper";
+import { ColorCode, convertPathToFileUrl } from "@utils/helper";
 import {
   objectToCubePrimitive,
   pointListToTriangleListPrimitive,
@@ -110,7 +110,7 @@ function createModelPrimitive(movingObject: DeepRequired<MovingObject>): ModelPr
     1,
     1,
     { r: 0, g: 0, b: 0, a: 0 },
-    "file://" + movingObject.model_reference, // Should be absolute path
+    convertPathToFileUrl(movingObject.model_reference), // Should be absolute path
   );
   return model_primitive;
 }
@@ -492,7 +492,7 @@ function buildSceneEntities(
       ];
 
       const modelPathKey = obj.model_reference;
-      if (!modelCache.has(modelPathKey) && modelPathKey.startsWith("/")) {
+      if (!modelCache.has(modelPathKey) && convertPathToFileUrl(modelPathKey) !== "") {
         modelCache.set(modelPathKey, createModelPrimitive(obj));
       }
 

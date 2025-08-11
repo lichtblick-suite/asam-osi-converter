@@ -38,3 +38,30 @@ export function convertDataURIToBinary(dataURI: string): Uint8Array {
 }
 
 export type ColorCodeName = { code: Color; name: string };
+
+export function convertPathToFileUrl(inputPath: string): string {
+  let normalizedPath = inputPath;
+
+  const isWindows = /[a-zA-Z]:\\|\\{2}/.test(inputPath);
+
+  if (isWindows) {
+    // Convert '\' to '/'
+    normalizedPath = normalizedPath.replace(/\\/g, "/");
+
+    if (/^\/\/[^/]+/.test(normalizedPath)) {
+      return "file:" + encodeURI(normalizedPath);
+    }
+
+    if (/^[a-zA-Z]:\//.test(normalizedPath)) {
+      return "file:///" + encodeURI(normalizedPath);
+    }
+
+    return "";
+  }
+
+  if (normalizedPath.startsWith("/")) {
+    return "file://" + encodeURI(normalizedPath);
+  }
+
+  return "";
+}
