@@ -1,6 +1,7 @@
 import {
   CubePrimitive,
   LineType,
+  ModelPrimitive,
   SceneEntityDeletionType,
   SceneUpdate,
   TextPrimitive,
@@ -39,8 +40,12 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
-import { ColorCode } from "@utils/helper";
-import { objectToCubePrimitive, pointListToTriangleListPrimitive } from "@utils/marker";
+import { ColorCode, convertPathToFileUrl } from "@utils/helper";
+import {
+  objectToCubePrimitive,
+  pointListToTriangleListPrimitive,
+  objectToModelPrimitive,
+} from "@utils/marker";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
 
@@ -89,7 +94,30 @@ type Config = {
   showAxes: boolean;
   showPhysicalLanes: boolean;
   showLogicalLanes: boolean;
+  showBoundingBox: boolean;
+  show3dModels: boolean;
+  defaultModelPath: string;
 };
+
+function createModelPrimitive(
+  movingObject: DeepRequired<MovingObject>,
+  modelFullPath: string,
+): ModelPrimitive {
+  const model_primitive = objectToModelPrimitive(
+    movingObject.base.position.x,
+    movingObject.base.position.y,
+    movingObject.base.position.z - movingObject.base.dimension.height / 2,
+    movingObject.base.orientation.roll,
+    movingObject.base.orientation.pitch,
+    movingObject.base.orientation.yaw,
+    1,
+    1,
+    1,
+    { r: 0, g: 0, b: 0, a: 0 },
+    convertPathToFileUrl(modelFullPath),
+  );
+  return model_primitive;
+}
 
 function buildObjectEntity(
   osiObject: DeepRequired<MovingObject> | DeepRequired<StationaryObject>,
@@ -98,6 +126,7 @@ function buildObjectEntity(
   frame_id: string,
   time: Time,
   config: Config | undefined,
+  modelCache: Map<string, ModelPrimitive>,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
   const cube = objectToCubePrimitive(
@@ -185,15 +214,40 @@ function buildObjectEntity(
     return lights;
   }
 
+  function getUpdatedModelPrimitives(): ModelPrimitive[] {
+    if (config != null && config.show3dModels) {
+      const model_path = config.defaultModelPath + osiObject.model_reference;
+      const model_primitive = modelCache.get(model_path);
+      if (model_primitive == undefined) {
+        return [];
+      }
+
+      model_primitive.pose.position.x = osiObject.base.position.x;
+      model_primitive.pose.position.y = osiObject.base.position.y;
+      model_primitive.pose.position.z =
+        osiObject.base.position.z - osiObject.base.dimension.height / 2;
+      model_primitive.pose.orientation = eulerToQuaternion(
+        osiObject.base.orientation.roll,
+        osiObject.base.orientation.pitch,
+        osiObject.base.orientation.yaw,
+      );
+
+      return [model_primitive];
+    }
+
+    return [];
+  }
+
   return {
     timestamp: time,
     frame_id,
     id: generateSceneEntityId(id_prefix, osiObject.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    cubes: [cube, ...buildVehicleLights()],
+    cubes: config != null && config.showBoundingBox ? [cube, ...buildVehicleLights()] : [],
     arrows: buildAxes(),
     metadata,
+    models: getUpdatedModelPrimitives(),
   };
 }
 
@@ -426,6 +480,7 @@ function buildSceneEntities(
   osiGroundTruth: DeepRequired<GroundTruth>,
   updateFlags: OSISceneEntitesUpdate,
   config: Config | undefined,
+  modelCache: Map<string, ModelPrimitive>,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
 
@@ -440,6 +495,16 @@ function buildSceneEntities(
           value: MovingObject_Type[obj.type],
         },
       ];
+
+      const modelPathKey = config?.defaultModelPath + obj.model_reference;
+      if (
+        !modelCache.has(modelPathKey) &&
+        obj.model_reference.length !== 0 &&
+        convertPathToFileUrl(modelPathKey)
+      ) {
+        modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
+      }
+
       if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
         metadata = [...metadata, ...buildVehicleMetadata(obj.vehicle_classification)];
         entity = buildObjectEntity(
@@ -449,6 +514,7 @@ function buildSceneEntities(
           ROOT_FRAME,
           time,
           config,
+          modelCache,
           metadata,
         );
       } else {
@@ -466,6 +532,7 @@ function buildSceneEntities(
           ROOT_FRAME,
           time,
           config,
+          modelCache,
           metadata,
         );
       }
@@ -486,6 +553,7 @@ function buildSceneEntities(
         ROOT_FRAME,
         time,
         config,
+        modelCache,
         metadata,
       );
     });
@@ -778,6 +846,7 @@ export function activate(extensionContext: ExtensionContext): void {
   let groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>(); // Weakly stores scene entities for each individual OSI ground truth frame
   const laneBoundaryCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
   const laneCache = new Map<string, PartialSceneEntity[]>(); // Note: A maximum of one entry is kept in this cache.
+  const modelCache = new Map<string, ModelPrimitive>(); // This cache will hold the first time loaded models with model path key
 
   const state = {
     previousMovingObjectIds: new Set<number>(),
@@ -814,6 +883,7 @@ export function activate(extensionContext: ExtensionContext): void {
       // Reset caches if configuration changed
       laneBoundaryCache.clear();
       laneCache.clear();
+      modelCache.clear();
       groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>();
     }
     state.previousConfig = config;
@@ -929,7 +999,7 @@ export function activate(extensionContext: ExtensionContext): void {
         logicalLaneBoundaries,
         lanes,
         logicalLanes,
-      } = buildSceneEntities(osiGroundTruthReq, updateFlags, config);
+      } = buildSceneEntities(osiGroundTruthReq, updateFlags, config, modelCache);
 
       // Concatenate newly generated and cached scene entities
       sceneEntities = [
@@ -1078,6 +1148,22 @@ export function activate(extensionContext: ExtensionContext): void {
               input: "boolean",
               value: config?.showLogicalLanes,
             },
+            showBoundingBox: {
+              label: "Show Bounding Box",
+              input: "boolean",
+              value: config?.showBoundingBox,
+            },
+            show3dModels: {
+              label: "Show 3D Models",
+              input: "boolean",
+              value: config?.show3dModels,
+            },
+            defaultModelPath: {
+              label: "Default 3D Model Path",
+              input: "autocomplete",
+              value: config?.defaultModelPath,
+              items: [],
+            },
           },
         }),
         handler: (action, config: Config | undefined) => {
@@ -1096,12 +1182,24 @@ export function activate(extensionContext: ExtensionContext): void {
           if (action.action === "update" && action.payload.path[2] === "showLogicalLanes") {
             config.showLogicalLanes = action.payload.value as boolean;
           }
+          if (action.action === "update" && action.payload.path[2] === "showBoundingBox") {
+            config.showBoundingBox = action.payload.value as boolean;
+          }
+          if (action.action === "update" && action.payload.path[2] === "show3dModels") {
+            config.show3dModels = action.payload.value as boolean;
+          }
+          if (action.action === "update" && action.payload.path[2] === "defaultModelPath") {
+            config.defaultModelPath = action.payload.value as string;
+          }
         },
         defaultConfig: {
           caching: true,
           showAxes: true,
           showPhysicalLanes: true,
           showLogicalLanes: false,
+          showBoundingBox: true,
+          show3dModels: false,
+          defaultModelPath: "/opt/models/vehicles/",
         },
       }),
     },
