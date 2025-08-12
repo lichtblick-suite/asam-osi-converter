@@ -1156,8 +1156,9 @@ export function activate(extensionContext: ExtensionContext): void {
             },
             defaultModelPath: {
               label: "Default 3D Model Path",
-              input: "string",
+              input: "autocomplete",
               value: config?.defaultModelPath,
+              items: [],
             },
           },
         }),
