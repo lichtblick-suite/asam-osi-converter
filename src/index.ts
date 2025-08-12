@@ -497,7 +497,11 @@ function buildSceneEntities(
       ];
 
       const modelPathKey = config?.defaultModelPath + obj.model_reference;
-      if (!modelCache.has(modelPathKey) && convertPathToFileUrl(modelPathKey)) {
+      if (
+        !modelCache.has(modelPathKey) &&
+        obj.model_reference.length !== 0 &&
+        convertPathToFileUrl(modelPathKey)
+      ) {
         modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
       }
 

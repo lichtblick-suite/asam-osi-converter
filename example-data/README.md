@@ -18,10 +18,11 @@ With this MCAP you can simply test stop line road marking.
 
 **File Name:** MovingHostWith3DModel.mcap
 
-With this MCAP you can test 3D model visualization of moving objects. To do test properly, you should copy the `models/MilkTruck.glTF` file to `/opt/models/vehicles/MilkTruck.glTF` in your file system or you should just change the base path from "Default 3D Model Path" setting in 3D panel. Also don't forget to start Lichtblick with `--allow-file-access-from-files` argument:
+The 3D model visualization of moving objects can be tested with this MCAP. To do so, copy the `models/MilkTruck.glTF` file to `/opt/models/vehicles/MilkTruck.glTF` or change the base path of the "Default 3D Model Path" setting in the Lichtblick 3D panel.
+Start Lichtblick with `--allow-file-access-from-files` argument:
 
 ```
 lichtblick --allow-file-access-from-files
 ```
 
-[Milk Truck](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck) model has taken from [Khronos glTF Examples](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0).
+The [Milk Truck](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/CesiumMilkTruck) model has been taken from [Khronos glTF Examples](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0).
