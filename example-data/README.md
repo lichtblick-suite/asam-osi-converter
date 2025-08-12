@@ -18,7 +18,7 @@ With this MCAP you can simply test stop line road marking.
 
 **File Name:** MovingHostWith3DModel.mcap
 
-With this MCAP you can test 3D model visualization of moving objects. To do test properly, you should copy the `models/MilkTruck.glTF` file to `/opt/models/vehicles/MilkTruck.glTF` in your file system. Also don't forget to start Lichtblick with `--allow-file-access-from-files` argument:
+With this MCAP you can test 3D model visualization of moving objects. To do test properly, you should copy the `models/MilkTruck.glTF` file to `/opt/models/vehicles/MilkTruck.glTF` in your file system or you should just change the base path from "Default 3D Model Path" setting in 3D panel. Also don't forget to start Lichtblick with `--allow-file-access-from-files` argument:
 
 ```
 lichtblick --allow-file-access-from-files

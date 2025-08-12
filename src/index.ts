@@ -96,9 +96,13 @@ type Config = {
   showLogicalLanes: boolean;
   showBoundingBox: boolean;
   show3dModels: boolean;
+  defaultModelPath: string;
 };
 
-function createModelPrimitive(movingObject: DeepRequired<MovingObject>): ModelPrimitive {
+function createModelPrimitive(
+  movingObject: DeepRequired<MovingObject>,
+  modelFullPath: string,
+): ModelPrimitive {
   const model_primitive = objectToModelPrimitive(
     movingObject.base.position.x,
     movingObject.base.position.y,
@@ -110,7 +114,7 @@ function createModelPrimitive(movingObject: DeepRequired<MovingObject>): ModelPr
     1,
     1,
     { r: 0, g: 0, b: 0, a: 0 },
-    convertPathToFileUrl(movingObject.model_reference), // Should be absolute path
+    convertPathToFileUrl(modelFullPath),
   );
   return model_primitive;
 }
@@ -212,7 +216,8 @@ function buildObjectEntity(
 
   function getUpdatedModelPrimitives(): ModelPrimitive[] {
     if (config != null && config.show3dModels) {
-      const model_primitive = modelCache.get(osiObject.model_reference);
+      const model_path = config.defaultModelPath + osiObject.model_reference;
+      const model_primitive = modelCache.get(model_path);
       if (model_primitive == undefined) {
         return [];
       }
@@ -491,9 +496,9 @@ function buildSceneEntities(
         },
       ];
 
-      const modelPathKey = obj.model_reference;
-      if (!modelCache.has(modelPathKey) && convertPathToFileUrl(modelPathKey) !== "") {
-        modelCache.set(modelPathKey, createModelPrimitive(obj));
+      const modelPathKey = config?.defaultModelPath + obj.model_reference;
+      if (!modelCache.has(modelPathKey) && convertPathToFileUrl(modelPathKey)) {
+        modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
       }
 
       if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
@@ -874,6 +879,7 @@ export function activate(extensionContext: ExtensionContext): void {
       // Reset caches if configuration changed
       laneBoundaryCache.clear();
       laneCache.clear();
+      modelCache.clear();
       groundTruthFrameCache = new WeakMap<GroundTruth, PartialSceneEntity[]>();
     }
     state.previousConfig = config;
@@ -1148,6 +1154,11 @@ export function activate(extensionContext: ExtensionContext): void {
               input: "boolean",
               value: config?.show3dModels,
             },
+            defaultModelPath: {
+              label: "Default 3D Model Path",
+              input: "string",
+              value: config?.defaultModelPath,
+            },
           },
         }),
         handler: (action, config: Config | undefined) => {
@@ -1172,6 +1183,9 @@ export function activate(extensionContext: ExtensionContext): void {
           if (action.action === "update" && action.payload.path[2] === "show3dModels") {
             config.show3dModels = action.payload.value as boolean;
           }
+          if (action.action === "update" && action.payload.path[2] === "defaultModelPath") {
+            config.defaultModelPath = action.payload.value as string;
+          }
         },
         defaultConfig: {
           caching: true,
@@ -1180,6 +1194,7 @@ export function activate(extensionContext: ExtensionContext): void {
           showLogicalLanes: false,
           showBoundingBox: true,
           show3dModels: false,
+          defaultModelPath: "/opt/models/vehicles/",
         },
       }),
     },
