@@ -1,3 +1,6 @@
+# only use yarn install
+package-lock.json
+
 # vs code
 .vscode/
 
