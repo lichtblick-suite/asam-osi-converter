@@ -51,14 +51,43 @@ describe("OSI Visualizer: Message Converter", () => {
       roll: 0,
     },
   };
+  const mockBaseMoving = {
+    dimension: {
+      width: 1,
+      height: 1,
+      length: 1,
+    },
+    position: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    acceleration: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    velocity: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    orientation: {
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+    },
+  };
   const mockMovingObject = {
     id: {
       value: 0,
     },
-    base: mockBase,
+    base: mockBaseMoving,
     type: {
       value: MovingObject_Type.VEHICLE,
     },
+    assigned_lane_id: [0],
+    model_reference: "",
     vehicle_attributes: {
       bbcenter_to_rear: {
         x: 0,
