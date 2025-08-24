@@ -494,6 +494,22 @@ function buildSceneEntities(
           key: "moving_object_type",
           value: MovingObject_Type[obj.type],
         },
+        {
+          key: "acceleration",
+          value: `${obj.base.acceleration.x}, ${obj.base.acceleration.y}, ${obj.base.acceleration.z}`,
+        },
+        {
+          key: "velocity",
+          value: `${obj.base.velocity.x}, ${obj.base.velocity.y}, ${obj.base.velocity.z}`,
+        },
+        {
+          // Might be multiple if the object is switching lanes or moving from one lane into another following lane
+          key: "assigned_lane_id",
+          value:
+            obj.assigned_lane_id.length > 0
+              ? obj.assigned_lane_id.map((identifier) => identifier.value).join(",")
+              : "",
+        },
       ];
 
       const modelPathKey = config?.defaultModelPath + obj.model_reference;

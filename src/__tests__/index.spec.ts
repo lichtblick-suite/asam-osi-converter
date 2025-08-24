@@ -1,3 +1,4 @@
+import { KeyValuePair, SceneEntity, SceneUpdate } from "@foxglove/schemas";
 import {
   GroundTruth,
   Lane,
@@ -51,14 +52,43 @@ describe("OSI Visualizer: Message Converter", () => {
       roll: 0,
     },
   };
+  const mockBaseMoving = {
+    dimension: {
+      width: 1,
+      height: 1,
+      length: 1,
+    },
+    position: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    acceleration: {
+      x: 20,
+      y: 20,
+      z: 0,
+    },
+    velocity: {
+      x: 30,
+      y: 40,
+      z: 0,
+    },
+    orientation: {
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+    },
+  };
   const mockMovingObject = {
     id: {
       value: 0,
     },
-    base: mockBase,
+    base: mockBaseMoving,
     type: {
       value: MovingObject_Type.VEHICLE,
     },
+    assigned_lane_id: [99, 100],
+    model_reference: "",
     vehicle_attributes: {
       bbcenter_to_rear: {
         x: 0,
@@ -182,6 +212,48 @@ describe("OSI Visualizer: Message Converter", () => {
     const result = messageConverterArgs.converter(mockMessageData);
     expect(result.deletions).toBeDefined();
     expect(result.entities).toBeDefined();
+  });
+
+  it("expect correct metadata for moving object", () => {
+    activate(mockExtensionContext);
+
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access,
+   @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+    const messageConverterArgs = mockRegisterMessageConverter.mock.calls[0][0];
+    const result = messageConverterArgs.converter(mockMessageData) as SceneUpdate;
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access,
+   @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
+    const vehicleEntity = result.entities.find((entity: SceneEntity) =>
+      entity.metadata.some((m: KeyValuePair) => m.key === "moving_object_type"),
+    );
+    expect(vehicleEntity).toBeDefined();
+
+    const metadata = vehicleEntity!.metadata;
+    expect(metadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "acceleration",
+          value: `${mockMovingObject.base.acceleration.x}, ${mockMovingObject.base.acceleration.y}, ${mockMovingObject.base.acceleration.z}`,
+        }),
+      ]),
+    );
+    expect(metadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "velocity",
+          value: `${mockMovingObject.base.velocity.x}, ${mockMovingObject.base.velocity.y}, ${mockMovingObject.base.velocity.z}`,
+        }),
+      ]),
+    );
+    expect(metadata).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "assigned_lane_id",
+          value: mockMovingObject.assigned_lane_id.map((id) => id.value).join(","),
+        }),
+      ]),
+    );
   });
 });
 
