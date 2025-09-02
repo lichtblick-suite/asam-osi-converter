@@ -384,8 +384,10 @@ export function buildMovingObjectMetadata(
     {
       key: "assigned_lane_id",
       value:
-        moving_object.assigned_lane_id.length > 0
-          ? moving_object.assigned_lane_id.map((id) => id.value).join(",")
+        moving_object.moving_object_classification.assigned_lane_id.length > 0
+          ? moving_object.moving_object_classification.assigned_lane_id
+              .map((id) => id.value)
+              .join(",")
           : "",
     },
   ];
