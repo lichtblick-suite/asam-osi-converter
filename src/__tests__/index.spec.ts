@@ -85,7 +85,6 @@ describe("OSI Visualizer: Message Converter", () => {
     type: {
       value: MovingObject_Type.VEHICLE,
     },
-    assigned_lane_id: [99, 100],
     model_reference: "",
     vehicle_attributes: {
       bbcenter_to_rear: {
@@ -93,6 +92,9 @@ describe("OSI Visualizer: Message Converter", () => {
         y: 0,
         z: 0,
       },
+    },
+    moving_object_classification: {
+      assigned_lane_id: [99, 100],
     },
     vehicle_classification: {
       type: {
@@ -228,7 +230,9 @@ describe("OSI Visualizer: Moving Objects", () => {
         z: 0,
       },
     },
-    assigned_lane_id: [{ value: 99 }, { value: 100 }],
+    moving_object_classification: {
+      assigned_lane_id: [99, 100],
+    },
     vehicle_classification: {
       type: 5,
       light_state: {
@@ -256,7 +260,9 @@ describe("OSI Visualizer: Moving Objects", () => {
         }),
         expect.objectContaining({
           key: "assigned_lane_id",
-          value: input.assigned_lane_id.map((id) => id.value).join(","),
+          value: input.moving_object_classification.assigned_lane_id
+            .map((id) => id.value)
+            .join(","),
         }),
         expect.objectContaining({
           key: "type",
