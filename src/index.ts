@@ -21,7 +21,6 @@ import {
   LaneBoundary_BoundaryPoint,
   MovingObject,
   MovingObject_Type,
-  MovingObject_VehicleClassification,
   MovingObject_VehicleClassification_Type,
   SensorData,
   SensorView,
@@ -369,23 +368,47 @@ const lightStateEnumStringMaps: IlightStateEnumStringMaps = {
   generic_light_state: MovingObject_VehicleClassification_LightState_GenericLightState,
 };
 
-export function buildVehicleMetadata(
-  vehicle_classification: DeepRequired<MovingObject_VehicleClassification>,
+export function buildMovingObjectMetadata(
+  moving_object: DeepRequired<MovingObject>,
 ): KeyValuePair[] {
-  return [
+  const metadata: KeyValuePair[] = [
+    { key: "moving_object_type", value: MovingObject_Type[moving_object.type] },
     {
-      key: "type",
-      value: MovingObject_VehicleClassification_Type[vehicle_classification.type],
+      key: "acceleration",
+      value: `${moving_object.base.acceleration.x}, ${moving_object.base.acceleration.y}, ${moving_object.base.acceleration.z}`,
     },
-    ...Object.entries(vehicle_classification.light_state ?? {}).map(([key, value]) => {
-      return {
-        key: `light_state.${key}`,
-        value:
-          lightStateEnumStringMaps[key]?.[value] ??
-          lightStateEnumStringMaps.generic_light_state[value]!,
-      };
-    }),
+    {
+      key: "velocity",
+      value: `${moving_object.base.velocity.x}, ${moving_object.base.velocity.y}, ${moving_object.base.velocity.z}`,
+    },
+    {
+      key: "assigned_lane_id",
+      value:
+        moving_object.moving_object_classification.assigned_lane_id.length > 0
+          ? moving_object.moving_object_classification.assigned_lane_id
+              .map((id) => id.value)
+              .join(",")
+          : "",
+    },
   ];
+
+  if (moving_object.type === MovingObject_Type.VEHICLE) {
+    metadata.push(
+      {
+        key: "type",
+        value: MovingObject_VehicleClassification_Type[moving_object.vehicle_classification.type],
+      },
+      ...Object.entries(moving_object.vehicle_classification.light_state).map(([key, value]) => {
+        return {
+          key: `light_state.${key}`,
+          value:
+            lightStateEnumStringMaps[key]?.[value] ??
+            lightStateEnumStringMaps.generic_light_state[value]!,
+        };
+      }),
+    );
+  }
+  return metadata;
 }
 
 export function buildStationaryMetadata(obj: DeepRequired<StationaryObject>): KeyValuePair[] {
@@ -489,12 +512,7 @@ function buildSceneEntities(
   if (updateFlags.movingObjects) {
     movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
       let entity;
-      let metadata = [
-        {
-          key: "moving_object_type",
-          value: MovingObject_Type[obj.type],
-        },
-      ];
+      const metadata = buildMovingObjectMetadata(obj);
 
       const modelPathKey = config?.defaultModelPath + obj.model_reference;
       if (
@@ -506,7 +524,6 @@ function buildSceneEntities(
       }
 
       if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
-        metadata = [...metadata, ...buildVehicleMetadata(obj.vehicle_classification)];
         entity = buildObjectEntity(
           obj,
           HOST_OBJECT_COLOR,
@@ -518,13 +535,7 @@ function buildSceneEntities(
           metadata,
         );
       } else {
-        //const objectType = MovingObject_Type[obj.type];
         const objectColor = MOVING_OBJECT_COLOR[obj.type];
-        const vehicleMetadata =
-          obj.type === MovingObject_Type.VEHICLE
-            ? buildVehicleMetadata(obj.vehicle_classification)
-            : [];
-        metadata = [...metadata, ...vehicleMetadata];
         entity = buildObjectEntity(
           obj,
           objectColor,
