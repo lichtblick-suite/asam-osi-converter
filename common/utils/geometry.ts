@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { Quaternion, Vector3 } from "@foxglove/schemas";
 
 export function eulerToQuaternion(roll: number, pitch: number, yaw: number): Quaternion {
@@ -18,41 +19,50 @@ export function eulerToQuaternion(roll: number, pitch: number, yaw: number): Qua
   return { x, y, z, w };
 }
 
-export function invertQuaternion(quaternion: Quaternion): Quaternion {
-  return { x: -quaternion.x, y: -quaternion.y, z: -quaternion.z, w: quaternion.w };
+
+export function invertQuaternion(q: Quaternion): Quaternion {
+  const normSquared = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+  if (normSquared === 0) {
+    throw new Error("Cannot invert a zero quaternion.");
+  }
+  const invNormSquared = 1 / normSquared;
+  return {
+    x: -q.x * invNormSquared,
+    y: -q.y * invNormSquared,
+    z: -q.z * invNormSquared,
+    w: q.w * invNormSquared,
+  };
 }
 
-export function quaternionMultiplication(
-  quaternion_lhs: Quaternion,
-  quaternion_rhs: Quaternion,
-): Quaternion {
-  const w =
-    quaternion_rhs.w * quaternion_lhs.w -
-    quaternion_rhs.x * quaternion_lhs.x -
-    quaternion_rhs.y * quaternion_lhs.y -
-    quaternion_rhs.z * quaternion_lhs.z;
-  const x =
-    quaternion_rhs.w * quaternion_lhs.x +
-    quaternion_rhs.x * quaternion_lhs.w -
-    quaternion_rhs.y * quaternion_lhs.z +
-    quaternion_rhs.z * quaternion_lhs.y;
-  const y =
-    quaternion_rhs.w * quaternion_lhs.y +
-    quaternion_rhs.x * quaternion_lhs.z +
-    quaternion_rhs.y * quaternion_lhs.w -
-    quaternion_rhs.z * quaternion_lhs.x;
-  const z =
-    quaternion_rhs.w * quaternion_lhs.z -
-    quaternion_rhs.x * quaternion_lhs.y +
-    quaternion_rhs.y * quaternion_lhs.x +
-    quaternion_rhs.z * quaternion_lhs.w;
-  return { x, y, z, w };
+export function quaternionMultiplication(a: Quaternion, b: Quaternion): Quaternion {
+    return {
+        x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+        y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+        z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+        w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+    };
 }
 
 export function pointRotationByQuaternion(point: Vector3, quaternion: Quaternion): Vector3 {
-  const r: Quaternion = { w: 0, x: point.x, y: point.y, z: point.z };
-  const q_conj = invertQuaternion(quaternion);
-  const tmp = quaternionMultiplication(quaternion, r);
-  const result = quaternionMultiplication(tmp, q_conj);
-  return { x: result.x, y: result.y, z: result.z };
+    // Convert the point to a quaternion (pure imaginary)
+    const pointAsQuaternion: Quaternion = {
+        x: point.x,
+        y: point.y,
+        z: point.z,
+        w: 0,
+    };
+
+    // Invert the quaternion
+    const inverse = invertQuaternion(quaternion);
+
+    // Apply the rotation: q * p * q^-1
+    const temp = quaternionMultiplication(quaternion, pointAsQuaternion);
+    const rotated = quaternionMultiplication(temp, inverse);
+
+    // Return the rotated point (discard the scalar part)
+    return {
+        x: rotated.x,
+        y: rotated.y,
+        z: rotated.z,
+    };
 }

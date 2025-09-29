@@ -1,4 +1,5 @@
 import {
+  Quaternion,
   CubePrimitive,
   LineType,
   ModelPrimitive,
@@ -38,7 +39,11 @@ import {
   TrafficSign_MainSign_Classification_Type,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
-import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
+import {
+  pointRotationByQuaternion,
+  eulerToQuaternion,
+  quaternionMultiplication,
+} from "@utils/geometry";
 import { ColorCode, convertPathToFileUrl } from "@utils/helper";
 import {
   objectToCubePrimitive,
@@ -79,7 +84,11 @@ import {
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 
-const ROOT_FRAME = "<root>";
+const ROS_ROOT_FRAME = "<root>";
+const OSI_GLOBAL_FRAME = "global";
+const OSI_EGO_VEHICLE_BB_CENTER_FRAME = "ego_vehicle_bb_center";
+const OSI_EGO_VEHICLE_REAR_AXLE_FRAME = "ego_vehicle_rear_axle";
+const BMW_EGO_VEHICLE_REAR_AXIS_FRAME = "ego_vehicle_rear_axis";
 
 // Object-specific prefixes for scene entity ids
 const PREFIX_MOVING_OBJECT = "moving_object";
@@ -528,7 +537,7 @@ function buildSceneEntities(
           obj,
           HOST_OBJECT_COLOR,
           PREFIX_MOVING_OBJECT,
-          ROOT_FRAME,
+          OSI_GLOBAL_FRAME,
           time,
           config,
           modelCache,
@@ -540,7 +549,7 @@ function buildSceneEntities(
           obj,
           objectColor,
           PREFIX_MOVING_OBJECT,
-          ROOT_FRAME,
+          OSI_GLOBAL_FRAME,
           time,
           config,
           modelCache,
@@ -561,7 +570,7 @@ function buildSceneEntities(
         obj,
         objectColor,
         PREFIX_STATIONARY_OBJECT,
-        ROOT_FRAME,
+        OSI_GLOBAL_FRAME,
         time,
         config,
         modelCache,
@@ -572,7 +581,7 @@ function buildSceneEntities(
 
   // Traffic Sign objects
   const trafficsignObjectSceneEntities = osiGroundTruth.traffic_sign.map((obj) => {
-    return buildTrafficSignEntity(obj, PREFIX_TRAFFIC_SIGN, ROOT_FRAME, time);
+    return buildTrafficSignEntity(obj, PREFIX_TRAFFIC_SIGN, OSI_GLOBAL_FRAME, time);
   });
 
   // Traffic Light objects
@@ -580,7 +589,7 @@ function buildSceneEntities(
   if (updateFlags.trafficLights) {
     trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
       const metadata = buildTrafficLightMetadata(obj);
-      return buildTrafficLightEntity(obj, PREFIX_TRAFFIC_LIGHT, ROOT_FRAME, time, metadata);
+      return buildTrafficLightEntity(obj, PREFIX_TRAFFIC_LIGHT, OSI_GLOBAL_FRAME, time, metadata);
     });
   }
 
@@ -588,7 +597,7 @@ function buildSceneEntities(
   let roadMarkingObjectSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.roadMarkings) {
     roadMarkingObjectSceneEntities = osiGroundTruth.road_marking.flatMap((road_marking) => {
-      const result = buildRoadMarkingEntity(road_marking, ROOT_FRAME, time);
+      const result = buildRoadMarkingEntity(road_marking, OSI_GLOBAL_FRAME, time);
 
       if (result != undefined) {
         const partialEntity: PartialSceneEntity = result;
@@ -603,7 +612,7 @@ function buildSceneEntities(
   let laneBoundarySceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.laneBoundaries && config != undefined && config.showPhysicalLanes) {
     laneBoundarySceneEntities = osiGroundTruth.lane_boundary.map((lane_boundary) => {
-      return buildLaneBoundaryEntity(lane_boundary, ROOT_FRAME, time);
+      return buildLaneBoundaryEntity(lane_boundary, OSI_GLOBAL_FRAME, time);
     });
   }
 
@@ -620,7 +629,7 @@ function buildSceneEntities(
       const rightLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
         rightLaneBoundaryIds.includes(b.id.value),
       );
-      return buildLaneEntity(lane, ROOT_FRAME, time, leftLaneBoundaries, rightLaneBoundaries);
+      return buildLaneEntity(lane, OSI_GLOBAL_FRAME, time, leftLaneBoundaries, rightLaneBoundaries);
     });
   }
 
@@ -628,7 +637,7 @@ function buildSceneEntities(
   let logicalLaneBoundarySceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.laneBoundaries && config != undefined && config.showLogicalLanes) {
     logicalLaneBoundarySceneEntities = osiGroundTruth.logical_lane_boundary.map((lane_boundary) => {
-      return buildLogicalLaneBoundaryEntity(lane_boundary, ROOT_FRAME, time);
+      return buildLogicalLaneBoundaryEntity(lane_boundary, OSI_GLOBAL_FRAME, time);
     });
   }
 
@@ -647,7 +656,7 @@ function buildSceneEntities(
 
       return buildLogicalLaneEntity(
         logical_lane,
-        ROOT_FRAME,
+        OSI_GLOBAL_FRAME,
         time,
         leftLaneBoundaries,
         rightLaneBoundaries,
@@ -677,8 +686,8 @@ export function buildEgoVehicleBBCenterFrameTransform(
   })!;
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: "<root>",
-    child_frame_id: "ego_vehicle_bb_center",
+    parent_frame_id: OSI_GLOBAL_FRAME,
+    child_frame_id: OSI_EGO_VEHICLE_BB_CENTER_FRAME,
     translation: {
       x: hostObject.base.position.x,
       y: hostObject.base.position.y,
@@ -692,6 +701,51 @@ export function buildEgoVehicleBBCenterFrameTransform(
   };
 }
 
+export function buildRootToGlobalFrameTransform(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+): FrameTransform {
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: ROS_ROOT_FRAME,
+    child_frame_id: OSI_GLOBAL_FRAME,
+    translation: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    rotation: eulerToQuaternion(0, 0, 0),
+  };
+}
+
+export function buildEgoVehicleRearAxisFrameTransform(
+  osiGroundTruth: DeepRequired<GroundTruth>,
+): FrameTransform {
+  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
+  const hostObject = osiGroundTruth.moving_object.find((obj) => {
+    return obj.id.value === hostIdentifier;
+  })!;
+  const rollAngle = hostObject.base.orientation.roll;
+  const pitchAngle = hostObject.base.orientation.pitch;
+  const yawAngle = -hostObject.base.orientation.yaw;
+  const hostObjectBasePosition: Vector3 = {
+    x: -hostObject.base.position.x,
+    y: -hostObject.base.position.y,
+    z: -hostObject.base.position.z,
+  };
+  const quaternion: Quaternion = eulerToQuaternion(rollAngle, pitchAngle, yawAngle);
+  const translationResult = pointRotationByQuaternion(hostObjectBasePosition, quaternion);
+  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear.x;
+  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear.y;
+  translationResult.z = translationResult.z - hostObject.vehicle_attributes.bbcenter_to_rear.z;
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME,
+    child_frame_id: OSI_GLOBAL_FRAME,
+    translation: translationResult,
+    rotation: eulerToQuaternion(rollAngle, pitchAngle, yawAngle),
+  };
+}
+
 export function buildEgoVehicleRearAxleFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
 ): FrameTransform {
@@ -701,8 +755,8 @@ export function buildEgoVehicleRearAxleFrameTransform(
   })!;
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: "ego_vehicle_bb_center",
-    child_frame_id: "ego_vehicle_rear_axle",
+    parent_frame_id: OSI_EGO_VEHICLE_BB_CENTER_FRAME,
+    child_frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
     translation: {
       x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
       y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
@@ -763,8 +817,8 @@ function buildSensorDataSceneEntities(
 
   const road_output_scene_update: PartialSceneEntity = {
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
-    frame_id: "ego_vehicle_rear_axis",
-    id: "ra_ground_truth",
+    frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
+    id: OSI_GLOBAL_FRAME,
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
@@ -1082,6 +1136,16 @@ export function activate(extensionContext: ExtensionContext): void {
         return transforms;
       }
 
+      // build identity transform between <root> and global
+      if (message.timestamp) {
+        transforms.transforms.push(
+          buildRootToGlobalFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+      } else {
+        console.error("Time stamp was not found in GroundTruth message.");
+        return transforms;
+      }
+
       // Return empty FrameTransforms if host vehicle is not contained in moving objects
       if (
         message.moving_object &&
@@ -1105,6 +1169,23 @@ export function activate(extensionContext: ExtensionContext): void {
       ) {
         transforms.transforms.push(
           buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+      } else {
+        console.warn(
+          "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axle FrameTransform.",
+        );
+      }
+
+      // Add BMW rear axis FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+      if (
+        message.moving_object.some(
+          (obj) =>
+            obj.id?.value === message.host_vehicle_id?.value &&
+            obj.vehicle_attributes?.bbcenter_to_rear,
+        )
+      ) {
+        transforms.transforms.push(
+          buildEgoVehicleRearAxisFrameTransform(message as DeepRequired<GroundTruth>),
         );
       } else {
         console.warn(
