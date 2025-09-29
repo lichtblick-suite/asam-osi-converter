@@ -706,8 +706,8 @@ export function buildRootToGlobalFrameTransform(
 ): FrameTransform {
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: ROS_ROOT_FRAME,
-    child_frame_id: OSI_GLOBAL_FRAME,
+    parent_frame_id: OSI_GLOBAL_FRAME,
+    child_frame_id: ROS_ROOT_FRAME,
     translation: {
       x: 0,
       y: 0,
@@ -1137,15 +1137,6 @@ export function activate(extensionContext: ExtensionContext): void {
       }
 
       // build identity transform between <root> and global
-      if (message.timestamp) {
-        transforms.transforms.push(
-          buildRootToGlobalFrameTransform(message as DeepRequired<GroundTruth>),
-        );
-      } else {
-        console.error("Time stamp was not found in GroundTruth message.");
-        return transforms;
-      }
-
       // Return empty FrameTransforms if host vehicle is not contained in moving objects
       if (
         message.moving_object &&
@@ -1153,6 +1144,9 @@ export function activate(extensionContext: ExtensionContext): void {
       ) {
         transforms.transforms.push(
           buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>),
+        );
+        transforms.transforms.push(
+          buildRootToGlobalFrameTransform(message as DeepRequired<GroundTruth>),
         );
       } else {
         console.error("Host vehicle not found in moving objects");
