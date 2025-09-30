@@ -1,5 +1,4 @@
 import {
-  Quaternion,
   CubePrimitive,
   LineType,
   ModelPrimitive,
@@ -41,6 +40,7 @@ import {
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
 import {
   pointRotationByQuaternion,
+  invertQuaternion,
   eulerToQuaternion,
   quaternionMultiplication,
 } from "@utils/geometry";
@@ -684,6 +684,8 @@ export function buildEgoVehicleBBCenterFrameTransform(
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
+
+  // Pose of EGO BB-CENTER in GLOBAL (parent -> child)
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
     parent_frame_id: OSI_GLOBAL_FRAME,
@@ -704,15 +706,13 @@ export function buildEgoVehicleBBCenterFrameTransform(
 export function buildRootToGlobalFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
 ): FrameTransform {
+  // Make <root> the tree root and identical to GLOBAL:
+  // parent (root) -> child (global) == identity
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: OSI_GLOBAL_FRAME,
-    child_frame_id: ROS_ROOT_FRAME,
-    translation: {
-      x: 0,
-      y: 0,
-      z: 0,
-    },
+    parent_frame_id: ROS_ROOT_FRAME,
+    child_frame_id: OSI_GLOBAL_FRAME,
+    translation: { x: 0, y: 0, z: 0 },
     rotation: eulerToQuaternion(0, 0, 0),
   };
 }
@@ -724,25 +724,50 @@ export function buildEgoVehicleRearAxisFrameTransform(
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
-  const rollAngle = hostObject.base.orientation.roll;
-  const pitchAngle = hostObject.base.orientation.pitch;
-  const yawAngle = -hostObject.base.orientation.yaw;
-  const hostObjectBasePosition: Vector3 = {
-    x: -hostObject.base.position.x,
-    y: -hostObject.base.position.y,
-    z: -hostObject.base.position.z,
+
+  // OSI orientation of the vehicle/body (bb-center) in GLOBAL
+  const roll = hostObject.base.orientation.roll;
+  const pitch = hostObject.base.orientation.pitch;
+  const yaw = hostObject.base.orientation.yaw;
+
+  // Rotation from child->parent (EGO->GLOBAL)
+  const q = eulerToQuaternion(roll, pitch, yaw);
+
+  // We need BMW_REAR_AXIS -> GLOBAL (inverse rotation & proper inverse translation)
+  const qInv = invertQuaternion(q); // R^T
+
+  // Base (bb-center) position in GLOBAL
+  const pBaseGlobal: Vector3 = {
+    x: hostObject.base.position.x,
+    y: hostObject.base.position.y,
+    z: hostObject.base.position.z,
   };
-  const quaternion: Quaternion = eulerToQuaternion(rollAngle, pitchAngle, yawAngle);
-  const translationResult = pointRotationByQuaternion(hostObjectBasePosition, quaternion);
-  translationResult.x = translationResult.x - hostObject.vehicle_attributes.bbcenter_to_rear.x;
-  translationResult.y = translationResult.y - hostObject.vehicle_attributes.bbcenter_to_rear.y;
-  translationResult.z = translationResult.z - hostObject.vehicle_attributes.bbcenter_to_rear.z;
+
+  // Offset from bb-center to rear-axis given in the vehicle/body frame
+  const bb2rearBody: Vector3 = {
+    x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
+    y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
+    z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
+  };
+
+  // Inverse translation formula for parent<-child:
+  // If GLOBAL <- EGO has (R, p), then EGO <- GLOBAL has (R^T, -R^T p).
+  // Our parent is BMW_REAR_AXIS (vehicle/body frame), which differs from BB_CENTER by a *body-frame* offset.
+  // GLOBAL origin expressed in BMW_REAR_AXIS:
+  //   t' = -R^T * p_base - bb2rear   (no rotation of bb2rear: it's already in the parent/body frame)
+  const baseInRear = pointRotationByQuaternion(pBaseGlobal, qInv); // R^T * p_base
+  const translation: Vector3 = {
+    x: -baseInRear.x - bb2rearBody.x,
+    y: -baseInRear.y - bb2rearBody.y,
+    z: -baseInRear.z - bb2rearBody.z,
+  };
+
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME,
-    child_frame_id: OSI_GLOBAL_FRAME,
-    translation: translationResult,
-    rotation: eulerToQuaternion(rollAngle, pitchAngle, yawAngle),
+    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME, // parent
+    child_frame_id: OSI_GLOBAL_FRAME, // child
+    translation,
+    rotation: qInv,
   };
 }
 
@@ -753,6 +778,8 @@ export function buildEgoVehicleRearAxleFrameTransform(
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
+
+  // OSI tree: BB_CENTER (parent) -> REAR_AXLE (child) with a pure translation in body frame
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
     parent_frame_id: OSI_EGO_VEHICLE_BB_CENTER_FRAME,
