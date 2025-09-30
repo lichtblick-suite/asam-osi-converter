@@ -30,7 +30,7 @@ function quatConjugate(q: Quaternion): Quaternion {
 }
 
 /** Normalize with guard; returns identity if near-zero or non-finite */
-export function quatNormalize(q: Quaternion, eps = EPS): Quaternion {
+function quatNormalize(q: Quaternion, eps = EPS): Quaternion {
   const n = quatNorm(q);
   if (!Number.isFinite(n) || n < eps) {
     // Fall back to identity to avoid NaN propagation in rotations
@@ -207,16 +207,4 @@ export function pointRotationByQuaternion(point: Vector3, quaternion: Quaternion
   const rz = vz + qw * tz + (qx * ty - qy * tx);
 
   return { x: clean0(rx), y: clean0(ry), z: clean0(rz) };
-}
-
-/** ---------- (Optional) tiny exports that may be handy elsewhere ---------- */
-
-// If other modules want a documented conjugate:
-export function quaternionConjugate(q: Quaternion): Quaternion {
-  return quatConjugate(q);
-}
-
-// For callers that care about angle wrapping explicitly:
-export function wrapAnglePi(angle: number): number {
-  return wrapPi(angle);
 }

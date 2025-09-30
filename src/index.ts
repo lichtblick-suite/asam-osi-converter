@@ -764,8 +764,8 @@ export function buildEgoVehicleRearAxisFrameTransform(
 
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME, // parent
-    child_frame_id: OSI_GLOBAL_FRAME, // child
+    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME,
+    child_frame_id: ROS_ROOT_FRAME,
     translation,
     rotation: qInv,
   };
