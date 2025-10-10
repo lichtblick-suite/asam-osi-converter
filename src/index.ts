@@ -79,7 +79,7 @@ import {
 import { buildTrafficLightMetadata, buildTrafficLightModel } from "./trafficlights";
 import { preloadDynamicTextures, buildTrafficSignModel } from "./trafficsigns";
 
-const ROS_ROOT_FRAME = "<root>";
+// const ROS_ROOT_FRAME = "<root>"; // proper frame UUID aliases are not supported
 const OSI_GLOBAL_FRAME = "global";
 const OSI_EGO_VEHICLE_BB_CENTER_FRAME = "ego_vehicle_bb_center";
 const OSI_EGO_VEHICLE_REAR_AXLE_FRAME = "ego_vehicle_rear_axle";
@@ -697,20 +697,6 @@ export function buildEgoVehicleBBCenterFrameTransform(
   };
 }
 
-export function buildRootToGlobalFrameTransform(
-  osiGroundTruth: DeepRequired<GroundTruth>,
-): FrameTransform {
-  // Make <root> the tree root and identical to GLOBAL:
-  // parent (root) -> child (global) == identity
-  return {
-    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: ROS_ROOT_FRAME,
-    child_frame_id: OSI_GLOBAL_FRAME,
-    translation: { x: 0, y: 0, z: 0 },
-    rotation: eulerToQuaternion(0, 0, 0),
-  };
-}
-
 export function buildEgoVehicleRearAxleFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
 ): FrameTransform {
@@ -1111,9 +1097,6 @@ export function activate(extensionContext: ExtensionContext): void {
       ) {
         transforms.transforms.push(
           buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>),
-        );
-        transforms.transforms.push(
-          buildRootToGlobalFrameTransform(message as DeepRequired<GroundTruth>),
         );
       } else {
         console.error("Host vehicle not found in moving objects");
