@@ -1089,7 +1089,6 @@ export function activate(extensionContext: ExtensionContext): void {
         return transforms;
       }
 
-      // build identity transform between <root> and global
       // Return empty FrameTransforms if host vehicle is not contained in moving objects
       if (
         message.moving_object &&
