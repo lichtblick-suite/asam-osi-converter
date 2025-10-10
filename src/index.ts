@@ -38,12 +38,7 @@ import {
   TrafficSign_MainSign_Classification_Type,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext, Immutable, MessageEvent, PanelSettings } from "@lichtblick/suite";
-import {
-  pointRotationByQuaternion,
-  invertQuaternion,
-  eulerToQuaternion,
-  quaternionMultiplication,
-} from "@utils/geometry";
+import { eulerToQuaternion, quaternionMultiplication } from "@utils/geometry";
 import { ColorCode, convertPathToFileUrl } from "@utils/helper";
 import {
   objectToCubePrimitive,
@@ -88,7 +83,6 @@ const ROS_ROOT_FRAME = "<root>";
 const OSI_GLOBAL_FRAME = "global";
 const OSI_EGO_VEHICLE_BB_CENTER_FRAME = "ego_vehicle_bb_center";
 const OSI_EGO_VEHICLE_REAR_AXLE_FRAME = "ego_vehicle_rear_axle";
-const BMW_EGO_VEHICLE_REAR_AXIS_FRAME = "ego_vehicle_rear_axis";
 
 // Object-specific prefixes for scene entity ids
 const PREFIX_MOVING_OBJECT = "moving_object";
@@ -717,60 +711,6 @@ export function buildRootToGlobalFrameTransform(
   };
 }
 
-export function buildEgoVehicleRearAxisFrameTransform(
-  osiGroundTruth: DeepRequired<GroundTruth>,
-): FrameTransform {
-  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
-  const hostObject = osiGroundTruth.moving_object.find((obj) => {
-    return obj.id.value === hostIdentifier;
-  })!;
-
-  // OSI orientation of the vehicle/body (bb-center) in GLOBAL
-  const roll = hostObject.base.orientation.roll;
-  const pitch = hostObject.base.orientation.pitch;
-  const yaw = hostObject.base.orientation.yaw;
-
-  // Rotation from child->parent (EGO->GLOBAL)
-  const q = eulerToQuaternion(roll, pitch, yaw);
-
-  // We need BMW_REAR_AXIS -> GLOBAL (inverse rotation & proper inverse translation)
-  const qInv = invertQuaternion(q); // R^T
-
-  // Base (bb-center) position in GLOBAL
-  const pBaseGlobal: Vector3 = {
-    x: hostObject.base.position.x,
-    y: hostObject.base.position.y,
-    z: hostObject.base.position.z,
-  };
-
-  // Offset from bb-center to rear-axis given in the vehicle/body frame
-  const bb2rearBody: Vector3 = {
-    x: hostObject.vehicle_attributes.bbcenter_to_rear.x,
-    y: hostObject.vehicle_attributes.bbcenter_to_rear.y,
-    z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
-  };
-
-  // Inverse translation formula for parent<-child:
-  // If GLOBAL <- EGO has (R, p), then EGO <- GLOBAL has (R^T, -R^T p).
-  // Our parent is BMW_REAR_AXIS (vehicle/body frame), which differs from BB_CENTER by a *body-frame* offset.
-  // GLOBAL origin expressed in BMW_REAR_AXIS:
-  //   t' = -R^T * p_base - bb2rear   (no rotation of bb2rear: it's already in the parent/body frame)
-  const baseInRear = pointRotationByQuaternion(pBaseGlobal, qInv); // R^T * p_base
-  const translation: Vector3 = {
-    x: -baseInRear.x - bb2rearBody.x,
-    y: -baseInRear.y - bb2rearBody.y,
-    z: -baseInRear.z - bb2rearBody.z,
-  };
-
-  return {
-    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
-    parent_frame_id: BMW_EGO_VEHICLE_REAR_AXIS_FRAME,
-    child_frame_id: ROS_ROOT_FRAME,
-    translation,
-    rotation: qInv,
-  };
-}
-
 export function buildEgoVehicleRearAxleFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
 ): FrameTransform {
@@ -1190,23 +1130,6 @@ export function activate(extensionContext: ExtensionContext): void {
       ) {
         transforms.transforms.push(
           buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>),
-        );
-      } else {
-        console.warn(
-          "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axle FrameTransform.",
-        );
-      }
-
-      // Add BMW rear axis FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
-      if (
-        message.moving_object.some(
-          (obj) =>
-            obj.id?.value === message.host_vehicle_id?.value &&
-            obj.vehicle_attributes?.bbcenter_to_rear,
-        )
-      ) {
-        transforms.transforms.push(
-          buildEgoVehicleRearAxisFrameTransform(message as DeepRequired<GroundTruth>),
         );
       } else {
         console.warn(
