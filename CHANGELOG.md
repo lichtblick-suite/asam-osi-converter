@@ -1,5 +1,14 @@
 # ASAM OSI Converter version history
 
+## [0.0.8](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.7...v0.0.8) (2025-10-10)
+
+
+### Features
+
+* rename "<root>" frame transform to  to ASAM OSI "global" , increase geometry.ts robustness ([#137](https://github.com/lichtblick-suite/asam-osi-converter/issues/137)) ([8184b04](https://github.com/lichtblick-suite/asam-osi-converter/commit/8184b0456ede91c17044262c99814214d8d3734b))
+
+
+
 ## [0.0.7](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.6...v0.0.7) (2025-09-04)
 
 
