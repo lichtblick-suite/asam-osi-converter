@@ -28,7 +28,6 @@
     "npm": ">=10.0.0"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.23.3",
     "@commitlint/cli": "^19.6.0",
     "@commitlint/config-conventional": "^19.6.0",
     "@foxglove/schemas": "^1.6.2",
