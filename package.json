@@ -4,7 +4,7 @@
   "description": "Visualises data following the standard of the ASAM Open Simulation Interface (ASAM OSI) using the native 3D panel of Lichtblick",
   "publisher": "Lichtblick",
   "homepage": "https://www.asam.net/standards/detail/osi/",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "MIT",
   "main": "./dist/extension.js",
   "keywords": [
