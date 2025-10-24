@@ -1,5 +1,14 @@
 # ASAM OSI Converter version history
 
+## [0.0.9](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.8...v0.0.9) (2025-10-24)
+
+
+### Bug Fixes
+
+* remove logical lane centerline ([#143](https://github.com/lichtblick-suite/asam-osi-converter/issues/143)) ([b10fcf6](https://github.com/lichtblick-suite/asam-osi-converter/commit/b10fcf62bb2142bccc48311cde9d941573bfc0bb))
+
+
+
 ## [0.0.8](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.7...v0.0.8) (2025-10-10)
 
 
