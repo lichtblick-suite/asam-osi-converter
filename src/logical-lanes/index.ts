@@ -1,4 +1,4 @@
-import { TriangleListPrimitive, type KeyValuePair, type Point3 } from "@foxglove/schemas";
+import { type KeyValuePair, type Point3 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas/schemas/typescript/Time";
 import {
   LogicalLane,
@@ -16,11 +16,7 @@ import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
 import {
-  LANE_CENTERLINE_COLOR,
-  LANE_CENTERLINE_WIDTH,
-  LANE_CENTERLINE_ARROWS,
   LANE_BOUNDARY_ARROWS,
-  LANE_CENTERLINE_SHOW,
   LOGICAL_LANE_BOUNDARY_RENDERING_WIDTH,
   LOGICAL_LANE_BOUNDARY_COLOR,
   LOGICAL_LANE_RENDERING_HEIGHT_OFFSET,
@@ -191,49 +187,6 @@ export function buildLogicalLaneEntity(
     rightLaneBoundaries.push(laneBoundaryPoints);
   }
 
-  let centerlineTrianglePrimitive: TriangleListPrimitive | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (LANE_CENTERLINE_SHOW) {
-    const centerlinePoints = leftLaneBoundaries.flatMap((left_boundary_point, index) => {
-      const right_boundary_point = rightLaneBoundaries.at(index);
-
-      if (right_boundary_point != undefined) {
-        const center_line_points = left_boundary_point.flatMap((left_point, point_index) => {
-          const right_point = right_boundary_point.at(point_index);
-
-          if (right_point != undefined) {
-            return {
-              position: {
-                x: left_point.position.x,
-                y: (left_point.position.y + right_point.position.y) / 2,
-                z: left_point.position.z,
-              } as Point3,
-              width: LANE_CENTERLINE_WIDTH,
-              height: 0,
-            };
-          }
-
-          return [];
-        });
-
-        return center_line_points;
-      }
-
-      return [];
-    });
-
-    centerlineTrianglePrimitive = pointListToTriangleListPrimitive(
-      centerlinePoints as MarkerPoint[],
-      LANE_CENTERLINE_COLOR,
-      {
-        dashed: false,
-        arrows: LANE_CENTERLINE_ARROWS,
-        invertArrows:
-          osiLogicalLane.move_direction === LogicalLane_MoveDirection.DECREASING_S ? true : false,
-      },
-    );
-  }
-
   return {
     timestamp: time,
     frame_id,
@@ -247,7 +200,6 @@ export function buildLogicalLaneEntity(
         LOGICAL_LANE_COLOR,
         LOGICAL_LANE_VISUALIZATION_WIDTH,
       ),
-      centerlineTrianglePrimitive,
     ],
     metadata: buildLogicalLaneMetadata(osiLogicalLane),
   };
