@@ -102,7 +102,7 @@ export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>
     },
     {
       key: "reference_line_id",
-      value: logical_lane.reference_line_id.value.toString(),
+      value: logical_lane?.reference_line_id?.value?.toString() || "",
     },
     {
       key: "start_s",
