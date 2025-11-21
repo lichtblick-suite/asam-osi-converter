@@ -7,6 +7,8 @@ import {
   Lane,
   Lane_Classification_Type,
   Lane_Classification_Subtype,
+  LogicalLane,
+  LogicalLaneBoundary,
 } from "@lichtblick/asam-osi-types";
 import {
   pointListToTriangleListPrimitive,
@@ -67,7 +69,7 @@ export function buildLaneBoundaryMetadata(
  * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
  * This might not be the case when using partial chunking of lanes/lane boundaries.
  */
-export const hashLanes = (lanes: Lane[]): string => {
+export const hashLanes = (lanes: Lane[] | LogicalLane[]): string => {
   const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
   let hashValue = 0;
   for (let i = 0; i < hash.length; i++) {
@@ -89,7 +91,9 @@ export const hashLanes = (lanes: Lane[]): string => {
  * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
  * This might not be the case when using partial chunking of lanes/lane boundaries.
  */
-export const hashLaneBoundaries = (laneBoundaries: LaneBoundary[]): string => {
+export const hashLaneBoundaries = (
+  laneBoundaries: LaneBoundary[] | LogicalLaneBoundary[],
+): string => {
   const hash = laneBoundaries.reduce(
     (acc, laneBoundary) => acc + laneBoundary.id!.value!.toString(),
     "",
