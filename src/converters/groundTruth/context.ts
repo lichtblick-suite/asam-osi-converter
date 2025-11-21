@@ -5,6 +5,8 @@ export function createGroundTruthContext(): GroundTruthContext {
     groundTruthFrameCache: new WeakMap(),
     laneBoundaryCache: new Map(),
     laneCache: new Map(),
+    logicalLaneBoundaryCache: new Map(),
+    logicalLaneCache: new Map(),
     modelCache: new Map(),
     state: {
       previousMovingObjectIds: new Set(),

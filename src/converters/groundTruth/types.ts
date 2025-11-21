@@ -53,6 +53,8 @@ export interface GroundTruthContext {
   groundTruthFrameCache: WeakMap<GroundTruth, PartialSceneEntity[]>;
   laneBoundaryCache: Map<string, PartialSceneEntity[]>;
   laneCache: Map<string, PartialSceneEntity[]>;
+  logicalLaneBoundaryCache: Map<string, PartialSceneEntity[]>;
+  logicalLaneCache: Map<string, PartialSceneEntity[]>;
   modelCache: Map<string, ModelPrimitive>;
   state: GroundTruthState;
 }
