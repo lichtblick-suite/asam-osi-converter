@@ -2,8 +2,6 @@ import { Color, KeyValuePair, ModelPrimitive } from "@foxglove/schemas";
 import {
   TrafficLight,
   TrafficLight_Classification,
-  TrafficLight_Classification_Color,
-  TrafficLight_Classification_Icon,
   TrafficLight_Classification_Mode,
 } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
@@ -84,25 +82,6 @@ const buildGltfModel = (
   data.materials[0]!.pbrMetallicRoughness.baseColorFactor = [color.r, color.g, color.b, color.a];
   return convertDataURIToBinary(`data:model/gltf+json;base64,${btoa(JSON.stringify(data))}`);
 };
-
-export function buildTrafficLightMetadata(obj: DeepRequired<TrafficLight>): KeyValuePair[] {
-  const metadata: KeyValuePair[] = [
-    {
-      key: "color",
-      value: TrafficLight_Classification_Color[obj.classification.color],
-    },
-    {
-      key: "icon",
-      value: TrafficLight_Classification_Icon[obj.classification.icon],
-    },
-    {
-      key: "mode",
-      value: TrafficLight_Classification_Mode[obj.classification.mode],
-    },
-  ];
-
-  return metadata;
-}
 
 const processTexture = (classification: DeepRequired<TrafficLight_Classification>): string => {
   const typeKey = classification.icon;

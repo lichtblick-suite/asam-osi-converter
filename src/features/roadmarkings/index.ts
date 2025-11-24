@@ -1,38 +1,13 @@
-import { ROAD_MARKING_COLOR } from "@/config/colors";
-import { KeyValuePair, Point3 } from "@foxglove/schemas";
-import {
-  RoadMarking,
-  RoadMarking_Classification_Color,
-  RoadMarking_Classification_Type,
-  TrafficSign_MainSign_Classification_Type,
-} from "@lichtblick/asam-osi-types";
+import { Point3 } from "@foxglove/schemas";
+import { RoadMarking, TrafficSign_MainSign_Classification_Type } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
 import { pointListToTriangleListPrimitive } from "@utils/marker";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
-function buildRoadMarkingMetadata(road_marking: DeepRequired<RoadMarking>): KeyValuePair[] {
-  const metadata: KeyValuePair[] = [
-    {
-      key: "type",
-      value: RoadMarking_Classification_Type[road_marking.classification.type],
-    },
-    {
-      key: "color",
-      value: RoadMarking_Classification_Color[road_marking.classification.monochrome_color],
-    },
-    {
-      key: "width",
-      value: road_marking.base.dimension.width.toString(),
-    },
-    {
-      key: "height",
-      value: road_marking.base.dimension.height.toString(),
-    },
-  ];
+import { buildRoadMarkingMetadata } from "./metadata";
 
-  return metadata;
-}
+import { ROAD_MARKING_COLOR } from "@/config/colors";
 
 export function buildRoadMarkingEntity(
   roadMarking: DeepRequired<RoadMarking>,

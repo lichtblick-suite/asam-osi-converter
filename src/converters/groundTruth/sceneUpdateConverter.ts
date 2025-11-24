@@ -1,22 +1,15 @@
-import {
-  hashLaneBoundaries,
-  hashLanes,
-  buildLaneBoundaryEntity,
-  buildLaneEntity,
-} from "@features/lanes";
+import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
 import { buildLogicalLaneBoundaryEntity, buildLogicalLaneEntity } from "@features/logicallanes";
-import {
-  buildMovingObjectMetadata,
-  createModelPrimitive,
-  buildObjectEntity,
-  buildStationaryMetadata,
-} from "@features/objects";
+import { createModelPrimitive, buildMovingObjectEntity } from "@features/movingobjects";
 import { buildRoadMarkingEntity } from "@features/roadmarkings";
-import { buildTrafficLightMetadata, buildTrafficLightEntity } from "@features/trafficlights";
+import { buildStationaryObjectEntity } from "@features/stationaryobjects";
+import { buildTrafficLightEntity } from "@features/trafficlights";
+import { buildTrafficLightMetadata } from "@features/trafficlights/metadata";
 import { buildTrafficSignEntity } from "@features/trafficsigns";
 import { ModelPrimitive, SceneUpdate } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { Immutable, Time, MessageEvent } from "@lichtblick/suite";
+import { hashLaneBoundaries, hashLanes } from "@utils/hashing";
 import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
 import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
@@ -67,7 +60,6 @@ function buildSceneEntities(
   if (updateFlags.movingObjects) {
     movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
       let entity;
-      const metadata = buildMovingObjectMetadata(obj);
 
       const modelPathKey = panelSettings?.defaultModelPath + obj.model_reference;
       if (
@@ -79,7 +71,7 @@ function buildSceneEntities(
       }
 
       if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
-        entity = buildObjectEntity(
+        entity = buildMovingObjectEntity(
           obj,
           HOST_OBJECT_COLOR,
           PREFIX_MOVING_OBJECT,
@@ -87,11 +79,10 @@ function buildSceneEntities(
           time,
           panelSettings,
           modelCache,
-          metadata,
         );
       } else {
         const objectColor = MOVING_OBJECT_COLOR[obj.type];
-        entity = buildObjectEntity(
+        entity = buildMovingObjectEntity(
           obj,
           objectColor,
           PREFIX_MOVING_OBJECT,
@@ -99,7 +90,6 @@ function buildSceneEntities(
           time,
           panelSettings,
           modelCache,
-          metadata,
         );
       }
       return entity;
@@ -111,8 +101,7 @@ function buildSceneEntities(
   if (updateFlags.stationaryObjects) {
     stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
       const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
-      const metadata = buildStationaryMetadata(obj);
-      return buildObjectEntity(
+      return buildStationaryObjectEntity(
         obj,
         objectColor,
         PREFIX_STATIONARY_OBJECT,
@@ -120,7 +109,6 @@ function buildSceneEntities(
         time,
         panelSettings,
         modelCache,
-        metadata,
       );
     });
   }
