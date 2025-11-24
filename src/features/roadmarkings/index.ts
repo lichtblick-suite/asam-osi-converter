@@ -7,7 +7,7 @@ import { DeepRequired } from "ts-essentials";
 
 import { buildRoadMarkingMetadata } from "./metadata";
 
-import { ROAD_MARKING_COLOR } from "@/config/colors";
+import { ROAD_MARKING_COLOR } from "@/config/constants";
 
 export function buildRoadMarkingEntity(
   roadMarking: DeepRequired<RoadMarking>,

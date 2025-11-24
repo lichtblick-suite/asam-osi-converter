@@ -18,7 +18,7 @@ import {
   LANE_BOUNDARY_OPACITY,
   LANE_BOUNDARY_ARROWS_LENGTH,
   LANE_BOUNDARY_ARROWS_WIDTH,
-} from "../config/colors";
+} from "../config/constants";
 
 export interface ArrowProperties {
   shaft_diameter: number;
