@@ -1,15 +1,6 @@
-import { TriangleListPrimitive, type KeyValuePair, type Point3 } from "@foxglove/schemas";
+import { TriangleListPrimitive, type Point3 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas/schemas/typescript/Time";
-import {
-  LaneBoundary,
-  LaneBoundary_Classification_Color,
-  LaneBoundary_Classification_Type,
-  Lane,
-  Lane_Classification_Type,
-  Lane_Classification_Subtype,
-  LogicalLane,
-  LogicalLaneBoundary,
-} from "@lichtblick/asam-osi-types";
+import { LaneBoundary, LaneBoundary_Classification_Type, Lane } from "@lichtblick/asam-osi-types";
 import {
   pointListToTriangleListPrimitive,
   laneToTriangleListPrimitive,
@@ -17,6 +8,8 @@ import {
 } from "@utils/marker";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
+
+import { buildLaneBoundaryMetadata, buildLaneMetadata } from "./metadata";
 
 import {
   LANE_CENTERLINE_COLOR,
@@ -32,80 +25,6 @@ import {
   LANE_BOUNDARY_ARROWS,
 } from "@/config/colors";
 import { PREFIX_LANE_BOUNDARY, PREFIX_LANE } from "@/config/entityPrefixes";
-
-export function buildLaneBoundaryMetadata(
-  lane_boundary: DeepRequired<LaneBoundary>,
-): KeyValuePair[] {
-  const metadata: KeyValuePair[] = [
-    {
-      key: "type",
-      value: LaneBoundary_Classification_Type[lane_boundary.classification.type],
-    },
-    {
-      key: "color",
-      value: LaneBoundary_Classification_Color[lane_boundary.classification.color],
-    },
-    {
-      key: "width",
-      value: lane_boundary.boundary_line[0]?.width!.toString() ?? "0",
-    },
-    {
-      key: "height",
-      value: lane_boundary.boundary_line[0]?.height!.toString() ?? "0",
-    },
-  ];
-
-  return metadata;
-}
-
-/**
- * Hashing function to create a unique hash for lane objects.
- *
- * The hashLanes function creates a hash by:
- *
- * - Concatenating the id values of all Lane objects.
- * - Iterating over the concatenated string and updating a hash value using bitwise operations.
- *
- * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
- * This might not be the case when using partial chunking of lanes/lane boundaries.
- */
-export const hashLanes = (lanes: Lane[] | LogicalLane[]): string => {
-  const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
-  let hashValue = 0;
-  for (let i = 0; i < hash.length; i++) {
-    const char = hash.charCodeAt(i);
-    hashValue = (hashValue << 5) - hashValue + char;
-    hashValue |= 0; // Convert to 32bit integer
-  }
-  return hashValue.toString();
-};
-
-/**
- * Hashing function to create a unique hash for lane boundary objects.
- *
- * The hashLanes function creates a hash by:
- *
- * - Concatenating the id values of all LaneBoundary objects.
- * - Iterating over the concatenated string and updating a hash value using bitwise operations.
- *
- * Note: This mechanism is a temporary solution to demonstrate the feasibility of caching as it relies on the assumption that a lane with the same id will always have the same properties.
- * This might not be the case when using partial chunking of lanes/lane boundaries.
- */
-export const hashLaneBoundaries = (
-  laneBoundaries: LaneBoundary[] | LogicalLaneBoundary[],
-): string => {
-  const hash = laneBoundaries.reduce(
-    (acc, laneBoundary) => acc + laneBoundary.id!.value!.toString(),
-    "",
-  );
-  let hashValue = 0;
-  for (let i = 0; i < hash.length; i++) {
-    const char = hash.charCodeAt(i);
-    hashValue = (hashValue << 5) - hashValue + char;
-    hashValue |= 0; // Convert to 32bit integer
-  }
-  return hashValue.toString();
-};
 
 /**
  * Builds a PartialSceneEntity representing an OSI lane boundary.
@@ -151,47 +70,6 @@ export function buildLaneBoundaryEntity(
     triangles: [pointListToTriangleListPrimitive(laneBoundaryPoints, color, options)],
     metadata: buildLaneBoundaryMetadata(osiLaneBoundary),
   };
-}
-
-export function buildLaneMetadata(lane: DeepRequired<Lane>): KeyValuePair[] {
-  const metadata: KeyValuePair[] = [
-    {
-      key: "type",
-      value: Lane_Classification_Type[lane.classification.type],
-    },
-    {
-      key: "subtype",
-      value: Lane_Classification_Subtype[lane.classification.subtype],
-    },
-    {
-      key: "left_lane_boundary_ids",
-      value: lane.classification.left_lane_boundary_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "right_lane_boundary_ids",
-      value: lane.classification.right_lane_boundary_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "left_adjacent_lane_id",
-      value: lane.classification.left_adjacent_lane_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "right_adjacent_lane_id",
-      value: lane.classification.right_adjacent_lane_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "lane_pairing",
-      value: lane.classification.lane_pairing
-        .map(
-          (pair) =>
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
-            `(${pair.antecessor_lane_id ? pair.antecessor_lane_id.value : ""}, ${pair.successor_lane_id ? pair.successor_lane_id.value : ""})`,
-        )
-        .join(", "),
-    },
-  ];
-
-  return metadata;
 }
 
 export function buildLaneEntity(

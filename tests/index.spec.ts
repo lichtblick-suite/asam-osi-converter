@@ -1,5 +1,5 @@
-import { buildLaneBoundaryMetadata } from "@features/lanes";
-import { buildMovingObjectMetadata } from "@features/objects";
+import { buildLaneBoundaryMetadata } from "@features/lanes/metadata";
+import { buildMovingObjectMetadata } from "@features/movingobjects/metadata";
 import {
   GroundTruth,
   Lane,

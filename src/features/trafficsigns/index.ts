@@ -1,4 +1,4 @@
-import { KeyValuePair, ModelPrimitive } from "@foxglove/schemas";
+import { ModelPrimitive } from "@foxglove/schemas";
 import {
   TrafficSign,
   TrafficSign_MainSign,
@@ -15,6 +15,7 @@ import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
 import images from "./images";
+import { buildTrafficSignMetadata } from "./metadata";
 import textureHandlerMap, { drawTrafficSignText } from "./textures";
 
 type TrafficSignCategory = keyof typeof images;
@@ -34,7 +35,6 @@ export function buildTrafficSignEntity(
   id_prefix: string,
   frame_id: string,
   time: Time,
-  metadata?: KeyValuePair[],
 ): PartialSceneEntity {
   const models = [];
 
@@ -45,6 +45,8 @@ export function buildTrafficSignEntity(
       models.push(buildTrafficSignModel("main", item));
     }
   }
+
+  const metadata = buildTrafficSignMetadata(obj);
 
   return {
     timestamp: time,
