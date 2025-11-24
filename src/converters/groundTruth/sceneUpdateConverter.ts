@@ -22,7 +22,11 @@ import {
   GroundTruthContext,
 } from "./types";
 
-import { HOST_OBJECT_COLOR, MOVING_OBJECT_COLOR, STATIONARY_OBJECT_COLOR } from "@/config/colors";
+import {
+  HOST_OBJECT_COLOR,
+  MOVING_OBJECT_COLOR,
+  STATIONARY_OBJECT_COLOR,
+} from "@/config/constants";
 import {
   PREFIX_LANE,
   PREFIX_LANE_BOUNDARY,

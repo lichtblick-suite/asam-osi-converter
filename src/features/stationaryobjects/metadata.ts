@@ -7,7 +7,7 @@ import {
   STATIONARY_OBJECT_MATERIAL,
   STATIONARY_OBJECT_COLOR,
   STATIONARY_OBJECT_TYPE,
-} from "@/config/colors";
+} from "@/config/constants";
 
 export function buildStationaryMetadata(obj: DeepRequired<StationaryObject>): KeyValuePair[] {
   const metadata: KeyValuePair[] = [

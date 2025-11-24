@@ -23,7 +23,7 @@ import {
   LANE_BOUNDARY_OPACITY,
   LANE_BOUNDARY_MIN_RENDERING_WIDTH,
   LANE_BOUNDARY_ARROWS,
-} from "@/config/colors";
+} from "@/config/constants";
 import { PREFIX_LANE_BOUNDARY, PREFIX_LANE } from "@/config/entityPrefixes";
 
 /**

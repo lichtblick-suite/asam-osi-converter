@@ -18,7 +18,7 @@ import {
   LOGICAL_LANE_RENDERING_HEIGHT_OFFSET,
   LOGICAL_LANE_COLOR,
   LOGICAL_LANE_VISUALIZATION_WIDTH,
-} from "@/config/colors";
+} from "@/config/constants";
 import { PREFIX_LOGICAL_LANE, PREFIX_LOGICAL_LANE_BOUNDARY } from "@/config/entityPrefixes";
 
 export function buildLogicalLaneBoundaryEntity(

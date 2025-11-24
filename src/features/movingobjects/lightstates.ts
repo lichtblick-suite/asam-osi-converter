@@ -10,7 +10,7 @@ import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
 import { objectToCubePrimitive } from "@utils/marker";
 import { DeepRequired } from "ts-essentials";
 
-import { BRAKE_LIGHT_COLOR } from "@/config/colors";
+import { BRAKE_LIGHT_COLOR } from "@/config/constants";
 
 export interface IlightStateEnumStringMaps {
   generic_light_state: typeof MovingObject_VehicleClassification_LightState_GenericLightState;

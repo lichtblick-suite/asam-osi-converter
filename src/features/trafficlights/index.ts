@@ -13,7 +13,7 @@ import { DeepRequired } from "ts-essentials";
 import * as geometries from "./geometries";
 import images from "./images";
 
-import { TRAFFIC_LIGHT_COLOR } from "@/config/colors";
+import { TRAFFIC_LIGHT_COLOR } from "@/config/constants";
 
 const modelCacheMap = new Map<string | number, Uint8Array>();
 
