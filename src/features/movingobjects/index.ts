@@ -8,9 +8,13 @@ import {
 import { ArrowPrimitive, Color, CubePrimitive, ModelPrimitive } from "@foxglove/schemas";
 import { MovingObject, StationaryObject } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { buildObjectAxes, eulerToQuaternion } from "@utils/geometry";
 import { convertPathToFileUrl } from "@utils/helper";
-import { objectToCubePrimitive, objectToModelPrimitive } from "@utils/marker";
+import { eulerToQuaternion } from "@utils/math";
+import {
+  buildObjectAxes,
+  objectToCubePrimitive,
+  objectToModelPrimitive,
+} from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 

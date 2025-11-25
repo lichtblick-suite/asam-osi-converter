@@ -1,7 +1,7 @@
 import { Point3 } from "@foxglove/schemas";
 import { RoadMarking, TrafficSign_MainSign_Classification_Type } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { pointListToTriangleListPrimitive } from "@utils/marker";
+import { pointListToTriangleListPrimitive } from "@utils/primitives/lines";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 

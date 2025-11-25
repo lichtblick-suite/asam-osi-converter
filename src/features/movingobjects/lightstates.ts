@@ -6,8 +6,8 @@ import {
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   MovingObject_VehicleClassification_LightState_GenericLightState,
 } from "@lichtblick/asam-osi-types";
-import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/geometry";
-import { objectToCubePrimitive } from "@utils/marker";
+import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/math";
+import { objectToCubePrimitive } from "@utils/primitives/objects";
 import { DeepRequired } from "ts-essentials";
 
 import { BRAKE_LIGHT_COLOR } from "@/config/constants";
