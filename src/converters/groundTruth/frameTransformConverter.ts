@@ -1,7 +1,7 @@
 import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
-import { eulerToQuaternion } from "@utils/geometry";
 import { osiTimestampToTime } from "@utils/helper";
+import { eulerToQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
 
 import {

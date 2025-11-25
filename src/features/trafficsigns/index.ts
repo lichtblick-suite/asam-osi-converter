@@ -9,7 +9,7 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
 import { convertDataURIToBinary } from "@utils/helper";
-import { objectToModelPrimitive } from "@utils/marker";
+import { objectToModelPrimitive } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 

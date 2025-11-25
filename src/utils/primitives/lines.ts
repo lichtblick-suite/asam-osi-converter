@@ -1,10 +1,8 @@
 import {
   LinePrimitive,
   LineType,
-  CubePrimitive,
   Color,
   Point3,
-  ModelPrimitive,
   Vector3,
   TriangleListPrimitive,
 } from "@foxglove/schemas";
@@ -13,20 +11,12 @@ import {
   LaneBoundary_Classification_Type,
 } from "@lichtblick/asam-osi-types";
 
-import { eulerToQuaternion } from "./geometry";
 import {
   LANE_BOUNDARY_OPACITY,
   LANE_BOUNDARY_ARROWS_LENGTH,
   LANE_BOUNDARY_ARROWS_WIDTH,
-} from "../config/constants";
-
-export interface ArrowProperties {
-  shaft_diameter: number;
-  shaft_length: number;
-  head_diameter: number;
-  head_length: number;
-  color: Color;
-}
+} from "../../config/constants";
+import { eulerToQuaternion } from "../math";
 
 export interface MarkerPoint {
   position: Point3;
@@ -649,70 +639,4 @@ export function pointListToDashedLinePrimitive(
     colors: new_colors,
     indices: [],
   } as LinePrimitive;
-}
-
-export function objectToCubePrimitive(
-  x: number,
-  y: number,
-  z: number,
-  roll: number,
-  pitch: number,
-  yaw: number,
-  width: number,
-  length: number,
-  height: number,
-  color: Color,
-): CubePrimitive {
-  return {
-    pose: {
-      position: {
-        x,
-        y,
-        z,
-      },
-      orientation: eulerToQuaternion(roll, pitch, yaw),
-    },
-    size: {
-      x: length,
-      y: width,
-      z: height,
-    },
-    color,
-  };
-}
-
-export function objectToModelPrimitive(
-  x: number,
-  y: number,
-  z: number,
-  roll: number,
-  pitch: number,
-  yaw: number,
-  width: number,
-  length: number,
-  height: number,
-  color: Color,
-  url = "",
-  data: Uint8Array = new Uint8Array(),
-): ModelPrimitive {
-  return {
-    pose: {
-      position: {
-        x,
-        y,
-        z,
-      },
-      orientation: eulerToQuaternion(roll, pitch, yaw),
-    },
-    scale: {
-      x: length,
-      y: width,
-      z: height,
-    },
-    color,
-    override_color: false,
-    url,
-    media_type: "model/gltf-binary",
-    data: url.length === 0 ? data : new Uint8Array(),
-  };
 }

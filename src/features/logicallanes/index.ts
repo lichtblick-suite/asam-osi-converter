@@ -5,7 +5,7 @@ import {
   pointListToTriangleListPrimitive,
   laneToTriangleListPrimitive,
   MarkerPoint,
-} from "@utils/marker";
+} from "@utils/primitives/lines";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
