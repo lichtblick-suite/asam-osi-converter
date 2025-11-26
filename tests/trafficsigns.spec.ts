@@ -9,7 +9,7 @@ const mockImagesMain = {
   1: mockImage,
 };
 const mockImagesSupp = {};
-jest.mock("../trafficsigns/images", () => ({
+jest.mock("@features/trafficsigns/images", () => ({
   get main() {
     return mockImagesMain;
   },
@@ -29,8 +29,8 @@ const mockMainTextureHandlerMap = new Map([
 ]);
 const mockSuppTextureHandlerMap = new Map();
 const mockFnDrawTrafficSignText = jest.fn().mockReturnValue(mockImage);
-jest.mock("../trafficsigns/textures", () => ({
-  drawTrafficSignText: () => mockFnDrawTrafficSignText(),
+jest.mock("@features/trafficsigns/textures", () => ({
+  drawTrafficSignText: () => mockFnDrawTrafficSignText() as unknown,
   get main() {
     return mockMainTextureHandlerMap;
   },
@@ -76,7 +76,7 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
 
     expect(buildTrafficSignModel("main", mockMainSignStatic)).toEqual(
       expect.objectContaining({
-        data: expect.any(Uint8Array),
+        data: expect.any(Uint8Array) as unknown,
       }),
     );
     expect(mockFnDrawTrafficSignText).not.toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
 
     expect(buildTrafficSignModel("main", mockMainSignDynamic)).toEqual(
       expect.objectContaining({
-        data: expect.any(Uint8Array),
+        data: expect.any(Uint8Array) as unknown,
       }),
     );
     expect(mockFnDrawTrafficSignText).toHaveBeenCalledTimes(1);

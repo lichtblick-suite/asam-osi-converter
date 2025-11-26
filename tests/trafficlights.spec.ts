@@ -1,12 +1,13 @@
-import { TRAFFIC_LIGHT_COLOR } from "@/config/constants";
 import { buildTrafficLightModel } from "@features/trafficlights";
 import { TrafficLight } from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
+import { TRAFFIC_LIGHT_COLOR } from "@/config/constants";
+
 const mockImage =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
-jest.mock("../trafficlights/images", () => ({
+jest.mock("@features/trafficlights/images", () => ({
   get 2() {
     return mockImage;
   },
@@ -42,7 +43,7 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
 
     expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor)).toEqual(
       expect.objectContaining({
-        data: expect.any(Uint8Array),
+        data: expect.any(Uint8Array) as unknown,
       }),
     );
   });
