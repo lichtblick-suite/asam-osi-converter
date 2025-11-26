@@ -17,11 +17,11 @@ import COUNTDOWN_SECONDS from "@assets/images/countdown_second.png";
 import ARROW_CROSS from "@assets/images/cross.png";
 import DONT_WALK from "@assets/images/do_not_walk.png";
 import NONE from "@assets/images/normal_one.png";
+import OTHER from "@assets/images/other.png";
 import PEDESTRIAN_AND_BICYCLE from "@assets/images/pedestrian_and_bicycle.png";
 import PEDESTRIAN from "@assets/images/pedestrian_one.png";
 import TRAM from "@assets/images/tram.png";
 import UNKNOWN from "@assets/images/unknown.png";
-import OTHER from "@assets/images/unknown.png";
 import WALK from "@assets/images/walk.png";
 import { TrafficLight_Classification_Icon as ICON } from "@lichtblick/asam-osi-types";
 
