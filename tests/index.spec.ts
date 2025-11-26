@@ -22,10 +22,10 @@ import { DeepRequired } from "ts-essentials";
 import { activate } from "@/index";
 
 jest.mock("@features/trafficsigns", () => ({
-  preloadDynamicTextures: () => {},
+  preloadDynamicTextures: jest.fn(),
 }));
 
-jest.mock("@features/trafficlights", () => {}, { virtual: true });
+jest.mock("@features/trafficlights", () => ({}));
 
 describe("OSI Visualizer: Message Converter", () => {
   const mockRegisterMessageConverter = jest.fn();
@@ -205,7 +205,9 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("converts a simple message { fromSchemaName: osi_3_msgs/osi_GroundTruth toSchemaName: foxglove.SceneUpdate }", () => {
     activate(mockExtensionContext);
-    const messageConverterArgs = mockRegisterMessageConverter.mock.calls[0][0];
+    const messageConverterArgs = mockRegisterMessageConverter.mock.calls[0][0] as {
+      converter: (data: GroundTruth) => any;
+    };
     const result = messageConverterArgs.converter(mockMessageData);
     expect(result.deletions).toBeDefined();
     expect(result.entities).toBeDefined();
