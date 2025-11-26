@@ -48,7 +48,6 @@ import SUP_TIME from "@assets/images/104X_time.png";
 import SUP_HAZARDOUS from "@assets/images/1052_30_hazardous_goods.png";
 import SUP_WEIGHT from "@assets/images/1053_33_supp_weight.png";
 import SUP_WET from "@assets/images/1053_35_supp_rain.png";
-import SUP_RAIN from "@assets/images/1053_35_supp_rain.png";
 import SUP_PARKING_CONSTRAINT from "@assets/images/1053_38_parking_contraints.png";
 import DOUBLE_TURN_LEFT from "@assets/images/105_1_double_turn_left.png";
 import DOUBLE_TURN_RIGHT from "@assets/images/105_2_double_turn_right.png";
@@ -109,7 +108,6 @@ import PEDESTRIAN_ZONE_END from "@assets/images/242_2_pedestrian_zone_end.png";
 import BICYCLE_ROAD_BEGIN from "@assets/images/244_1_bicycle_road_begin.png";
 import BICYCLE_ROAD_END from "@assets/images/244_2_bicycle_road_end.png";
 import BUS_LANE from "@assets/images/245_bus_lane.png";
-import BUS_LANE_BEGIN from "@assets/images/245_bus_lane.png";
 import ALL_PROHIBITED from "@assets/images/250_no_vehicles.png";
 import MOTORIZED_MULTITRACK_PROHIBITED from "@assets/images/251_no_motor_except_solo_motor_cycle.png";
 import TRUCKS_PROHIBITED from "@assets/images/253_no_truck.png";
@@ -292,6 +290,9 @@ import {
   TrafficSign_MainSign_Classification_Type as MAIN_TYPE,
   TrafficSign_SupplementarySign_Classification_Type as SUPPLEMENTARY_TYPE,
 } from "@lichtblick/asam-osi-types";
+
+const SUP_RAIN = SUP_WET;
+const BUS_LANE_BEGIN = BUS_LANE;
 
 export default {
   main: {
