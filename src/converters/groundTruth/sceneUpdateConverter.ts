@@ -18,7 +18,7 @@ import { createGroundTruthContext } from "./context";
 import {
   GroundTruthPanelSettings,
   OSISceneEntities,
-  OSISceneEntitiesUpdate,
+  OSISceneEntitiesUpdateFlags,
   GroundTruthContext,
 } from "./types";
 
@@ -53,69 +53,63 @@ import { OSI_GLOBAL_FRAME } from "@/config/frameTransformNames";
  */
 function buildSceneEntities(
   osiGroundTruth: DeepRequired<GroundTruth>,
-  updateFlags: OSISceneEntitiesUpdate,
+  updateFlags: OSISceneEntitiesUpdateFlags,
   panelSettings: GroundTruthPanelSettings | undefined,
   modelCache: Map<string, ModelPrimitive>,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
 
   // Moving objects
-  let movingObjectSceneEntities: PartialSceneEntity[] = [];
-  if (updateFlags.movingObjects) {
-    movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
-      let entity;
+  const movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
+    let entity;
 
-      const modelPathKey = panelSettings?.defaultModelPath + obj.model_reference;
-      if (
-        !modelCache.has(modelPathKey) &&
-        obj.model_reference.length !== 0 &&
-        convertPathToFileUrl(modelPathKey)
-      ) {
-        modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
-      }
+    const modelPathKey = panelSettings?.defaultModelPath + obj.model_reference;
+    if (
+      !modelCache.has(modelPathKey) &&
+      obj.model_reference.length !== 0 &&
+      convertPathToFileUrl(modelPathKey)
+    ) {
+      modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
+    }
 
-      if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
-        entity = buildMovingObjectEntity(
-          obj,
-          HOST_OBJECT_COLOR,
-          PREFIX_MOVING_OBJECT,
-          OSI_GLOBAL_FRAME,
-          time,
-          panelSettings,
-          modelCache,
-        );
-      } else {
-        const objectColor = MOVING_OBJECT_COLOR[obj.type];
-        entity = buildMovingObjectEntity(
-          obj,
-          objectColor,
-          PREFIX_MOVING_OBJECT,
-          OSI_GLOBAL_FRAME,
-          time,
-          panelSettings,
-          modelCache,
-        );
-      }
-      return entity;
-    });
-  }
-
-  // Stationary objects
-  let stationaryObjectSceneEntities: PartialSceneEntity[] = [];
-  if (updateFlags.stationaryObjects) {
-    stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
-      const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
-      return buildStationaryObjectEntity(
+    if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
+      entity = buildMovingObjectEntity(
         obj,
-        objectColor,
-        PREFIX_STATIONARY_OBJECT,
+        HOST_OBJECT_COLOR,
+        PREFIX_MOVING_OBJECT,
         OSI_GLOBAL_FRAME,
         time,
         panelSettings,
         modelCache,
       );
-    });
-  }
+    } else {
+      const objectColor = MOVING_OBJECT_COLOR[obj.type];
+      entity = buildMovingObjectEntity(
+        obj,
+        objectColor,
+        PREFIX_MOVING_OBJECT,
+        OSI_GLOBAL_FRAME,
+        time,
+        panelSettings,
+        modelCache,
+      );
+    }
+    return entity;
+  });
+
+  // Stationary objects
+  const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
+    const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
+    return buildStationaryObjectEntity(
+      obj,
+      objectColor,
+      PREFIX_STATIONARY_OBJECT,
+      OSI_GLOBAL_FRAME,
+      time,
+      panelSettings,
+      modelCache,
+    );
+  });
 
   // Traffic Sign objects
   const trafficsignObjectSceneEntities = osiGroundTruth.traffic_sign.map((obj) => {
@@ -123,33 +117,27 @@ function buildSceneEntities(
   });
 
   // Traffic Light objects
-  let trafficlightObjectSceneEntities: PartialSceneEntity[] = [];
-  if (updateFlags.trafficLights) {
-    trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
-      const metadata = buildTrafficLightMetadata(obj);
-      return buildTrafficLightEntity(obj, PREFIX_TRAFFIC_LIGHT, OSI_GLOBAL_FRAME, time, metadata);
-    });
-  }
+  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
+    const metadata = buildTrafficLightMetadata(obj);
+    return buildTrafficLightEntity(obj, PREFIX_TRAFFIC_LIGHT, OSI_GLOBAL_FRAME, time, metadata);
+  });
 
   // Road Marking objects
-  let roadMarkingObjectSceneEntities: PartialSceneEntity[] = [];
-  if (updateFlags.roadMarkings) {
-    roadMarkingObjectSceneEntities = osiGroundTruth.road_marking.flatMap((road_marking) => {
-      const result = buildRoadMarkingEntity(
-        road_marking,
-        PREFIX_ROAD_MARKING,
-        OSI_GLOBAL_FRAME,
-        time,
-      );
+  const roadMarkingObjectSceneEntities = osiGroundTruth.road_marking.flatMap((road_marking) => {
+    const result = buildRoadMarkingEntity(
+      road_marking,
+      PREFIX_ROAD_MARKING,
+      OSI_GLOBAL_FRAME,
+      time,
+    );
 
-      if (result != undefined) {
-        const partialEntity: PartialSceneEntity = result;
-        return partialEntity;
-      }
+    if (result != undefined) {
+      const partialEntity: PartialSceneEntity = result;
+      return partialEntity;
+    }
 
-      return [];
-    });
-  }
+    return [];
+  });
 
   // Lane boundaries
   let laneBoundarySceneEntities: PartialSceneEntity[] = [];
@@ -327,12 +315,7 @@ export function convertGroundTruthToSceneUpdate(
   let sceneEntities: PartialSceneEntity[] = [];
 
   try {
-    const updateFlags: OSISceneEntitiesUpdate = {
-      movingObjects: true,
-      stationaryObjects: true,
-      trafficSigns: true,
-      trafficLights: true,
-      roadMarkings: true,
+    const updateFlags: OSISceneEntitiesUpdateFlags = {
       laneBoundaries: true,
       logicalLaneBoundaries: true,
       lanes: true,

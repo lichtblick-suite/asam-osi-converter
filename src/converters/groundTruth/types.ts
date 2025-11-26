@@ -14,12 +14,7 @@ export interface OSISceneEntities {
   logicalLanes: PartialSceneEntity[];
 }
 
-export interface OSISceneEntitiesUpdate {
-  movingObjects: boolean;
-  stationaryObjects: boolean;
-  trafficSigns: boolean;
-  trafficLights: boolean;
-  roadMarkings: boolean;
+export interface OSISceneEntitiesUpdateFlags {
   laneBoundaries: boolean;
   logicalLaneBoundaries: boolean;
   lanes: boolean;
