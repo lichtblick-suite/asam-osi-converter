@@ -21,15 +21,11 @@ import { DeepRequired } from "ts-essentials";
 
 import { activate } from "@/index";
 
-jest.mock(
-  "../trafficsigns",
-  () => ({
-    preloadDynamicTextures: () => {},
-  }),
-  { virtual: true },
-);
+jest.mock("@features/trafficsigns", () => ({
+  preloadDynamicTextures: () => {},
+}));
 
-jest.mock("../trafficlights", () => {}, { virtual: true });
+jest.mock("@features/trafficlights", () => {}, { virtual: true });
 
 describe("OSI Visualizer: Message Converter", () => {
   const mockRegisterMessageConverter = jest.fn();

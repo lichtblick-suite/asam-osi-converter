@@ -16,6 +16,7 @@ module.exports = {
   moduleNameMapper: {
     "^@utils/(.*)$": "<rootDir>/src/utils/$1",
     "^@assets/(.*)$": "<rootDir>/assets/$1",
+    "^@converters$": "<rootDir>/src/converters",
     "^@converters/(.*)$": "<rootDir>/src/converters/$1",
     "^@features/(.*)$": "<rootDir>/src/features/$1",
     "^@/(.*)$": "<rootDir>/src/$1"
