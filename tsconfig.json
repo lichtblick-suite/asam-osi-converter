@@ -1,10 +1,11 @@
 {
   "extends": "create-lichtblick-extension/tsconfig/tsconfig.json",
 
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "tests/**/*.ts"],
   "exclude": ["./src/**/*.test.ts"],
   "compilerOptions": {
-    // "rootDirs": "./src",
+    "baseUrl": ".",
+    "rootDir": ".",
     "outDir": "./dist",
     "lib": ["dom"],
 
@@ -24,8 +25,11 @@
     "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@common-types/*": ["./common/types/*"],
-      "@utils/*": ["./common/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@assets/*": ["./assets/*"],
+      "@converters": ["./src/converters/index.ts"],
+      "@features/*": ["./src/features/*"],
+      "@/*": ["./src/*"]
     }
   }
 }
