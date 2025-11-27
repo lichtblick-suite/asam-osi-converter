@@ -15,6 +15,7 @@ import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
 
 import { createGroundTruthContext } from "./context";
+import { DEFAULT_CONFIG } from "./panelSettings";
 import {
   GroundTruthPanelSettings,
   OSISceneEntities,
@@ -230,10 +231,10 @@ export function convertGroundTruthToSceneUpdate(
   const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
 
-  const config = event?.topicConfig as GroundTruthPanelSettings | undefined;
+  const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
 
   // Reset caches if configuration changed
-  if (config && config !== state.previousConfig) {
+  if (config !== state.previousConfig) {
     laneBoundaryCache.clear();
     laneCache.clear();
     logicalLaneBoundaryCache.clear();
@@ -243,7 +244,7 @@ export function convertGroundTruthToSceneUpdate(
   }
 
   state.previousConfig = config;
-  const caching = config?.caching;
+  const caching = config.caching;
 
   // Deletions logic (comparing previous step's entities with current step's entities)
   const deletions = [
@@ -278,25 +279,25 @@ export function convertGroundTruthToSceneUpdate(
       timestamp,
     ),
     ...getDeletedEntities(
-      config?.showPhysicalLanes === true ? osiGroundTruthReq.lane_boundary : [],
+      config.showPhysicalLanes ? osiGroundTruthReq.lane_boundary : [],
       state.previousLaneBoundaryIds,
       PREFIX_LANE_BOUNDARY,
       timestamp,
     ),
     ...getDeletedEntities(
-      config?.showLogicalLanes === true ? osiGroundTruthReq.logical_lane_boundary : [],
+      config.showLogicalLanes ? osiGroundTruthReq.logical_lane_boundary : [],
       state.previousLogicalLaneBoundaryIds,
       PREFIX_LOGICAL_LANE_BOUNDARY,
       timestamp,
     ),
     ...getDeletedEntities(
-      config?.showPhysicalLanes === true ? osiGroundTruthReq.lane : [],
+      config.showPhysicalLanes ? osiGroundTruthReq.lane : [],
       state.previousLaneIds,
       PREFIX_LANE,
       timestamp,
     ),
     ...getDeletedEntities(
-      config?.showLogicalLanes === true ? osiGroundTruthReq.logical_lane : [],
+      config.showLogicalLanes ? osiGroundTruthReq.logical_lane : [],
       state.previousLogicalLaneIds,
       PREFIX_LOGICAL_LANE,
       timestamp,
@@ -328,7 +329,7 @@ export function convertGroundTruthToSceneUpdate(
     let logicalLaneBoundaryHash: string | undefined;
     let logicalLaneHash: string | undefined;
 
-    if (caching === true) {
+    if (caching) {
       // Physical lane boundaries
       laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
       if (laneBoundaryCache.has(laneBoundaryHash)) {
@@ -387,19 +388,19 @@ export function convertGroundTruthToSceneUpdate(
     );
 
     // Update caches
-    if (caching === true && updateFlags.laneBoundaries && laneBoundaryHash) {
+    if (caching && updateFlags.laneBoundaries && laneBoundaryHash) {
       laneBoundaryCache.clear();
       laneBoundaryCache.set(laneBoundaryHash, laneBoundaries);
     }
-    if (caching === true && updateFlags.lanes && laneHash) {
+    if (caching && updateFlags.lanes && laneHash) {
       laneCache.clear();
       laneCache.set(laneHash, lanes);
     }
-    if (caching === true && updateFlags.logicalLaneBoundaries && logicalLaneBoundaryHash) {
+    if (caching && updateFlags.logicalLaneBoundaries && logicalLaneBoundaryHash) {
       logicalLaneBoundaryCache.clear();
       logicalLaneBoundaryCache.set(logicalLaneBoundaryHash, logicalLaneBoundaries);
     }
-    if (caching === true && updateFlags.logicalLanes && logicalLaneHash) {
+    if (caching && updateFlags.logicalLanes && logicalLaneHash) {
       logicalLaneCache.clear();
       logicalLaneCache.set(logicalLaneHash, logicalLanes);
     }
