@@ -59,13 +59,16 @@ jobs:
       #    cd scancode-toolkit
       #    ./scancode --json-pp ../scancode-result.json ../
 
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release
+          cp CHANGELOG.md release/
+          cp lichtblick.asam-osi-converter-*.foxe release/
+
       - name: Upload deliverables
         uses: svenstaro/upload-release-action@v2
         with:
+          file: release/*
           file_glob: true
-          file: |
-            CHANGELOG.md
-            lichtblick.asam-osi-converter-*.foxe
-            scancode-result.json
           tag: ${{ github.event.release.tag_name }}
           overwrite: true
