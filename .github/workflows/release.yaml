@@ -49,19 +49,23 @@ jobs:
           mkdir -p scancode-toolkit
           tar -xzf scancode-toolkit.tar.gz -C scancode-toolkit --strip-components=1
   
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
+      #- name: Set up Python 3.12
+      #  uses: actions/setup-python@v5
+      #  with:
+      #    python-version: 3.12
   
-      - name: Run ScanCode
-        run: |
-          cd scancode-toolkit
-          ./scancode --json-pp ../scancode-result.json ../
+      #- name: Run ScanCode
+      #  run: |
+      #    cd scancode-toolkit
+      #    ./scancode --json-pp ../scancode-result.json ../
 
       - name: Upload deliverables
         uses: svenstaro/upload-release-action@v2
         with:
-          file: "CHANGELOG.md lichtblick.asam-osi-converter-*.foxe"
+          file_glob: true
+          file: |
+            CHANGELOG.md
+            lichtblick.asam-osi-converter-*.foxe
+            scancode-result.json
           tag: ${{ github.event.release.tag_name }}
           overwrite: true
