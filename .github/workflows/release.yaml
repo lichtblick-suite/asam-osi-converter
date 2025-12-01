@@ -30,7 +30,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
           git commit -m "docs: update CHANGELOG for ${{ github.event.release.tag_name }}" || echo "No changes to commit"
-          git push origin HEAD:${{ github.event.release.target_commitish }} || echo "Nothing to push"
+          git push origin main || echo "Nothing to push"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,11 +43,11 @@ jobs:
       - name: Package
         run: yarn run package
 
-      - name: Download ScanCode Toolkit
-        run: |
-          curl -L -o scancode-toolkit.tar.gz https://github.com/aboutcode-org/scancode-toolkit/releases/download/v32.3.0/scancode-toolkit-v32.3.0_py3.12-linux.tar.gz
-          mkdir -p scancode-toolkit
-          tar -xzf scancode-toolkit.tar.gz -C scancode-toolkit --strip-components=1
+      #- name: Download ScanCode Toolkit
+      #  run: |
+      #    curl -L -o scancode-toolkit.tar.gz https://github.com/aboutcode-org/scancode-toolkit/releases/download/v32.3.0/scancode-toolkit-v32.3.0_py3.12-linux.tar.gz
+      #    mkdir -p scancode-toolkit
+      #    tar -xzf scancode-toolkit.tar.gz -C scancode-toolkit --strip-components=1
   
       #- name: Set up Python 3.12
       #  uses: actions/setup-python@v5
