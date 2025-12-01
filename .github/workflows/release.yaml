@@ -1,23 +1,36 @@
 name: release
 
 on:
-  push:
-    tags: ["v[0-9].[0-9]+.[0-9]+"]
+  release:
+    types: [published]
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  build_foxe:
-    name: build_foxe
+  changelog:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
+          ref: ${{ github.event.release.target_commitish }}
+
+      - name: Generate changelog for this release
+        id: changelog
+        uses: janheinrichmerker/action-github-changelog-generator@v2.3
+        with:
+          token: ${{ secrets.CHANGELOG_TOKEN }}
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG for ${{ github.event.release.tag_name }}"
+          git push origin HEAD:${{ github.event.release.target_commitish }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -29,62 +42,6 @@ jobs:
 
       - name: Package
         run: yarn run package
-
-      - name: Extract version
-        id: extract_version
-        run: |
-          version=$(node -p "require('./package.json').version")
-          echo "version=$version" >> $GITHUB_ENV
-
-      - name: Update changelog file
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: |
-          yarn commitizen init cz-conventional-changelog --save-dev --force --save-exact
-          HEADER=$(awk 'NR==1 {print; exit}' CHANGELOG.md)
-          yarn conventional-changelog -p angular -o TEMP.md -r 0
-          echo "$HEADER" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          cat TEMP.md >> CHANGELOG.md
-          rm TEMP.md
-
-      - name: Fetch initial commit history
-        id: fetch_initial_commit_history
-        run: |
-          INITIAL_COMMIT_HISTORY=$(cat initial_commit_history.md)
-          echo "INITIAL_COMMIT_HISTORY<<EOF" >> $GITHUB_ENV
-          echo "$INITIAL_COMMIT_HISTORY" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Insert initial commit history
-        run: |
-          TARGET_TAG="0.0.1"
-          FILE="CHANGELOG.md"
-
-          INITIAL_COMMIT_HISTORY="${{ env.INITIAL_COMMIT_HISTORY }}"
-
-          if grep -q "^## $TARGET_TAG " "$FILE"; then
-            sed -i "/^## $TARGET_TAG /,/^## /{//!d}" "$FILE"
-
-            awk -v content="$INITIAL_COMMIT_HISTORY" -v tag="## $TARGET_TAG " '
-            BEGIN { found=0 }
-            $0 ~ tag { print; print content; found=1; next }
-            { print }
-            END { if (!found) print "Tag header not found!" }
-            ' "$FILE" > TEMP.md && mv TEMP.md "$FILE"
-
-            echo "Initial commit history inserted under the ## $TARGET_TAG header in $FILE."
-          else
-            echo "Tag ## $TARGET_TAG not found in $FILE."
-          fi
-
-      - name: Commit changelog changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git commit -s -m "chore: update changelog for $GITHUB_REF"
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Download ScanCode Toolkit
         run: |
@@ -102,49 +59,11 @@ jobs:
           cd scancode-toolkit
           ./scancode --json-pp ../scancode-result.json ../
 
-      - name: Create GitHub Release
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        id: create_release
-        uses: "plu5/automatic-releases-with-sha-action@main"
+      - name: Upload deliverables
+        uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: "${{ secrets.PAT_TOKEN }}"
-          prerelease: false
-          title: ASAM OSI Converter ${{ env.version }}
-          files: |
+          file: |
             CHANGELOG.md
-            scancode-result.json
-            lichtblick.asam-osi-converter-${{ env.version }}.foxe
-
-      - name: Upload CHANGELOG as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelog
-          path: ./CHANGELOG.md
-
-  create_pull_request:
-    name: Create Pull Request
-    needs: build_foxe
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          fetch-depth: 0
-
-      - name: Download changelog artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: changelog
-          path: ./
-
-      - name: Create a Pull Request to update the changelog file
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          commit-message: "docs: update CHANGELOG for release"
-          branch: "update-changelog"
-          title: "Update CHANGELOG for new release"
-          body: "This pull request updates the CHANGELOG file with details of the new release."
-          base: "main"
-          delete-branch: true
+            lichtblick.asam-osi-converter-*.foxe
+          tag: ${{ github.event.release.tag_name }}
+          overwrite: true
