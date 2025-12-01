@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.1](https://github.com/thomassedlmayer/asam-osi-converter/tree/v0.1.1) (2025-12-01)
+
+[Full Changelog](https://github.com/thomassedlmayer/asam-osi-converter/compare/v0.1.0...v0.1.1)
+
+**Merged pull requests:**
+
+- ci: always push changelog to main [\#3](https://github.com/thomassedlmayer/asam-osi-converter/pull/3) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Ci/test new GitHub actions [\#1](https://github.com/thomassedlmayer/asam-osi-converter/pull/1) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
 ## [v0.1.0](https://github.com/thomassedlmayer/asam-osi-converter/tree/v0.1.0) (2025-12-01)
 
 [Full Changelog](https://github.com/thomassedlmayer/asam-osi-converter/compare/v0.0.9...v0.1.0)
