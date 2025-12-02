@@ -1,6 +1,5 @@
-import type { SceneEntity, SceneEntityDeletion } from "@foxglove/schemas";
 import { SceneEntityDeletionType } from "@foxglove/schemas";
-import type { Time } from "@foxglove/schemas/schemas/typescript/Time";
+import type { SceneEntity, SceneEntityDeletion, Time } from "@foxglove/schemas";
 import type { DeepPartial, DeepRequired } from "ts-essentials";
 
 export type PartialSceneEntity = DeepPartial<SceneEntity> & { id: string };

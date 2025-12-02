@@ -1,5 +1,5 @@
 import { TriangleListPrimitive, type Point3 } from "@foxglove/schemas";
-import { Time } from "@foxglove/schemas/schemas/typescript/Time";
+import { Time } from "@foxglove/schemas";
 import { LaneBoundary, LaneBoundary_Classification_Type, Lane } from "@lichtblick/asam-osi-types";
 import {
   pointListToTriangleListPrimitive,
