@@ -24,13 +24,32 @@ jobs:
         with:
           token: ${{ secrets.CHANGELOG_TOKEN }}
 
-      - name: Commit updated CHANGELOG.md
+      - name: Commit changelog to a new branch
         run: |
+          BRANCH="changelog-update-${{ github.event.release.tag_name }}"
+          git checkout -b "$BRANCH"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG for ${{ github.event.release.tag_name }}" || echo "No changes to commit"
-          git push origin main || echo "Nothing to push"
+          git commit -m "docs: update CHANGELOG for ${{ github.event.release.tag_name }}" || exit 0
+          git push origin "$BRANCH"
+
+      - name: Create PR
+        id: create_pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: changelog-update-${{ github.event.release.tag_name }}
+          title: "docs: update CHANGELOG for ${{ github.event.release.tag_name }}"
+          body: "Automated changelog update."
+          base: main
+
+      - name: Auto-merge PR
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: squash
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
