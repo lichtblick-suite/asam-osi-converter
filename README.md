@@ -10,13 +10,10 @@ Current ASAM OSI [tracefile formats](https://opensimulationinterface.github.io/o
 
 ## Getting started
 
-Get Lichtblick from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
-
-Get extension file from [releases](https://github.com/Lichtblick-Suite/asam-osi-converter/releases).
-
-Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
-
-Open a file/stream which is following the ASAM OSI standard.
+* Get Lichtblick from [github](https://github.com/Lichtblick-Suite/lichtblick/releases).
+* Get extension file from [releases](https://github.com/Lichtblick-Suite/asam-osi-converter/releases).
+* Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
+* Open a file/stream which is following the ASAM OSI standard.
 
 ## Coding guidelines
 
@@ -87,9 +84,39 @@ All commits must follow the **Conventional Commits** standard to ensure consiste
 
 ---
 
-## **2. Tagging for Releases**
+## **2. Audit and Upgrade before Release**
 
-Tags are used to create release points in the project.
+Before tagging a release, ensure dependencies are secure and up to date.
+
+```sh
+yarn audit --summary
+
+yarn upgrade
+
+yarn install
+```
+
+Commit both `package.json` and`yarn.lock` before proceeding with release tagging.
+
+
+Outdated packages can be identified by using
+
+```sh
+yarn outdated
+```
+
+### Important Notes
+
+Not all upgrades are safe or compatible.
+Tools like TypeScript, esbuild, ESLint, and React types may introduce breaking changes in newer versions.
+Since this project relies on older but stable build tooling, prefer minor/patch updates and only adopt breaking major versions intentionally.
+
+## **3. Release Process**
+
+The release workflow is triggered when a push of a tag (`v[0-9].[0-9]+.[0-9]+`) occurs.
+The release workflow creates a changelog, builds the foxe extension based on the version specified in `package.json` and finally creates a release on github with the corresponding artifacts.
+
+Make sure to bump the version number in `package.json` and commit and push before tagging.
 
 ### Steps to Tag a Release
 
@@ -114,28 +141,7 @@ Tags are used to create release points in the project.
 
 ---
 
-## **3. Creating a GitHub Release**
-
-Once the tag is pushed, create a release on GitHub:
-
-1. Go to the **Releases** section of the repository.
-2. Click **Draft a new release**.
-3. Select the tag you created (e.g., `v1.0.0`).
-4. Fill in the release title and notes. Use the changelog for guidance.
-5. Click **Publish Release**.
-
----
-
-## **4. Automating Releases**
-
-This project includes a GitHub Actions workflow to automate changelog updates and publishing releases. Ensure the workflow is configured correctly by following these steps:
-
-1. Push a tag (e.g., `v1.0.0`) to trigger the workflow.
-2. Verify the changelog and release on GitHub.
-
----
-
-## **5. Troubleshooting**
+## **4. Troubleshooting**
 
 - **Commit Rejected**: Ensure your commit message follows the Conventional Commits format.
 - **Empty Changelog**: Verify that commit messages are properly formatted.
