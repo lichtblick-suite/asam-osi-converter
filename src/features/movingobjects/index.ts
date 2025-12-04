@@ -6,7 +6,7 @@ import {
   IndicatorLightSide,
 } from "@features/movingobjects/lightstates";
 import { ArrowPrimitive, Color, CubePrimitive, ModelPrimitive } from "@foxglove/schemas";
-import { MovingObject, StationaryObject } from "@lichtblick/asam-osi-types";
+import { MovingObject } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
 import { convertPathToFileUrl } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
@@ -69,14 +69,14 @@ export function buildMovingObjectEntity(
     return buildObjectAxes(osiObject);
   }
 
-  function hasBrakeLightState(obj: MovingObject | StationaryObject): obj is MovingObject {
+  function hasBrakeLightState(obj: MovingObject): obj is MovingObject {
     return (
       "vehicle_classification" in obj &&
       obj.vehicle_classification?.light_state?.brake_light_state != undefined
     );
   }
 
-  function hasIndicatorState(obj: MovingObject | StationaryObject): obj is MovingObject {
+  function hasIndicatorState(obj: MovingObject): obj is MovingObject {
     return (
       "vehicle_classification" in obj &&
       obj.vehicle_classification?.light_state?.indicator_state != undefined
