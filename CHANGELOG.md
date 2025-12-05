@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.1.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.1) (2025-12-05)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.0...v0.1.1)
+
+**Merged pull requests:**
+
+- chore: bump version [\#154](https://github.com/lichtblick-suite/asam-osi-converter/pull/154) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- fix: missing metadata bug [\#153](https://github.com/lichtblick-suite/asam-osi-converter/pull/153) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
 ## [v0.1.0](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.0) (2025-12-05)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.9...v0.1.0)
