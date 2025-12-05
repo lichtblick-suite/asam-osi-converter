@@ -1,123 +1,242 @@
-# ASAM OSI Converter version history
+# Changelog
 
-## [0.0.8](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.7...v0.0.8) (2025-10-10)
+## [v0.1.0](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.0) (2025-12-05)
 
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.9...v0.1.0)
 
-### Features
+**Implemented enhancements:**
 
-* rename "<root>" frame transform to  to ASAM OSI "global" , increase geometry.ts robustness ([#137](https://github.com/lichtblick-suite/asam-osi-converter/issues/137)) ([8184b04](https://github.com/lichtblick-suite/asam-osi-converter/commit/8184b0456ede91c17044262c99814214d8d3734b))
+- Reorganization/cleanup [\#146](https://github.com/lichtblick-suite/asam-osi-converter/pull/146) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
+**Closed issues:**
 
+- Should I commit yarn.lock and package-lock.json files? [\#86](https://github.com/lichtblick-suite/asam-osi-converter/issues/86)
+- Magic numbers in the code [\#68](https://github.com/lichtblick-suite/asam-osi-converter/issues/68)
 
-## [0.0.7](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.6...v0.0.7) (2025-09-04)
+**Merged pull requests:**
 
+- chore: provide token to changelog generator [\#152](https://github.com/lichtblick-suite/asam-osi-converter/pull/152) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- chore: bump version [\#151](https://github.com/lichtblick-suite/asam-osi-converter/pull/151) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- ci: switch to PAT\_TOKEN [\#150](https://github.com/lichtblick-suite/asam-osi-converter/pull/150) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
-### Bug Fixes
+## [v0.0.9](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.9) (2025-10-24)
 
-* **ci:** Update release.yaml ([#104](https://github.com/lichtblick-suite/asam-osi-converter/issues/104)) ([53cd2b5](https://github.com/lichtblick-suite/asam-osi-converter/commit/53cd2b5ea73f19389b8a2bc255851ff75193f1b7))
-* out of bounding box issue ([#118](https://github.com/lichtblick-suite/asam-osi-converter/issues/118)) ([6873cfb](https://github.com/lichtblick-suite/asam-osi-converter/commit/6873cfbe031bc279d75e480e87f35c730c7fd04e))
-* simplify deletion logic ([#113](https://github.com/lichtblick-suite/asam-osi-converter/issues/113)) ([8803754](https://github.com/lichtblick-suite/asam-osi-converter/commit/8803754c682573f255bb7b29aeb7fb4052e7dd0f))
-* the type error after vehicle lights implementation ([#119](https://github.com/lichtblick-suite/asam-osi-converter/issues/119)) ([a5c521d](https://github.com/lichtblick-suite/asam-osi-converter/commit/a5c521db8df15cbd04596900005ae4e251ff8ae0))
-* use new assigned_lane_id instead of deprecated one ([#128](https://github.com/lichtblick-suite/asam-osi-converter/issues/128)) ([ee02c71](https://github.com/lichtblick-suite/asam-osi-converter/commit/ee02c71e91d6ebe7061e2407d7aef89a36fd3b3f))
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.8...v0.0.9)
 
+**Fixed bugs:**
 
-### Features
+- OSI::SensorData Frame Transform Error [\#138](https://github.com/lichtblick-suite/asam-osi-converter/issues/138)
+- Allow unset velocity and acceleration? [\#124](https://github.com/lichtblick-suite/asam-osi-converter/issues/124)
+- fix: remove logical lane centerline [\#143](https://github.com/lichtblick-suite/asam-osi-converter/pull/143) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Fix/allow unset values in metadata [\#142](https://github.com/lichtblick-suite/asam-osi-converter/pull/142) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
-* add additional metadata for moving objects ([#123](https://github.com/lichtblick-suite/asam-osi-converter/issues/123)) ([a030c38](https://github.com/lichtblick-suite/asam-osi-converter/commit/a030c3857c97a17d1ab6bfb3b8968e840c1c0af4))
-* add disappearing vehicle example ([#120](https://github.com/lichtblick-suite/asam-osi-converter/issues/120)) ([0592bd5](https://github.com/lichtblick-suite/asam-osi-converter/commit/0592bd5b12dab5a224b75a4f17080efec75f568e))
-* Add frame transform between ego bb and ego vehicle rear axis ([#105](https://github.com/lichtblick-suite/asam-osi-converter/issues/105)) ([2d86030](https://github.com/lichtblick-suite/asam-osi-converter/commit/2d860304e3011d117a4f27185c5a21f5eb2d80fb))
-* add stop line road marking ([#106](https://github.com/lichtblick-suite/asam-osi-converter/issues/106)) ([8b1023d](https://github.com/lichtblick-suite/asam-osi-converter/commit/8b1023ddb75a673682d0c5b258ed56afcb3a25ea))
-* Visualize logical lanes ([#107](https://github.com/lichtblick-suite/asam-osi-converter/issues/107)) ([2ebbcf8](https://github.com/lichtblick-suite/asam-osi-converter/commit/2ebbcf808fb439876ec30c499d8cf11f83759861))
+**Closed issues:**
 
+- OSI::GroundTruth messages objects not rendering in 3D panel after v0.0.7 update [\#139](https://github.com/lichtblick-suite/asam-osi-converter/issues/139)
+- Reminder: Use Const [\#136](https://github.com/lichtblick-suite/asam-osi-converter/issues/136)
 
-### Reverts
+**Merged pull requests:**
 
-* Revert "feat: Add frame transform between ego bb and ego vehicle rear axis (#…" (#116) ([ade792c](https://github.com/lichtblick-suite/asam-osi-converter/commit/ade792c38aaa0afd704dbdff5923e954a3d4bc82)), closes [#116](https://github.com/lichtblick-suite/asam-osi-converter/issues/116)
+- Update CHANGELOG for new release [\#141](https://github.com/lichtblick-suite/asam-osi-converter/pull/141) ([jdsika](https://github.com/jdsika))
+- feat: rename "\<root\>" frame transform to  to ASAM OSI "global" , increase geometry.ts robustness [\#137](https://github.com/lichtblick-suite/asam-osi-converter/pull/137) ([jdsika](https://github.com/jdsika))
 
+## [v0.0.8](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.8) (2025-10-10)
 
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.7...v0.0.8)
 
-## [0.0.6](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.5...v0.0.6) (2025-05-07)
+## [v0.0.7](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.7) (2025-09-04)
 
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.6...v0.0.7)
 
-### Bug Fixes
+**Implemented enhancements:**
 
-* mirror textures and traffic sign values ([#101](https://github.com/lichtblick-suite/asam-osi-converter/issues/101)) ([53420bb](https://github.com/lichtblick-suite/asam-osi-converter/commit/53420bbe79c4a0285986e484d0d640b5ae390baf))
-* remove broken traffic sign optimization ([#95](https://github.com/lichtblick-suite/asam-osi-converter/issues/95)) ([d31df44](https://github.com/lichtblick-suite/asam-osi-converter/commit/d31df44c4eb789bb0f477cab484360474de5b205)), closes [#94](https://github.com/lichtblick-suite/asam-osi-converter/issues/94)
+- feat: add disappearing vehicle example [\#120](https://github.com/lichtblick-suite/asam-osi-converter/pull/120) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Visualize brake and indicator lights - Follow Up [\#118](https://github.com/lichtblick-suite/asam-osi-converter/pull/118) ([buraktiryaki](https://github.com/buraktiryaki))
+- Visualize brake and indicator lights [\#115](https://github.com/lichtblick-suite/asam-osi-converter/pull/115) ([buraktiryaki](https://github.com/buraktiryaki))
+- Visualize the stop line road marking [\#106](https://github.com/lichtblick-suite/asam-osi-converter/pull/106) ([myemural](https://github.com/myemural))
 
+**Fixed bugs:**
 
-### Features
+- Revert "Add frame transform between ego bb and ego vehicle rear axis" [\#116](https://github.com/lichtblick-suite/asam-osi-converter/pull/116) ([jdsika](https://github.com/jdsika))
+- fix\(ci\): Update release.yaml [\#104](https://github.com/lichtblick-suite/asam-osi-converter/pull/104) ([jdsika](https://github.com/jdsika))
 
-* add info for unhandled sensordata ([#98](https://github.com/lichtblick-suite/asam-osi-converter/issues/98)) ([2686e4a](https://github.com/lichtblick-suite/asam-osi-converter/commit/2686e4a14f427e2d9d5fb7b0d2cbba94d847b42b))
-* add options for cache and object axes ([#100](https://github.com/lichtblick-suite/asam-osi-converter/issues/100)) ([7f688cb](https://github.com/lichtblick-suite/asam-osi-converter/commit/7f688cb908dbeae4e65968e847b4c65b7f0fac06))
+**Closed issues:**
 
+- Use of deprecated assigned\_lane\_id [\#125](https://github.com/lichtblick-suite/asam-osi-converter/issues/125)
+- Docs: README.md and CHANGELOG.md not visible [\#85](https://github.com/lichtblick-suite/asam-osi-converter/issues/85)
 
+**Merged pull requests:**
 
-## [0.0.5](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.4...v0.0.5) (2025-03-07)
+- build\(deps\): bump form-data from 4.0.1 to 4.0.4 in the npm\_and\_yarn group across 1 directory [\#110](https://github.com/lichtblick-suite/asam-osi-converter/pull/110) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Update CHANGELOG for new release [\#133](https://github.com/lichtblick-suite/asam-osi-converter/pull/133) ([jdsika](https://github.com/jdsika))
+- use new assigned\_lane\_id instead of deprecated one [\#128](https://github.com/lichtblick-suite/asam-osi-converter/pull/128) ([buraktiryaki](https://github.com/buraktiryaki))
+- feat: add additional metadata for moving objects 2 [\#123](https://github.com/lichtblick-suite/asam-osi-converter/pull/123) ([buraktiryaki](https://github.com/buraktiryaki))
+- chore: bump version [\#121](https://github.com/lichtblick-suite/asam-osi-converter/pull/121) ([jdsika](https://github.com/jdsika))
+- fix: the type error after vehicle lights implementation [\#119](https://github.com/lichtblick-suite/asam-osi-converter/pull/119) ([buraktiryaki](https://github.com/buraktiryaki))
+- External 3D Asset Rendering [\#117](https://github.com/lichtblick-suite/asam-osi-converter/pull/117) ([myemural](https://github.com/myemural))
+- fix: simplify deletion logic [\#113](https://github.com/lichtblick-suite/asam-osi-converter/pull/113) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Visualize logical lanes [\#107](https://github.com/lichtblick-suite/asam-osi-converter/pull/107) ([myemural](https://github.com/myemural))
+- Add frame transform between ego bb and ego vehicle rear axis [\#105](https://github.com/lichtblick-suite/asam-osi-converter/pull/105) ([rmessaou](https://github.com/rmessaou))
 
+## [v0.0.6](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.6) (2025-05-07)
 
-### Features
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.5...v0.0.6)
 
-* add lane boundary and lane implementation including color schema and temporary caching ([#81](https://github.com/lichtblick-suite/asam-osi-converter/issues/81)) ([4c9cc52](https://github.com/lichtblick-suite/asam-osi-converter/commit/4c9cc526a1c8449ed0a42314e1fb3b928bed17f8))
+**Implemented enhancements:**
 
+- feat: add options for cache and object axes [\#100](https://github.com/lichtblick-suite/asam-osi-converter/pull/100) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Fix/infinite object lifetime [\#94](https://github.com/lichtblick-suite/asam-osi-converter/pull/94) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
+**Fixed bugs:**
 
-## [0.0.4](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.3...v0.0.4) (2025-02-15)
+- fix: mirror textures and traffic sign values [\#101](https://github.com/lichtblick-suite/asam-osi-converter/pull/101) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
+**Closed issues:**
 
-### Bug Fixes
+- Handle OSI:SD gracefully [\#96](https://github.com/lichtblick-suite/asam-osi-converter/issues/96)
+- Are rotations handled in OSI:SV and OSI:GT the same way? [\#93](https://github.com/lichtblick-suite/asam-osi-converter/issues/93)
+- Issue: Moving Objects "Accumulate" During Trace-Playback [\#91](https://github.com/lichtblick-suite/asam-osi-converter/issues/91)
+- Issue: Lane Boundary Caching Based Solely on ID Hash Leads to Stale Visualizations [\#90](https://github.com/lichtblick-suite/asam-osi-converter/issues/90)
+- Traffic sign orientation incorrect [\#89](https://github.com/lichtblick-suite/asam-osi-converter/issues/89)
+- Rework: Conditions for re-rendering and caching [\#78](https://github.com/lichtblick-suite/asam-osi-converter/issues/78)
 
-* **ci:** update package-lock files and replace npm with yarn in workflow ([#76](https://github.com/lichtblick-suite/asam-osi-converter/issues/76)) ([7e0cfba](https://github.com/lichtblick-suite/asam-osi-converter/commit/7e0cfba569d9777d1fdb6cdd30eabf596a5045ae))
-* lane boundaries without z-values ([#65](https://github.com/lichtblick-suite/asam-osi-converter/issues/65)) ([cabb6c3](https://github.com/lichtblick-suite/asam-osi-converter/commit/cabb6c304cea7160dd03f34beef42c107374bb37))
-* rotation angles ([#64](https://github.com/lichtblick-suite/asam-osi-converter/issues/64)) ([fb017e1](https://github.com/lichtblick-suite/asam-osi-converter/commit/fb017e14f762dec4e73ae5fe8e93081768bdfb1f))
-* split up and fix frame transforms, increase robustness ([#72](https://github.com/lichtblick-suite/asam-osi-converter/issues/72)) ([6e082a1](https://github.com/lichtblick-suite/asam-osi-converter/commit/6e082a152e6cdaa62dd9efbae550d0264c0e56fd))
+**Merged pull requests:**
 
+- build: bump to v0.0.6, update package locks, update workflow versions [\#102](https://github.com/lichtblick-suite/asam-osi-converter/pull/102) ([jdsika](https://github.com/jdsika))
+- Add info for unhandled SensorData [\#98](https://github.com/lichtblick-suite/asam-osi-converter/pull/98) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- fix: remove broken traffic sign optimization [\#95](https://github.com/lichtblick-suite/asam-osi-converter/pull/95) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
+## [v0.0.5](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.5) (2025-03-07)
 
-## [0.0.3](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.2...v0.0.3) (2024-12-17)
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.4...v0.0.5)
 
+**Implemented enhancements:**
 
-### Bug Fixes
+- CI Release: Add sha of artifacts [\#84](https://github.com/lichtblick-suite/asam-osi-converter/issues/84)
+- build: bump version of ASAM OSI Converter, npm audit fix --force [\#87](https://github.com/lichtblick-suite/asam-osi-converter/pull/87) ([jdsika](https://github.com/jdsika))
+- feat: add lane boundary and lane implementation and temporary caching [\#81](https://github.com/lichtblick-suite/asam-osi-converter/pull/81) ([jdsika](https://github.com/jdsika))
 
-* **ci:** release pipeline fix ([#25](https://github.com/lichtblick-suite/asam-osi-converter/issues/25)) ([b34e891](https://github.com/lichtblick-suite/asam-osi-converter/commit/b34e891568e6d892e3f1b03029bafae6723a4fbf))
+**Fixed bugs:**
 
+- Limit header extraction [\#79](https://github.com/lichtblick-suite/asam-osi-converter/pull/79) ([samikachai](https://github.com/samikachai))
 
+**Closed issues:**
 
-## [0.0.2](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.1...v0.0.2) (2024-12-12)
+- Optimization: Write one LanePrimitive function with optional parameters [\#66](https://github.com/lichtblick-suite/asam-osi-converter/issues/66)
 
+**Merged pull requests:**
 
-### Features
+- Update CHANGELOG for new release [\#88](https://github.com/lichtblick-suite/asam-osi-converter/pull/88) ([samikachai](https://github.com/samikachai))
 
-* **CI/CD:** automate changelog creation and update ([#18](https://github.com/lichtblick-suite/asam-osi-converter/issues/18)) ([c511ba0](https://github.com/lichtblick-suite/asam-osi-converter/commit/c511ba061a30faf861d447ca71bff094c6b77532))
+## [v0.0.4](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.4) (2025-02-15)
 
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.3...v0.0.4)
 
+**Implemented enhancements:**
 
-## 0.0.1 (2024-10-18)
-Initial commit
+- fix: split up and fix frame transforms, increase robustness [\#72](https://github.com/lichtblick-suite/asam-osi-converter/pull/72) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
-Update LICENSE
+**Fixed bugs:**
 
-Update README
+- Position Z not taken into account in the converter [\#12](https://github.com/lichtblick-suite/asam-osi-converter/issues/12)
+- fix\(ci\): update package-lock files and replace npm with yarn in workflow [\#76](https://github.com/lichtblick-suite/asam-osi-converter/pull/76) ([jdsika](https://github.com/jdsika))
+- fix: lane boundaries without z-values [\#65](https://github.com/lichtblick-suite/asam-osi-converter/pull/65) ([jdsika](https://github.com/jdsika))
+- fix: rotation angles [\#64](https://github.com/lichtblick-suite/asam-osi-converter/pull/64) ([jdsika](https://github.com/jdsika))
 
-Create CODEOWNERS
+**Closed issues:**
 
-Jest configuration and initial unit tests
+- Open native binary OSI trace file [\#74](https://github.com/lichtblick-suite/asam-osi-converter/issues/74)
+- Issues concerning frameTransformator function [\#67](https://github.com/lichtblick-suite/asam-osi-converter/issues/67)
 
-Implement TrafficSigns
+**Merged pull requests:**
 
-Improve logic to prevent TrafficSign rerender
+- docs: create README.md for traffic sign images [\#70](https://github.com/lichtblick-suite/asam-osi-converter/pull/70) ([jdsika](https://github.com/jdsika))
+- Add checking workflow and replace create-foxglove-extension package [\#61](https://github.com/lichtblick-suite/asam-osi-converter/pull/61) ([samikachai](https://github.com/samikachai))
+- Update CHANGELOG for new release [\#60](https://github.com/lichtblick-suite/asam-osi-converter/pull/60) ([samikachai](https://github.com/samikachai))
+- Update CHANGELOG for new release [\#77](https://github.com/lichtblick-suite/asam-osi-converter/pull/77) ([samikachai](https://github.com/samikachai))
+- docs: Update README.md [\#75](https://github.com/lichtblick-suite/asam-osi-converter/pull/75) ([jdsika](https://github.com/jdsika))
 
-Synchronize OSI extension code
+## [v0.0.3](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.3) (2024-12-17)
 
-Fix trafficsign category modelCache
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.2...v0.0.3)
 
-Traffic Lights Implementation
+**Closed issues:**
 
-Create release with artifact on new tag (#3)
+- What does "dragging the .foxe file into the Lichtblick window mean"? [\#15](https://github.com/lichtblick-suite/asam-osi-converter/issues/15)
 
-Integrate ASAM OSI as Dependency for OSI Ground Truth Extension (#5)
+**Merged pull requests:**
 
-Remove old unneeded manually created types (#9)
+- Fix CI/CD Pipeline to generate changelog with the release and create a PR of the change. [\#59](https://github.com/lichtblick-suite/asam-osi-converter/pull/59) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update workflow [\#58](https://github.com/lichtblick-suite/asam-osi-converter/pull/58) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update workflow [\#57](https://github.com/lichtblick-suite/asam-osi-converter/pull/57) ([samikachai](https://github.com/samikachai))
+- ci\(release\): preserve state across jobs [\#56](https://github.com/lichtblick-suite/asam-osi-converter/pull/56) ([samikachai](https://github.com/samikachai))
+- ci\(release\): split jobs [\#54](https://github.com/lichtblick-suite/asam-osi-converter/pull/54) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update workflow [\#53](https://github.com/lichtblick-suite/asam-osi-converter/pull/53) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update workflow [\#52](https://github.com/lichtblick-suite/asam-osi-converter/pull/52) ([samikachai](https://github.com/samikachai))
+- Ci  create pr to update changelog file [\#50](https://github.com/lichtblick-suite/asam-osi-converter/pull/50) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update workflow [\#49](https://github.com/lichtblick-suite/asam-osi-converter/pull/49) ([samikachai](https://github.com/samikachai))
+- Ci  create pr to update changelog file [\#47](https://github.com/lichtblick-suite/asam-osi-converter/pull/47) ([samikachai](https://github.com/samikachai))
+- ci\(release\): add changes stashing before and after pull [\#46](https://github.com/lichtblick-suite/asam-osi-converter/pull/46) ([samikachai](https://github.com/samikachai))
+- ci\(release\): specifiy pull reconcilation [\#45](https://github.com/lichtblick-suite/asam-osi-converter/pull/45) ([samikachai](https://github.com/samikachai))
+- ci\(release\): force changes in changelog commit [\#44](https://github.com/lichtblick-suite/asam-osi-converter/pull/44) ([samikachai](https://github.com/samikachai))
+- ci\(release\): add branch pull action before commit [\#43](https://github.com/lichtblick-suite/asam-osi-converter/pull/43) ([samikachai](https://github.com/samikachai))
+- ci\(release\): add commit step to update-changelog branch [\#42](https://github.com/lichtblick-suite/asam-osi-converter/pull/42) ([samikachai](https://github.com/samikachai))
+- ci\(release\): handle staging with create-pull-request action [\#40](https://github.com/lichtblick-suite/asam-osi-converter/pull/40) ([samikachai](https://github.com/samikachai))
+- ci\(release\): add PAT to PR creation step [\#36](https://github.com/lichtblick-suite/asam-osi-converter/pull/36) ([samikachai](https://github.com/samikachai))
+- ci\(release\): remove uppercase start from commit message [\#35](https://github.com/lichtblick-suite/asam-osi-converter/pull/35) ([samikachai](https://github.com/samikachai))
+- ci\(release\): update PR commit message [\#34](https://github.com/lichtblick-suite/asam-osi-converter/pull/34) ([samikachai](https://github.com/samikachai))
+- Ci  create pr to update changelog file [\#33](https://github.com/lichtblick-suite/asam-osi-converter/pull/33) ([samikachai](https://github.com/samikachai))
+- ci\(release\): add initial commit history fetch job to pipeline [\#32](https://github.com/lichtblick-suite/asam-osi-converter/pull/32) ([samikachai](https://github.com/samikachai))
+- ci: adapt pipeline workflow [\#31](https://github.com/lichtblick-suite/asam-osi-converter/pull/31) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#30](https://github.com/lichtblick-suite/asam-osi-converter/pull/30) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#29](https://github.com/lichtblick-suite/asam-osi-converter/pull/29) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#28](https://github.com/lichtblick-suite/asam-osi-converter/pull/28) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#27](https://github.com/lichtblick-suite/asam-osi-converter/pull/27) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#26](https://github.com/lichtblick-suite/asam-osi-converter/pull/26) ([samikachai](https://github.com/samikachai))
+- Ci  release pipeline fix [\#25](https://github.com/lichtblick-suite/asam-osi-converter/pull/25) ([samikachai](https://github.com/samikachai))
 
-Migrate from npm to yarn (#10)
+## [v0.0.2](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.2) (2024-12-12)
 
-Install @lichtblick/asam-osi-types npm package and update imports. (#16)
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.1...v0.0.2)
+
+**Implemented enhancements:**
+
+- Automate CHANGELOG.md creation [\#11](https://github.com/lichtblick-suite/asam-osi-converter/issues/11)
+- status checks: add build test for eyery PR [\#8](https://github.com/lichtblick-suite/asam-osi-converter/issues/8)
+- ci\(release\): attach changelog to release instead of committing to main [\#24](https://github.com/lichtblick-suite/asam-osi-converter/pull/24) ([samikachai](https://github.com/samikachai))
+- Install @lichtblick/asam-osi-types npm package and update imports. [\#16](https://github.com/lichtblick-suite/asam-osi-converter/pull/16) ([samikachai](https://github.com/samikachai))
+
+**Fixed bugs:**
+
+- ci\(release\): remove trigger on PRs from workflow [\#21](https://github.com/lichtblick-suite/asam-osi-converter/pull/21) ([samikachai](https://github.com/samikachai))
+- Migrating from npm to yarn [\#10](https://github.com/lichtblick-suite/asam-osi-converter/pull/10) ([partnerAcemirMendes](https://github.com/partnerAcemirMendes))
+
+**Closed issues:**
+
+- Unable to visualize OSI Data [\#19](https://github.com/lichtblick-suite/asam-osi-converter/issues/19)
+- remove foxglove dependencies [\#6](https://github.com/lichtblick-suite/asam-osi-converter/issues/6)
+
+**Merged pull requests:**
+
+- Ci  fix release pipeline [\#23](https://github.com/lichtblick-suite/asam-osi-converter/pull/23) ([samikachai](https://github.com/samikachai))
+- Create README.md for example data [\#20](https://github.com/lichtblick-suite/asam-osi-converter/pull/20) ([jdsika](https://github.com/jdsika))
+- Docs: automate changelog creation and update [\#18](https://github.com/lichtblick-suite/asam-osi-converter/pull/18) ([samikachai](https://github.com/samikachai))
+- Remove old unneeded manually created types [\#9](https://github.com/lichtblick-suite/asam-osi-converter/pull/9) ([partnerAcemirMendes](https://github.com/partnerAcemirMendes))
+
+## [v0.0.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.1) (2024-10-18)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/ea99b2bfd38f8d0b94daa96837a61fcbb29675c4...v0.0.1)
+
+**Implemented enhancements:**
+
+- Integrate ASAM OSI as Dependency for OSI Ground Truth Extension [\#5](https://github.com/lichtblick-suite/asam-osi-converter/pull/5) ([partnerAcemirMendes](https://github.com/partnerAcemirMendes))
+- Create release with artifact on new tag [\#3](https://github.com/lichtblick-suite/asam-osi-converter/pull/3) ([Str4ken](https://github.com/Str4ken))
+
+**Closed issues:**
+
+- MCAP ASAM OSI files [\#4](https://github.com/lichtblick-suite/asam-osi-converter/issues/4)
+- Rework the readme [\#2](https://github.com/lichtblick-suite/asam-osi-converter/issues/2)
+
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
