@@ -22,6 +22,8 @@ jobs:
 
       - name: Generate changelog for this release
         uses: janheinrichmerker/action-github-changelog-generator@v2.4
+        with:
+          token: ${{ secrets.LICHTBLICK_GITHUB_TOKEN }} 
 
       - name: Commit updated CHANGELOG.md
         env:
