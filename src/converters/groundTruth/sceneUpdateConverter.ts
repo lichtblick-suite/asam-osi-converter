@@ -120,7 +120,14 @@ function buildSceneEntities(
   // Traffic Light objects
   const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
     const metadata = buildTrafficLightMetadata(obj);
-    return buildTrafficLightEntity(obj, PREFIX_TRAFFIC_LIGHT, OSI_GLOBAL_FRAME, time, metadata);
+    return buildTrafficLightEntity(
+      obj,
+      PREFIX_TRAFFIC_LIGHT,
+      OSI_GLOBAL_FRAME,
+      time,
+      panelSettings,
+      metadata,
+    );
   });
 
   // Road Marking objects

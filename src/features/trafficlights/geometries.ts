@@ -160,13 +160,20 @@ const plane = {
   materials: [
     {
       alphaMode: "BLEND",
-      doubleSided: true,
-      name: "Texture",
+      doubleSided: false,
+      name: "FrontTexture",
       pbrMetallicRoughness: {
         baseColorFactor: [1, 1, 1, 1],
-        baseColorTexture: {
-          index: 0,
-        },
+        baseColorTexture: { index: 0 },
+        metallicFactor: 0,
+      },
+    },
+    {
+      alphaMode: "OPAQUE",
+      doubleSided: true,
+      name: "BackBlack",
+      pbrMetallicRoughness: {
+        baseColorFactor: [0, 0, 0, 1],
         metallicFactor: 0,
       },
     },
@@ -183,6 +190,15 @@ const plane = {
           },
           indices: 3,
           material: 0,
+        },
+        {
+          attributes: {
+            POSITION: 0,
+            NORMAL: 1,
+            TEXCOORD_0: 2,
+          },
+          indices: 3,
+          material: 1,
         },
       ],
     },
