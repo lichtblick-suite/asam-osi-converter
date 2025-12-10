@@ -7,7 +7,7 @@
  */
 
 import { Color, CubePrimitive, ModelPrimitive, Vector3, ArrowPrimitive } from "@foxglove/schemas";
-import { StationaryObject, MovingObject } from "@lichtblick/asam-osi-types";
+import { StationaryObject, MovingObject, TrafficLight } from "@lichtblick/asam-osi-types";
 import { ColorCode } from "@utils/helper";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
@@ -79,7 +79,10 @@ export function objectToModelPrimitive(
 }
 
 export function buildAxisArrow(
-  osiObject: DeepRequired<StationaryObject> | DeepRequired<MovingObject>,
+  osiObject:
+    | DeepRequired<StationaryObject>
+    | DeepRequired<MovingObject>
+    | DeepRequired<TrafficLight>,
   axis_color: Color,
   orientation: Vector3 = { x: 0, y: 0, z: 0 },
   shaft_length: number,
@@ -113,7 +116,10 @@ export function buildAxisArrow(
 }
 
 export function buildObjectAxes(
-  osiObject: DeepRequired<StationaryObject> | DeepRequired<MovingObject>,
+  osiObject:
+    | DeepRequired<StationaryObject>
+    | DeepRequired<MovingObject>
+    | DeepRequired<TrafficLight>,
   shaft_length = 0.154,
   shaft_diameter = 0.02,
   head_length = 0.046,

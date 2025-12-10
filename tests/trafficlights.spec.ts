@@ -41,7 +41,7 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
     } as DeepRequired<TrafficLight>;
     const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification.color].code;
 
-    expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor)).toEqual(
+    expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor, { sec: 0, nsec: 0 })).toEqual(
       expect.objectContaining({
         data: expect.any(Uint8Array) as unknown,
       }),
