@@ -6,8 +6,13 @@ import {
   TrafficLight_Classification_Mode,
 } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { convertDataURIToBinary } from "@utils/helper";
-import { buildObjectAxes, objectToModelPrimitive } from "@utils/primitives/objects";
+import { ColorCode, convertDataURIToBinary } from "@utils/helper";
+import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/math";
+import {
+  buildObjectAxes,
+  objectToCubePrimitive,
+  objectToModelPrimitive,
+} from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
@@ -35,6 +40,19 @@ export function buildTrafficLightEntity(
   config: GroundTruthPanelSettings | undefined,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
+  const cube = objectToCubePrimitive(
+    obj.base.position.x,
+    obj.base.position.y,
+    obj.base.position.z,
+    obj.base.orientation.roll,
+    obj.base.orientation.pitch,
+    obj.base.orientation.yaw,
+    obj.base.dimension.width,
+    obj.base.dimension.length,
+    obj.base.dimension.height,
+    ColorCode("gray", 0.5),
+  );
+
   const models = [];
 
   models.push(
@@ -55,7 +73,7 @@ export function buildTrafficLightEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     arrows: buildAxes(),
-    // texts,
+    cubes: config != null && config.showBoundingBox ? [cube] : [],
     models,
     metadata,
   };
@@ -81,10 +99,26 @@ export const buildTrafficLightModel = (
     modelCacheMap.set(mapKey, buildGltfModel("plane", processTexture(item.classification), color));
   }
 
+  const localAxisOrientation = eulerToQuaternion(
+    item.base.orientation.roll,
+    item.base.orientation.pitch,
+    item.base.orientation.yaw,
+  );
+
+  const textureOffsetX = item.base.dimension.length / 2 + 0.001;
+
+  const frontNormal = pointRotationByQuaternion({ x: 1, y: 0, z: 0 }, localAxisOrientation);
+
+  const frontCenter = {
+    x: item.base.position.x + frontNormal.x * textureOffsetX,
+    y: item.base.position.y + frontNormal.y * textureOffsetX,
+    z: item.base.position.z + frontNormal.z * textureOffsetX,
+  };
+
   return objectToModelPrimitive(
-    item.base.position.x,
-    item.base.position.y,
-    item.base.position.z,
+    frontCenter.x,
+    frontCenter.y,
+    frontCenter.z,
     item.base.orientation.roll,
     item.base.orientation.pitch,
     item.base.orientation.yaw,
