@@ -117,6 +117,8 @@ export const TRAFFIC_LIGHT_COLOR: Record<TrafficLight_Classification_Color, Colo
   [TrafficLight_Classification_Color.WHITE]: { code: ColorCode("w", 1), name: "White" },
 };
 
+export const TRAFFIC_LIGHT_ICON_OFFSET = 0.001; // Small offset to place traffic sign icon in front of traffic sign box without z-fighting
+
 export const ROAD_MARKING_COLOR: Record<RoadMarking_Classification_Color, Color> = {
   [RoadMarking_Classification_Color.BLUE]: ColorCode("b"),
   [RoadMarking_Classification_Color.GREEN]: ColorCode("g"),

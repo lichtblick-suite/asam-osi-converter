@@ -34,7 +34,6 @@ export function createModelPrimitive(
     1,
     1,
     1,
-    { r: 0, g: 0, b: 0, a: 0 },
     convertPathToFileUrl(modelFullPath),
   );
   return model_primitive;

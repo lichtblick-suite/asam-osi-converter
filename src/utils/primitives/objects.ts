@@ -52,7 +52,6 @@ export function objectToModelPrimitive(
   width: number,
   length: number,
   height: number,
-  color: Color,
   url = "",
   data: Uint8Array = new Uint8Array(),
 ): ModelPrimitive {
@@ -70,7 +69,7 @@ export function objectToModelPrimitive(
       y: width,
       z: height,
     },
-    color,
+    color: { r: 0, g: 0, b: 0, a: 0 }, // will not be used but can't be omitted in ModelPrimitive
     override_color: false,
     url,
     media_type: "model/gltf-binary",
