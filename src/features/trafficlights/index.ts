@@ -6,7 +6,7 @@ import {
   TrafficLight_Classification_Mode,
 } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { ColorCode, convertDataURIToBinary } from "@utils/helper";
+import { convertDataURIToBinary } from "@utils/helper";
 import { eulerToQuaternion, pointRotationByQuaternion } from "@utils/math";
 import {
   buildObjectAxes,
@@ -19,7 +19,7 @@ import { DeepRequired } from "ts-essentials";
 import * as geometries from "./geometries";
 import images from "./images";
 
-import { TRAFFIC_LIGHT_COLOR } from "@/config/constants";
+import { TRAFFIC_LIGHT_COLOR, TRAFFIC_LIGHT_ICON_OFFSET } from "@/config/constants";
 
 function computeFlashState(time: Time, period = 2n): "ON" | "OFF" {
   const sec = BigInt(time.sec);
@@ -32,6 +32,19 @@ function computeFlashState(time: Time, period = 2n): "ON" | "OFF" {
 
 const modelCacheMap = new Map<string | number, Uint8Array>();
 
+function getAlpha(mode: TrafficLight_Classification_Mode, time: Time): number {
+  switch (mode) {
+    case TrafficLight_Classification_Mode.OFF:
+      return 0.2;
+    case TrafficLight_Classification_Mode.CONSTANT:
+      return 1.0;
+    case TrafficLight_Classification_Mode.FLASHING:
+      return computeFlashState(time) === "ON" ? 1.0 : 0.2;
+    default:
+      return 0.8;
+  }
+}
+
 export function buildTrafficLightEntity(
   obj: DeepRequired<TrafficLight>,
   id_prefix: string,
@@ -40,6 +53,11 @@ export function buildTrafficLightEntity(
   config: GroundTruthPanelSettings | undefined,
   metadata?: KeyValuePair[],
 ): PartialSceneEntity {
+  const trafficLightColor = { ...TRAFFIC_LIGHT_COLOR[obj.classification.color].code };
+
+  trafficLightColor.a = getAlpha(obj.classification.mode, time);
+  const modelCacheKey = getModelCacheKey(obj.classification, time);
+
   const cube = objectToCubePrimitive(
     obj.base.position.x,
     obj.base.position.y,
@@ -50,13 +68,7 @@ export function buildTrafficLightEntity(
     obj.base.dimension.width,
     obj.base.dimension.length,
     obj.base.dimension.height,
-    ColorCode("gray", 0.5),
-  );
-
-  const models = [];
-
-  models.push(
-    buildTrafficLightModel(obj, TRAFFIC_LIGHT_COLOR[obj.classification.color].code, time),
+    trafficLightColor,
   );
 
   function buildAxes(): ArrowPrimitive[] {
@@ -73,30 +85,22 @@ export function buildTrafficLightEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     arrows: buildAxes(),
-    cubes: config != null && config.showBoundingBox ? [cube] : [],
-    models,
+    cubes: config?.showBoundingBox ?? false ? [cube] : [],
+    models: [buildTrafficLightModel(obj, trafficLightColor, modelCacheKey)],
     metadata,
   };
 }
 
 export const buildTrafficLightModel = (
   item: DeepRequired<TrafficLight>,
-  color: Color,
-  time: Time,
+  modelBaseColor: Color,
+  modelCacheKey: string,
 ): ModelPrimitive => {
-  let mapKey = getMapKey(item.classification);
-  if (item.classification.mode === TrafficLight_Classification_Mode.OFF) {
-    color.a = 0.2;
-  } else if (item.classification.mode === TrafficLight_Classification_Mode.CONSTANT) {
-    color.a = 1.0;
-  } else if (item.classification.mode === TrafficLight_Classification_Mode.FLASHING) {
-    const flashState = computeFlashState(time);
-    color.a = flashState === "ON" ? 1.0 : 0.2;
-    mapKey = mapKey.concat(flashState);
-  }
-
-  if (!modelCacheMap.has(mapKey)) {
-    modelCacheMap.set(mapKey, buildGltfModel("plane", processTexture(item.classification), color));
+  if (!modelCacheMap.has(modelCacheKey)) {
+    modelCacheMap.set(
+      modelCacheKey,
+      buildGltfModel("plane", processTexture(item.classification), modelBaseColor),
+    );
   }
 
   const localAxisOrientation = eulerToQuaternion(
@@ -104,11 +108,8 @@ export const buildTrafficLightModel = (
     item.base.orientation.pitch,
     item.base.orientation.yaw,
   );
-
-  const textureOffsetX = item.base.dimension.length / 2 + 0.001;
-
+  const textureOffsetX = item.base.dimension.length / 2 + TRAFFIC_LIGHT_ICON_OFFSET;
   const frontNormal = pointRotationByQuaternion({ x: 1, y: 0, z: 0 }, localAxisOrientation);
-
   const frontCenter = {
     x: item.base.position.x + frontNormal.x * textureOffsetX,
     y: item.base.position.y + frontNormal.y * textureOffsetX,
@@ -125,9 +126,8 @@ export const buildTrafficLightModel = (
     item.base.dimension.width,
     item.base.dimension.length,
     item.base.dimension.height,
-    color,
     "",
-    modelCacheMap.get(mapKey),
+    modelCacheMap.get(modelCacheKey),
   );
 };
 
@@ -149,6 +149,13 @@ const processTexture = (classification: DeepRequired<TrafficLight_Classification
   return images[typeKey];
 };
 
-const getMapKey = (classification: TrafficLight_Classification): string => {
-  return `${classification.icon}|${classification.color}|${classification.mode}`;
+export const getModelCacheKey = (
+  classification: TrafficLight_Classification,
+  time: Time,
+): string => {
+  let outputKey = `${classification.icon}|${classification.color}|${classification.mode}`;
+  if (classification.mode === TrafficLight_Classification_Mode.FLASHING) {
+    outputKey += `_${computeFlashState(time)}`;
+  }
+  return outputKey;
 };

@@ -1,4 +1,4 @@
-import { buildTrafficLightModel } from "@features/trafficlights";
+import { buildTrafficLightModel, getModelCacheKey } from "@features/trafficlights";
 import { TrafficLight } from "@lichtblick/asam-osi-types";
 import { DeepRequired } from "ts-essentials";
 
@@ -40,8 +40,12 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
       },
     } as DeepRequired<TrafficLight>;
     const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification.color].code;
+    const modelCacheKey = getModelCacheKey(mockTrafficLightStatic.classification, {
+      sec: 0,
+      nsec: 0,
+    });
 
-    expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor, { sec: 0, nsec: 0 })).toEqual(
+    expect(buildTrafficLightModel(mockTrafficLightStatic, mockColor, modelCacheKey)).toEqual(
       expect.objectContaining({
         data: expect.any(Uint8Array) as unknown,
       }),

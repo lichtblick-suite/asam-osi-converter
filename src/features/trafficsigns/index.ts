@@ -87,7 +87,6 @@ export const buildTrafficSignModel = (
     item.base.dimension.width,
     item.base.dimension.length,
     item.base.dimension.height,
-    { r: 0, g: 0, b: 0, a: 0 },
     "",
     modelSignCacheMap[category].get(mapKey),
   );
