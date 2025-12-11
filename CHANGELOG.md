@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.1.2](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.2) (2025-12-11)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.1...v0.1.2)
+
+**Implemented enhancements:**
+
+- Add traffic light box colors [\#156](https://github.com/lichtblick-suite/asam-osi-converter/pull/156) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Enable traffic light mode switching, add traffic light axes, support flashing [\#155](https://github.com/lichtblick-suite/asam-osi-converter/pull/155) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Fixed bugs:**
+
+- Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
+- Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
+
 ## [v0.1.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.1) (2025-12-05)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.0...v0.1.1)
@@ -16,6 +30,11 @@
 **Implemented enhancements:**
 
 - Reorganization/cleanup [\#146](https://github.com/lichtblick-suite/asam-osi-converter/pull/146) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Fixed bugs:**
+
+- Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
+- Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
 
 **Closed issues:**
 
