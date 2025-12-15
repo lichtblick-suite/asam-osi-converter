@@ -3,12 +3,12 @@ import {
   registerGroundTruthConverter,
   convertSensorDataToSceneUpdate,
   registerSensorViewConverter,
+  generateGroundTruth3DPanelSettings,
+  convertSensorDataToFrameTransforms,
 } from "@converters";
 import { preloadDynamicTextures } from "@features/trafficsigns";
 import { SensorView } from "@lichtblick/asam-osi-types";
 import { ExtensionContext } from "@lichtblick/suite";
-
-import { generateGroundTruth3DPanelSettings } from "./converters/groundTruth/panelSettings";
 
 export function activate(extensionContext: ExtensionContext): void {
   preloadDynamicTextures();
@@ -37,6 +37,12 @@ export function activate(extensionContext: ExtensionContext): void {
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
     converter: convertSensorDataToSceneUpdate,
+  });
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorData",
+    toSchemaName: "foxglove.FrameTransforms",
+    converter: convertSensorDataToFrameTransforms,
   });
 
   extensionContext.registerMessageConverter({
