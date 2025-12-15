@@ -194,7 +194,7 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("registers the message converters", () => {
     activate(mockExtensionContext);
-    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(5);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(6);
   });
 
   it("converts a simple message { fromSchemaName: osi_3_msgs/osi_GroundTruth toSchemaName: foxglove.SceneUpdate }", () => {
