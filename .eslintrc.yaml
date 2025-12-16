@@ -27,7 +27,7 @@ overrides:
     extends:
       - plugin:@lichtblick/typescript
     parserOptions:
-      project: ./tsconfig.json
+      project: ./tsconfig.eslint.json
 
   - files: ["**/*.spec.ts", "**/*.test.ts", "tests/**/*.ts"]
     rules:
