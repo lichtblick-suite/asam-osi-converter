@@ -8,10 +8,8 @@ import { ColorCode } from "@utils/helper";
 import { PartialSceneEntity } from "@utils/scene";
 import { DeepRequired, DeepPartial } from "ts-essentials";
 
-import {
-  OSI_GLOBAL_FRAME,
-  OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
-} from "@/config/frameTransformNames";
+import { PREFIX_DETECTED_LANE_BOUNDARIES } from "@/config/entityPrefixes";
+import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
 
 export function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
@@ -65,7 +63,7 @@ export function buildSensorDataSceneEntities(
   const road_output_scene_update: PartialSceneEntity = {
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
     frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
-    id: OSI_GLOBAL_FRAME,
+    id: PREFIX_DETECTED_LANE_BOUNDARIES,
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
