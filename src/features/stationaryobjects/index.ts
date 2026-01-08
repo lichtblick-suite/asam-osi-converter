@@ -10,12 +10,12 @@ import {
   objectToModelPrimitive,
 } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
+import { MINSET_OBJECT, MINSET_STATIONARY_OBJECT, Trusted } from "@utils/trustedType";
 
 import { buildStationaryMetadata } from "./metadata";
 
 export function createModelPrimitive(
-  movingObject: DeepRequired<MovingObject>,
+  movingObject: Trusted<MovingObject, typeof MINSET_OBJECT>,
   modelFullPath: string,
 ): ModelPrimitive {
   const model_primitive = objectToModelPrimitive(
@@ -34,7 +34,7 @@ export function createModelPrimitive(
 }
 
 export function buildStationaryObjectEntity(
-  osiObject: DeepRequired<StationaryObject>,
+  osiObject: Trusted<StationaryObject, typeof MINSET_STATIONARY_OBJECT>,
   color: Color,
   id_prefix: string,
   frame_id: string,

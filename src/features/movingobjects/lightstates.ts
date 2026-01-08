@@ -11,6 +11,7 @@ import { objectToCubePrimitive } from "@utils/primitives/objects";
 import { DeepRequired } from "ts-essentials";
 
 import { BRAKE_LIGHT_COLOR } from "@/config/constants";
+import { MINSET_OBJECT, Trusted } from "@utils/trustedType";
 
 export interface IlightStateEnumStringMaps {
   generic_light_state: typeof MovingObject_VehicleClassification_LightState_GenericLightState;
@@ -36,18 +37,18 @@ export enum IndicatorLightSide {
 }
 
 const BRAKE_LIGHT_DIMENSIONS: Dimension3d = { width: 0.5, length: 0.25, height: 0.25 };
-const BRAKE_LIGHT_POSITION_X_OFFSET = BRAKE_LIGHT_DIMENSIONS.length! / 2;
-const BRAKE_LIGHT_POSITION_Y_OFFSET = BRAKE_LIGHT_DIMENSIONS.width! / 2;
+const BRAKE_LIGHT_POSITION_X_OFFSET = BRAKE_LIGHT_DIMENSIONS.length / 2;
+const BRAKE_LIGHT_POSITION_Y_OFFSET = BRAKE_LIGHT_DIMENSIONS.width / 2;
 
 const INDICATOR_ON_COLOR: Color = { r: 1.0, g: 0.8, b: 0.0, a: 0.7 };
 const INDICATOR_OFF_COLOR: Color = { r: 0.5, g: 0.5, b: 0.0, a: 0.7 };
 const INDICATOR_LIGHT_DIMENSIONS: Dimension3d = { width: 0.25, length: 0.25, height: 0.25 };
-const INDICATOR_LIGHT_POSITION_X_OFFSET = INDICATOR_LIGHT_DIMENSIONS.length! / 2;
-const INDICATOR_LIGHT_POSITION_Y_OFFSET = INDICATOR_LIGHT_DIMENSIONS.width! / 2;
-const INDICATOR_LIGHT_POSITION_Z_OFFSET = BRAKE_LIGHT_DIMENSIONS.height!;
+const INDICATOR_LIGHT_POSITION_X_OFFSET = INDICATOR_LIGHT_DIMENSIONS.length / 2;
+const INDICATOR_LIGHT_POSITION_Y_OFFSET = INDICATOR_LIGHT_DIMENSIONS.width / 2;
+const INDICATOR_LIGHT_POSITION_Z_OFFSET = BRAKE_LIGHT_DIMENSIONS.height;
 
 export const buildBrakeLight = (
-  moving_obj: DeepRequired<MovingObject>,
+  moving_obj: Trusted<MovingObject, typeof MINSET_OBJECT>,
   side: BrakeLightSide,
 ): CubePrimitive => {
   const brakeLightColor =
@@ -75,9 +76,9 @@ export const buildBrakeLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    BRAKE_LIGHT_DIMENSIONS.width!,
-    BRAKE_LIGHT_DIMENSIONS.length!,
-    BRAKE_LIGHT_DIMENSIONS.height!,
+    BRAKE_LIGHT_DIMENSIONS.width,
+    BRAKE_LIGHT_DIMENSIONS.length,
+    BRAKE_LIGHT_DIMENSIONS.height,
     brakeLightColor,
   );
 };
@@ -88,21 +89,21 @@ export const buildIndicatorLight = (
 ): CubePrimitive => {
   let lightOn = false;
   switch (moving_obj.vehicle_classification.light_state.indicator_state) {
-    case MovingObject_VehicleClassification_LightState_IndicatorState.LEFT:
+    case MovingObject_VehicleClassification_LightState_IndicatorState.INDICATOR_STATE_LEFT:
       if (side === IndicatorLightSide.FrontLeft || side === IndicatorLightSide.RearLeft) {
         lightOn = true;
       } else {
         lightOn = false;
       }
       break;
-    case MovingObject_VehicleClassification_LightState_IndicatorState.RIGHT:
+    case MovingObject_VehicleClassification_LightState_IndicatorState.INDICATOR_STATE_RIGHT:
       if (side === IndicatorLightSide.FrontRight || side === IndicatorLightSide.RearRight) {
         lightOn = true;
       } else {
         lightOn = false;
       }
       break;
-    case MovingObject_VehicleClassification_LightState_IndicatorState.WARNING:
+    case MovingObject_VehicleClassification_LightState_IndicatorState.INDICATOR_STATE_WARNING:
       lightOn = true;
       break;
     default:
@@ -135,9 +136,9 @@ export const buildIndicatorLight = (
     moving_obj.base.orientation.roll,
     moving_obj.base.orientation.pitch,
     moving_obj.base.orientation.yaw,
-    INDICATOR_LIGHT_DIMENSIONS.width!,
-    INDICATOR_LIGHT_DIMENSIONS.length!,
-    INDICATOR_LIGHT_DIMENSIONS.height!,
+    INDICATOR_LIGHT_DIMENSIONS.width,
+    INDICATOR_LIGHT_DIMENSIONS.length,
+    INDICATOR_LIGHT_DIMENSIONS.height,
     lightOn ? INDICATOR_ON_COLOR : INDICATOR_OFF_COLOR,
   );
 };

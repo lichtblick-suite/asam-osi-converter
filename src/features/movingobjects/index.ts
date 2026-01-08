@@ -16,12 +16,12 @@ import {
   objectToModelPrimitive,
 } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
+import { MINSET_OBJECT, Trusted } from "@utils/trustedType";
 
 import { buildMovingObjectMetadata } from "./metadata";
 
 export function createModelPrimitive(
-  movingObject: DeepRequired<MovingObject>,
+  movingObject: Trusted<MovingObject, typeof MINSET_OBJECT>,
   modelFullPath: string,
 ): ModelPrimitive {
   const model_primitive = objectToModelPrimitive(
@@ -40,7 +40,7 @@ export function createModelPrimitive(
 }
 
 export function buildMovingObjectEntity(
-  osiObject: DeepRequired<MovingObject>,
+  osiObject: Trusted<MovingObject, typeof MINSET_OBJECT>,
   color: Color,
   id_prefix: string,
   frame_id: string,
@@ -99,7 +99,7 @@ export function buildMovingObjectEntity(
   }
 
   function getUpdatedModelPrimitives(): ModelPrimitive[] {
-    if (config != null && config.show3dModels) {
+    if (config != undefined && config.show3dModels) {
       const model_path = config.defaultModelPath + osiObject.model_reference;
       const model_primitive = modelCache.get(model_path);
       if (model_primitive == undefined) {

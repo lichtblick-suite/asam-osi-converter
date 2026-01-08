@@ -44,12 +44,17 @@ export function generateSceneEntityId(prefix: string, id: number): string {
  * @returns An array of partial scene entities representing the deleted entities,
  *          each containing an ID, timestamp, and deletion type.
  */
-export function getDeletedEntities<T extends { id: { value: number } }>(
+export function getDeletedEntities<T extends { id: { value: number } | undefined }>(
   osiEntities: DeepRequired<T[]>,
   previousFrameIds: Set<number>,
   entityPrefix: string,
   timestamp: Time,
 ): PartialSceneEntity[] {
+  osiEntities.map((entity) => {
+    if (entity.id == undefined) {
+      throw Error("error");
+    }
+  });
   const currentIds = new Set(osiEntities.map((entity) => entity.id.value));
   const deletedIds = Array.from(previousFrameIds).filter((id) => !currentIds.has(id));
   previousFrameIds.clear();

@@ -8,6 +8,8 @@
     "rootDir": ".",
     "outDir": "./dist",
     "lib": ["dom"],
+/*     "strict": true,
+    "exactOptionalPropertyTypes": true, */
 
     // These two settings prevent typescript from emitting .d.ts files we don't need in
     // the compiled extension.

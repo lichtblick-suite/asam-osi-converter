@@ -1,6 +1,32 @@
 import { ModelPrimitive } from "@foxglove/schemas";
-import { GroundTruth } from "@lichtblick/asam-osi-types";
+import {
+  GroundTruth,
+  Lane,
+  LaneBoundary,
+  LogicalLane,
+  LogicalLaneBoundary,
+  MovingObject,
+  ReferenceLine,
+  RoadMarking,
+  StationaryObject,
+  TrafficLight,
+  TrafficSign,
+} from "@lichtblick/asam-osi-types";
 import { PartialSceneEntity } from "@utils/scene";
+import { Trusted, MINSET_OBJECT, MINSET_STATIONARY_OBJECT } from "@utils/trustedType";
+
+export interface OSIObjectLists {
+  movingObjects: Trusted<MovingObject, typeof MINSET_OBJECT>[];
+  stationaryObjects: Trusted<StationaryObject, typeof MINSET_STATIONARY_OBJECT>[];
+  trafficSigns: Trusted<TrafficSign, []>[];
+  trafficLights: Trusted<TrafficLight, []>[];
+  lanes: Trusted<Lane, []>[];
+  laneBoundaries: Trusted<LaneBoundary, []>[];
+  logicalLanes: Trusted<LogicalLane, []>[];
+  logicalLaneBoundaries: Trusted<LogicalLaneBoundary, []>[];
+  roadMarkings: Trusted<RoadMarking, []>[];
+  referenceLines: Trusted<ReferenceLine, []>[];
+}
 
 export interface OSISceneEntities {
   movingObjects: PartialSceneEntity[];

@@ -10,9 +10,9 @@ import { ModelPrimitive, SceneUpdate } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { Immutable, Time, MessageEvent } from "@lichtblick/suite";
 import { hashLaneBoundaries, hashLanes } from "@utils/hashing";
-import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
+import { ColorCode, convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
 import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
-import { DeepPartial, DeepRequired } from "ts-essentials";
+import { DeepPartial } from "ts-essentials";
 
 import { createGroundTruthContext } from "./context";
 import { DEFAULT_CONFIG } from "./panelSettings";
@@ -21,6 +21,7 @@ import {
   OSISceneEntities,
   OSISceneEntitiesUpdateFlags,
   GroundTruthContext,
+  OSIObjectLists,
 } from "./types";
 
 import {
@@ -53,18 +54,18 @@ import { OSI_GLOBAL_FRAME } from "@/config/frameTransformNames";
  * For each entity type with its corresponding update flag set to false, the scene entity list will be empty.
  */
 function buildSceneEntities(
-  osiGroundTruth: DeepRequired<GroundTruth>,
+  time: Time,
+  currentOSIObjects: OSIObjectLists,
+  hostVehicleId: number | undefined,
   updateFlags: OSISceneEntitiesUpdateFlags,
   panelSettings: GroundTruthPanelSettings | undefined,
   modelCache: Map<string, ModelPrimitive>,
 ): OSISceneEntities {
-  const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
-
   // Moving objects
-  const movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
+  const movingObjectSceneEntities = currentOSIObjects.movingObjects.map((obj) => {
     let entity;
 
-    const modelPathKey = panelSettings?.defaultModelPath + obj.model_reference;
+    const modelPathKey = (panelSettings?.defaultModelPath ?? "") + obj.model_reference;
     if (
       !modelCache.has(modelPathKey) &&
       obj.model_reference.length !== 0 &&
@@ -73,7 +74,7 @@ function buildSceneEntities(
       modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
     }
 
-    if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
+    if (hostVehicleId != undefined && obj.id.value === hostVehicleId) {
       entity = buildMovingObjectEntity(
         obj,
         HOST_OBJECT_COLOR,
@@ -99,8 +100,11 @@ function buildSceneEntities(
   });
 
   // Stationary objects
-  const stationaryObjectSceneEntities = osiGroundTruth.stationary_object.map((obj) => {
-    const objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
+  const stationaryObjectSceneEntities = currentOSIObjects.stationaryObjects.map((obj) => {
+    let objectColor = ColorCode("c", 0.5);
+    if (obj.classification) {
+      objectColor = STATIONARY_OBJECT_COLOR[obj.classification.color].code;
+    }
     return buildStationaryObjectEntity(
       obj,
       objectColor,
@@ -113,12 +117,12 @@ function buildSceneEntities(
   });
 
   // Traffic Sign objects
-  const trafficsignObjectSceneEntities = osiGroundTruth.traffic_sign.map((obj) => {
+  const trafficsignObjectSceneEntities = currentOSIObjects.trafficSigns.map((obj) => {
     return buildTrafficSignEntity(obj, PREFIX_TRAFFIC_SIGN, OSI_GLOBAL_FRAME, time);
   });
 
   // Traffic Light objects
-  const trafficlightObjectSceneEntities = osiGroundTruth.traffic_light.map((obj) => {
+  const trafficlightObjectSceneEntities = currentOSIObjects.trafficLights.map((obj) => {
     const metadata = buildTrafficLightMetadata(obj);
     return buildTrafficLightEntity(
       obj,
@@ -131,7 +135,7 @@ function buildSceneEntities(
   });
 
   // Road Marking objects
-  const roadMarkingObjectSceneEntities = osiGroundTruth.road_marking.flatMap((road_marking) => {
+  const roadMarkingObjectSceneEntities = currentOSIObjects.roadMarkings.flatMap((road_marking) => {
     const result = buildRoadMarkingEntity(
       road_marking,
       PREFIX_ROAD_MARKING,
@@ -150,7 +154,7 @@ function buildSceneEntities(
   // Lane boundaries
   let laneBoundarySceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.laneBoundaries && panelSettings != undefined && panelSettings.showPhysicalLanes) {
-    laneBoundarySceneEntities = osiGroundTruth.lane_boundary.map((lane_boundary) => {
+    laneBoundarySceneEntities = currentOSIObjects.laneBoundaries.map((lane_boundary) => {
       return buildLaneBoundaryEntity(lane_boundary, OSI_GLOBAL_FRAME, time);
     });
   }
@@ -159,13 +163,13 @@ function buildSceneEntities(
   let laneSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.lanes && panelSettings != undefined && panelSettings.showPhysicalLanes) {
     // Re-generate lanes only when update.lanes is true
-    laneSceneEntities = osiGroundTruth.lane.map((lane) => {
+    laneSceneEntities = currentOSIObjects.lanes.map((lane) => {
       const rightLaneBoundaryIds = lane.classification.right_lane_boundary_id.map((id) => id.value);
       const leftLaneBoundaryIds = lane.classification.left_lane_boundary_id.map((id) => id.value);
-      const leftLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
+      const leftLaneBoundaries = currentOSIObjects.laneBoundaries.filter((b) =>
         leftLaneBoundaryIds.includes(b.id.value),
       );
-      const rightLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
+      const rightLaneBoundaries = currentOSIObjects.laneBoundaries.filter((b) =>
         rightLaneBoundaryIds.includes(b.id.value),
       );
       return buildLaneEntity(lane, OSI_GLOBAL_FRAME, time, leftLaneBoundaries, rightLaneBoundaries);
@@ -179,21 +183,23 @@ function buildSceneEntities(
     panelSettings != undefined &&
     panelSettings.showLogicalLanes
   ) {
-    logicalLaneBoundarySceneEntities = osiGroundTruth.logical_lane_boundary.map((lane_boundary) => {
-      return buildLogicalLaneBoundaryEntity(lane_boundary, OSI_GLOBAL_FRAME, time);
-    });
+    logicalLaneBoundarySceneEntities = currentOSIObjects.logicalLaneBoundaries.map(
+      (lane_boundary) => {
+        return buildLogicalLaneBoundaryEntity(lane_boundary, OSI_GLOBAL_FRAME, time);
+      },
+    );
   }
 
   // Logical lanes
   let logicalLaneSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.logicalLanes && panelSettings != undefined && panelSettings.showLogicalLanes) {
-    logicalLaneSceneEntities = osiGroundTruth.logical_lane.map((logical_lane) => {
+    logicalLaneSceneEntities = currentOSIObjects.logicalLanes.map((logical_lane) => {
       const rightLaneBoundaryIds = logical_lane.right_boundary_id.map((id) => id.value);
       const leftLaneBoundaryIds = logical_lane.left_boundary_id.map((id) => id.value);
-      const leftLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
+      const leftLaneBoundaries = currentOSIObjects.logicalLaneBoundaries.filter((b) =>
         leftLaneBoundaryIds.includes(b.id.value),
       );
-      const rightLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
+      const rightLaneBoundaries = currentOSIObjects.logicalLaneBoundaries.filter((b) =>
         rightLaneBoundaryIds.includes(b.id.value),
       );
 
@@ -235,8 +241,21 @@ export function convertGroundTruthToSceneUpdate(
     state,
   } = ctx;
 
-  const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
+  const osiGroundTruthReq = osiGroundTruth;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
+
+  const currentOSIObjects: OSIObjectLists = {
+    movingObjects: osiGroundTruth.moving_object ?? [],
+    stationaryObjects: osiGroundTruth.stationary_object ?? [],
+    trafficSigns: osiGroundTruth.traffic_sign ?? [],
+    trafficLights: osiGroundTruth.traffic_light ?? [],
+    lanes: osiGroundTruth.lane ?? [],
+    laneBoundaries: osiGroundTruth.lane_boundary ?? [],
+    logicalLanes: osiGroundTruth.logical_lane ?? [],
+    logicalLaneBoundaries: osiGroundTruth.logical_lane_boundary ?? [],
+    roadMarkings: osiGroundTruth.road_marking ?? [],
+    referenceLines: osiGroundTruth.reference_line ?? [],
+  };
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
 
@@ -256,55 +275,55 @@ export function convertGroundTruthToSceneUpdate(
   // Deletions logic (comparing previous step's entities with current step's entities)
   const deletions = [
     ...getDeletedEntities(
-      osiGroundTruthReq.moving_object,
+      currentOSIObjects.movingObjects,
       state.previousMovingObjectIds,
       PREFIX_MOVING_OBJECT,
       timestamp,
     ),
     ...getDeletedEntities(
-      osiGroundTruthReq.stationary_object,
+      currentOSIObjects.stationaryObjects,
       state.previousStationaryObjectIds,
       PREFIX_STATIONARY_OBJECT,
       timestamp,
     ),
     ...getDeletedEntities(
-      osiGroundTruthReq.traffic_sign,
+      currentOSIObjects.trafficSigns,
       state.previousTrafficSignIds,
       PREFIX_TRAFFIC_SIGN,
       timestamp,
     ),
     ...getDeletedEntities(
-      osiGroundTruthReq.traffic_light,
+      currentOSIObjects.trafficLights,
       state.previousTrafficLightIds,
       PREFIX_TRAFFIC_LIGHT,
       timestamp,
     ),
     ...getDeletedEntities(
-      osiGroundTruthReq.road_marking,
+      currentOSIObjects.roadMarkings,
       state.previousRoadMarkingIds,
       PREFIX_ROAD_MARKING,
       timestamp,
     ),
     ...getDeletedEntities(
-      config.showPhysicalLanes ? osiGroundTruthReq.lane_boundary : [],
+      config.showPhysicalLanes ? currentOSIObjects.laneBoundaries : [],
       state.previousLaneBoundaryIds,
       PREFIX_LANE_BOUNDARY,
       timestamp,
     ),
     ...getDeletedEntities(
-      config.showLogicalLanes ? osiGroundTruthReq.logical_lane_boundary : [],
+      config.showLogicalLanes ? currentOSIObjects.logicalLanes : [],
       state.previousLogicalLaneBoundaryIds,
       PREFIX_LOGICAL_LANE_BOUNDARY,
       timestamp,
     ),
     ...getDeletedEntities(
-      config.showPhysicalLanes ? osiGroundTruthReq.lane : [],
+      config.showPhysicalLanes ? currentOSIObjects.lanes : [],
       state.previousLaneIds,
       PREFIX_LANE,
       timestamp,
     ),
     ...getDeletedEntities(
-      config.showLogicalLanes ? osiGroundTruthReq.logical_lane : [],
+      config.showLogicalLanes ? currentOSIObjects.logicalLanes : [],
       state.previousLogicalLaneIds,
       PREFIX_LOGICAL_LANE,
       timestamp,
@@ -338,21 +357,21 @@ export function convertGroundTruthToSceneUpdate(
 
     if (caching) {
       // Physical lane boundaries
-      laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
+      laneBoundaryHash = hashLaneBoundaries(currentOSIObjects.laneBoundaries);
       if (laneBoundaryCache.has(laneBoundaryHash)) {
         sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
         updateFlags.laneBoundaries = false;
       }
 
       // Physical lanes
-      laneHash = hashLanes(osiGroundTruthReq.lane);
+      laneHash = hashLanes(currentOSIObjects.lanes);
       if (laneCache.has(laneHash)) {
         sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
         updateFlags.lanes = false;
       }
 
       // Logical lane boundaries
-      logicalLaneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.logical_lane_boundary);
+      logicalLaneBoundaryHash = hashLaneBoundaries(currentOSIObjects.logicalLaneBoundaries);
       if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
         sceneEntities = sceneEntities.concat(
           logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
@@ -361,12 +380,14 @@ export function convertGroundTruthToSceneUpdate(
       }
 
       // Logical lanes
-      logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
+      logicalLaneHash = hashLanes(currentOSIObjects.logicalLanes);
       if (logicalLaneCache.has(logicalLaneHash)) {
         sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
         updateFlags.logicalLanes = false;
       }
     }
+
+    const hostVehicleId = osiGroundTruthReq.host_vehicle_id?.value ?? undefined;
 
     // Build new entities
     const {
@@ -379,7 +400,14 @@ export function convertGroundTruthToSceneUpdate(
       logicalLaneBoundaries,
       lanes,
       logicalLanes,
-    } = buildSceneEntities(osiGroundTruthReq, updateFlags, config, modelCache);
+    } = buildSceneEntities(
+      timestamp,
+      currentOSIObjects,
+      hostVehicleId,
+      updateFlags,
+      config,
+      modelCache,
+    );
 
     // Merge cached and built entities
     sceneEntities = sceneEntities.concat(
@@ -419,6 +447,7 @@ export function convertGroundTruthToSceneUpdate(
       "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
       error,
     );
+    throw error;
   }
 
   return {
@@ -429,10 +458,15 @@ export function convertGroundTruthToSceneUpdate(
 
 export function registerGroundTruthConverter(): (
   msg: GroundTruth,
-  event: Immutable<MessageEvent<GroundTruth>>,
-) => unknown {
+  event?: Immutable<MessageEvent<GroundTruth>>,
+) => DeepPartial<SceneUpdate> {
   const ctx = createGroundTruthContext();
 
-  return (msg: GroundTruth, event: Immutable<MessageEvent<GroundTruth>>) =>
-    convertGroundTruthToSceneUpdate(ctx, msg, event);
+  return (msg: GroundTruth, event?: Immutable<MessageEvent<GroundTruth>>) => {
+    return convertGroundTruthToSceneUpdate(ctx, msg, event);
+  };
 }
+function Color() {
+  throw new Error("Function not implemented.");
+}
+

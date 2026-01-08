@@ -105,24 +105,26 @@ export function buildLaneEntity(
   }
 
   let centerlineTrianglePrimitive: TriangleListPrimitive | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (LANE_CENTERLINE_SHOW) {
-    const centerlinePoints = osiLane.classification.centerline.map((point) => {
-      return {
-        position: { x: point.x, y: point.y, z: point.z } as Point3,
-        width: LANE_CENTERLINE_WIDTH,
-        height: 0,
-      };
-    });
-    centerlineTrianglePrimitive = pointListToTriangleListPrimitive(
-      centerlinePoints,
-      LANE_CENTERLINE_COLOR,
-      {
-        dashed: false,
-        arrows: LANE_CENTERLINE_ARROWS,
-        invertArrows: !osiLane.classification.centerline_is_driving_direction,
-      },
-    );
+  if (osiLane.classification.centerline != undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (LANE_CENTERLINE_SHOW) {
+      const centerlinePoints = osiLane.classification.centerline.map((point) => {
+        return {
+          position: { x: point.x, y: point.y, z: point.z } as Point3,
+          width: LANE_CENTERLINE_WIDTH,
+          height: 0,
+        };
+      });
+      centerlineTrianglePrimitive = pointListToTriangleListPrimitive(
+        centerlinePoints,
+        LANE_CENTERLINE_COLOR,
+        {
+          dashed: false,
+          arrows: LANE_CENTERLINE_ARROWS,
+          invertArrows: !osiLane.classification.centerline_is_driving_direction,
+        },
+      );
+    }
   }
 
   let color = LANE_TYPE[osiLane.classification.type];

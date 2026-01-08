@@ -46,11 +46,11 @@ describe("OSI Visualizer: Moving Objects", () => {
         }),
         expect.objectContaining({
           key: "acceleration",
-          value: `${input.base.acceleration.x}, ${input.base.acceleration.y}, ${input.base.acceleration.z}`,
+          value: `${input.base.acceleration.x.toString()}, ${input.base.acceleration.y.toString()}, ${input.base.acceleration.z.toString()}`,
         }),
         expect.objectContaining({
           key: "velocity",
-          value: `${input.base.velocity.x}, ${input.base.velocity.y}, ${input.base.velocity.z}`,
+          value: `${input.base.velocity.x.toString()}, ${input.base.velocity.y.toString()}, ${input.base.velocity.z.toString()}`,
         }),
         expect.objectContaining({
           key: "assigned_lane_id",
