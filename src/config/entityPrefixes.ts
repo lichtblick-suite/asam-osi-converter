@@ -8,3 +8,4 @@ export const PREFIX_LANE = "lane";
 export const PREFIX_LANE_BOUNDARY = "lane_boundary";
 export const PREFIX_LOGICAL_LANE_BOUNDARY = "logical_lane_boundary";
 export const PREFIX_LOGICAL_LANE = "logical_lane";
+export const PREFIX_DETECTED_LANE_BOUNDARIES = "detected_lane_boundaries";

@@ -8,13 +8,14 @@ import { ColorCode } from "@utils/helper";
 import { PartialSceneEntity } from "@utils/scene";
 import { DeepRequired, DeepPartial } from "ts-essentials";
 
-import { OSI_EGO_VEHICLE_REAR_AXLE_FRAME, OSI_GLOBAL_FRAME } from "@/config/frameTransformNames";
+import { PREFIX_DETECTED_LANE_BOUNDARIES } from "@/config/entityPrefixes";
+import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
 
 export function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
 ): PartialSceneEntity[] {
   const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
-    return { x: boundary.position.x, y: boundary.position.y, z: 0 };
+    return { x: boundary.position.x, y: boundary.position.y, z: boundary.position.z };
   };
   const ToLinePrimitive = (points: Point3[], thickness: number): DeepPartial<LinePrimitive> => {
     return {
@@ -61,8 +62,8 @@ export function buildSensorDataSceneEntities(
 
   const road_output_scene_update: PartialSceneEntity = {
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
-    frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
-    id: OSI_GLOBAL_FRAME,
+    frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
+    id: PREFIX_DETECTED_LANE_BOUNDARIES,
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),

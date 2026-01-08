@@ -16,7 +16,7 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
   try {
     // Return empty FrameTransforms if host vehicle id is not set
     if (!message.host_vehicle_id) {
-      console.error("Missing host vehicle id GroundTruth message. Can not build FrameTransforms.");
+      console.error("Missing host vehicle id GroundTruth message. Cannot build FrameTransforms.");
       return transforms;
     }
 
@@ -46,7 +46,7 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
       );
     } else {
       console.warn(
-        "bbcenter_to_rear not found in ego vehicle attributes. Can not build rear axle FrameTransform.",
+        "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
       );
     }
   } catch (error) {
