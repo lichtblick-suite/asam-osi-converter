@@ -1,6 +1,6 @@
 import { SceneEntityDeletionType } from "@foxglove/schemas";
 import type { SceneEntity, SceneEntityDeletion, Time } from "@foxglove/schemas";
-import type { DeepPartial, DeepRequired } from "ts-essentials";
+import type { DeepPartial } from "ts-essentials";
 
 export type PartialSceneEntity = DeepPartial<SceneEntity> & { id: string };
 
@@ -44,13 +44,13 @@ export function generateSceneEntityId(prefix: string, id: number): string {
  * @returns An array of partial scene entities representing the deleted entities,
  *          each containing an ID, timestamp, and deletion type.
  */
-export function getDeletedEntities<T extends { id: { value: number } }>(
-  osiEntities: DeepRequired<T[]>,
+export function getDeletedEntities(
+  osiEntities: { id?: { value: number } }[],
   previousFrameIds: Set<number>,
   entityPrefix: string,
   timestamp: Time,
 ): PartialSceneEntity[] {
-  const currentIds = new Set(osiEntities.map((entity) => entity.id.value));
+  const currentIds = new Set(osiEntities.map((entity) => entity.id!.value));
   const deletedIds = Array.from(previousFrameIds).filter((id) => !currentIds.has(id));
   previousFrameIds.clear();
   currentIds.forEach((id) => previousFrameIds.add(id));

@@ -6,9 +6,8 @@ import {
   LogicalLaneBoundary,
   LogicalLaneBoundary_PassingRule,
 } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
-export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>): KeyValuePair[] {
+export function buildLogicalLaneMetadata(logical_lane: LogicalLane): KeyValuePair[] {
   const metadata: KeyValuePair[] = [
     {
       key: "type",
@@ -17,12 +16,12 @@ export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>
     {
       key: "physical_lane_reference_ids",
       value: logical_lane.physical_lane_reference
-        .map((reference) => reference.physical_lane_id.value)
+        .map((reference) => reference.physical_lane_id?.value)
         .join(", "),
     },
     {
       key: "reference_line_id",
-      value: logical_lane?.reference_line_id?.value?.toString() || "",
+      value: logical_lane.reference_line_id?.value.toString() ?? "",
     },
     {
       key: "start_s",
@@ -38,15 +37,15 @@ export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>
     },
     {
       key: "right_adjacent_lane_ids",
-      value: logical_lane.right_adjacent_lane.map((id) => id.other_lane_id.value).join(", "),
+      value: logical_lane.right_adjacent_lane.map((id) => id.other_lane_id?.value).join(", "),
     },
     {
       key: "left_adjacent_lane_ids",
-      value: logical_lane.left_adjacent_lane.map((id) => id.other_lane_id.value).join(", "),
+      value: logical_lane.left_adjacent_lane.map((id) => id.other_lane_id?.value).join(", "),
     },
     {
       key: "overlapping_lane_ids",
-      value: logical_lane.overlapping_lane.map((id) => id.other_lane_id.value).join(", "),
+      value: logical_lane.overlapping_lane.map((id) => id.other_lane_id?.value).join(", "),
     },
     {
       key: "right_boundary_ids",
@@ -58,11 +57,11 @@ export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>
     },
     {
       key: "predecessor_lane_ids",
-      value: logical_lane.predecessor_lane.map((id) => id.other_lane_id.value).join(", "),
+      value: logical_lane.predecessor_lane.map((id) => id.other_lane_id?.value).join(", "),
     },
     {
       key: "successor_lane_ids",
-      value: logical_lane.successor_lane.map((id) => id.other_lane_id.value).join(", "),
+      value: logical_lane.successor_lane.map((id) => id.other_lane_id?.value).join(", "),
     },
   ];
 
@@ -70,13 +69,9 @@ export function buildLogicalLaneMetadata(logical_lane: DeepRequired<LogicalLane>
 }
 
 export function buildLogicalLaneBoundaryMetadata(
-  logical_lane_boundary: DeepRequired<LogicalLaneBoundary>,
+  logical_lane_boundary: LogicalLaneBoundary,
 ): KeyValuePair[] {
   const metadata: KeyValuePair[] = [
-    {
-      key: "reference_line_id",
-      value: logical_lane_boundary.reference_line_id.value.toString(),
-    },
     {
       key: "physical_boundary_ids",
       value: logical_lane_boundary.physical_boundary_id
@@ -88,6 +83,13 @@ export function buildLogicalLaneBoundaryMetadata(
       value: LogicalLaneBoundary_PassingRule[logical_lane_boundary.passing_rule],
     },
   ];
+
+  if (logical_lane_boundary.reference_line_id) {
+    metadata.push({
+      key: "reference_line_id",
+      value: logical_lane_boundary.reference_line_id.value.toString(),
+    });
+  }
 
   return metadata;
 }

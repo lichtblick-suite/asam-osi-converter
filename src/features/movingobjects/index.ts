@@ -16,31 +16,34 @@ import {
   objectToModelPrimitive,
 } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
 
 import { buildMovingObjectMetadata } from "./metadata";
 
 export function createModelPrimitive(
-  movingObject: DeepRequired<MovingObject>,
+  movingObject: MovingObject,
   modelFullPath: string,
 ): ModelPrimitive {
-  const model_primitive = objectToModelPrimitive(
-    movingObject.base.position.x,
-    movingObject.base.position.y,
-    movingObject.base.position.z - movingObject.base.dimension.height / 2,
-    movingObject.base.orientation.roll,
-    movingObject.base.orientation.pitch,
-    movingObject.base.orientation.yaw,
-    1,
-    1,
-    1,
-    convertPathToFileUrl(modelFullPath),
-  );
-  return model_primitive;
+  if (movingObject.base?.position && movingObject.base.dimension && movingObject.base.orientation) {
+    const model_primitive = objectToModelPrimitive(
+      movingObject.base.position.x,
+      movingObject.base.position.y,
+      movingObject.base.position.z - movingObject.base.dimension.height / 2,
+      movingObject.base.orientation.roll,
+      movingObject.base.orientation.pitch,
+      movingObject.base.orientation.yaw,
+      1,
+      1,
+      1,
+      convertPathToFileUrl(modelFullPath),
+    );
+    return model_primitive;
+  } else {
+    throw Error("Missing MovingObject information.");
+  }
 }
 
 export function buildMovingObjectEntity(
-  osiObject: DeepRequired<MovingObject>,
+  osiObject: MovingObject,
   color: Color,
   id_prefix: string,
   frame_id: string,
@@ -48,6 +51,14 @@ export function buildMovingObjectEntity(
   config: GroundTruthPanelSettings | undefined,
   modelCache: Map<string, ModelPrimitive>,
 ): PartialSceneEntity {
+  if (
+    !osiObject.base?.position ||
+    !osiObject.base.orientation ||
+    !osiObject.base.dimension ||
+    !osiObject.id
+  ) {
+    throw Error("Missing moving object information");
+  }
   const cube = objectToCubePrimitive(
     osiObject.base.position.x,
     osiObject.base.position.y,
@@ -99,7 +110,10 @@ export function buildMovingObjectEntity(
   }
 
   function getUpdatedModelPrimitives(): ModelPrimitive[] {
-    if (config != null && config.show3dModels) {
+    if (!osiObject.base?.position || !osiObject.base.orientation || !osiObject.base.dimension) {
+      throw Error("Missing moving object information");
+    }
+    if (config?.show3dModels === true) {
       const model_path = config.defaultModelPath + osiObject.model_reference;
       const model_primitive = modelCache.get(model_path);
       if (model_primitive == undefined) {
@@ -131,7 +145,7 @@ export function buildMovingObjectEntity(
     id: generateSceneEntityId(id_prefix, osiObject.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    cubes: config != null && config.showBoundingBox ? [cube, ...buildVehicleLights()] : [],
+    cubes: config?.showBoundingBox === true ? [cube, ...buildVehicleLights()] : [],
     arrows: buildAxes(),
     metadata,
     models: getUpdatedModelPrimitives(),

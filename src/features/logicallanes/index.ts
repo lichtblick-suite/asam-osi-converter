@@ -7,7 +7,6 @@ import {
   MarkerPoint,
 } from "@utils/primitives/lines";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
 
 import { buildLogicalLaneBoundaryMetadata, buildLogicalLaneMetadata } from "./metadata";
 
@@ -22,12 +21,18 @@ import {
 import { PREFIX_LOGICAL_LANE, PREFIX_LOGICAL_LANE_BOUNDARY } from "@/config/entityPrefixes";
 
 export function buildLogicalLaneBoundaryEntity(
-  osiLogicalLaneBoundary: DeepRequired<LogicalLaneBoundary>,
+  osiLogicalLaneBoundary: LogicalLaneBoundary,
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
+  if (!osiLogicalLaneBoundary.id) {
+    throw Error("Missing logical lane boundary information");
+  }
   // Create LaneBoundaryPoint objects using only necessary fields for rendering
   const laneBoundaryPoints = osiLogicalLaneBoundary.boundary_line.map((point) => {
+    if (!point.position) {
+      throw Error("Missing logical lane boundary point information");
+    }
     return {
       position: {
         x: point.position.x,
@@ -60,15 +65,21 @@ export function buildLogicalLaneBoundaryEntity(
 }
 
 export function buildLogicalLaneEntity(
-  osiLogicalLane: DeepRequired<LogicalLane>,
+  osiLogicalLane: LogicalLane,
   frame_id: string,
   time: Time,
-  osiLeftLaneBoundaries: DeepRequired<LogicalLaneBoundary>[],
-  osiRightLaneBoundaries: DeepRequired<LogicalLaneBoundary>[],
+  osiLeftLaneBoundaries: LogicalLaneBoundary[],
+  osiRightLaneBoundaries: LogicalLaneBoundary[],
 ): PartialSceneEntity {
+  if (!osiLogicalLane.id) {
+    throw Error("Missing logical lane information");
+  }
   const leftLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiLeftLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      if (!point.position) {
+        throw Error("Missing lane boundary point information");
+      }
       return {
         position: {
           x: point.position.x,
@@ -84,6 +95,9 @@ export function buildLogicalLaneEntity(
   const rightLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiRightLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      if (!point.position) {
+        throw Error("Missing lane boundary point information");
+      }
       return {
         position: {
           x: point.position.x,

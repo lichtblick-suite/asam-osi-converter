@@ -7,7 +7,6 @@ import {
   MarkerPoint,
 } from "@utils/primitives/lines";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
 
 import { buildLaneBoundaryMetadata, buildLaneMetadata } from "./metadata";
 
@@ -35,12 +34,18 @@ import { PREFIX_LANE_BOUNDARY, PREFIX_LANE } from "@/config/entityPrefixes";
  * @returns A PartialSceneEntity representing the object.
  */
 export function buildLaneBoundaryEntity(
-  osiLaneBoundary: DeepRequired<LaneBoundary>,
+  osiLaneBoundary: LaneBoundary,
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
+  if (!osiLaneBoundary.classification || !osiLaneBoundary.id) {
+    throw Error("Missing lane boundary information.");
+  }
   // Create LaneBoundaryPoint objects using only necessary fields for rendering
   const laneBoundaryPoints = osiLaneBoundary.boundary_line.map((point) => {
+    if (!point.position) {
+      throw Error("Missing lane boundary point information");
+    }
     return {
       position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
       width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
@@ -56,7 +61,8 @@ export function buildLaneBoundaryEntity(
 
   // Set option for dashed lines
   const options = {
-    dashed: osiLaneBoundary.classification.type === LaneBoundary_Classification_Type.DASHED_LINE,
+    dashed:
+      osiLaneBoundary.classification.type === LaneBoundary_Classification_Type.TYPE_DASHED_LINE,
     arrows: LANE_BOUNDARY_ARROWS,
     invertArrows: false,
   };
@@ -73,15 +79,21 @@ export function buildLaneBoundaryEntity(
 }
 
 export function buildLaneEntity(
-  osiLane: DeepRequired<Lane>,
+  osiLane: Lane,
   frame_id: string,
   time: Time,
-  osiLeftLaneBoundaries: DeepRequired<LaneBoundary>[],
-  osiRightLaneBoundaries: DeepRequired<LaneBoundary>[],
+  osiLeftLaneBoundaries: LaneBoundary[],
+  osiRightLaneBoundaries: LaneBoundary[],
 ): PartialSceneEntity {
+  if (!osiLane.classification || !osiLane.id) {
+    throw Error("Missing lane information");
+  }
   const leftLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiLeftLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      if (!point.position) {
+        throw Error("Missing lane boundary point information");
+      }
       return {
         position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
         width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
@@ -94,6 +106,9 @@ export function buildLaneEntity(
   const rightLaneBoundaries: MarkerPoint[][] = [];
   for (const lb of osiRightLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
+      if (!point.position) {
+        throw Error("Missing lane boundary point information");
+      }
       return {
         position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
         width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible

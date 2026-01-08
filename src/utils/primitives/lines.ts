@@ -56,13 +56,13 @@ export function pointListToTriangleListPrimitive(
     if (dashed) {
       // Use 'dash' property to determine if the current section is dash or gap; if UNKNOWN or OTHER the flag alternates every step
       if (
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.GAP ||
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.END
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.DASH_GAP ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.DASH_END
       ) {
         dashSectionFlag = false; // override
       } else if (
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.START ||
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.CONTINUE
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.DASH_START ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.DASH_CONTINUE
       ) {
         dashSectionFlag = true; // override
       }
@@ -73,7 +73,7 @@ export function pointListToTriangleListPrimitive(
       } else {
         currentColor = {
           ...color,
-          a: LANE_BOUNDARY_OPACITY[LaneBoundary_Classification_Type.NO_LINE],
+          a: LANE_BOUNDARY_OPACITY[LaneBoundary_Classification_Type.TYPE_NO_LINE],
         };
       }
       dashSectionFlag = !dashSectionFlag; // alternate opacity for next section (will be overridden if 'dash' property is set)

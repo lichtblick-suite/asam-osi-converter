@@ -7,11 +7,10 @@ import {
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   MovingObject_VehicleClassification_LightState_GenericLightState,
 } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
 describe("OSI Visualizer: Moving Objects", () => {
   const input = {
-    type: MovingObject_Type.VEHICLE,
+    type: MovingObject_Type.TYPE_VEHICLE,
     base: {
       acceleration: {
         x: 20,
@@ -35,7 +34,7 @@ describe("OSI Visualizer: Moving Objects", () => {
         head_light: 3,
       },
     },
-  } as unknown as DeepRequired<MovingObject>;
+  } as unknown as MovingObject;
 
   it("builds metadata  for vehicle moving objects", () => {
     expect(buildMovingObjectMetadata(input)).toEqual(
@@ -46,41 +45,41 @@ describe("OSI Visualizer: Moving Objects", () => {
         }),
         expect.objectContaining({
           key: "acceleration",
-          value: `${input.base.acceleration.x}, ${input.base.acceleration.y}, ${input.base.acceleration.z}`,
+          value: `${input.base!.acceleration!.x.toString()}, ${input.base!.acceleration!.y.toString()}, ${input.base!.acceleration!.z.toString()}`,
         }),
         expect.objectContaining({
           key: "velocity",
-          value: `${input.base.velocity.x}, ${input.base.velocity.y}, ${input.base.velocity.z}`,
+          value: `${input.base!.velocity!.x.toString()}, ${input.base!.velocity!.y.toString()}, ${input.base!.velocity!.z.toString()}`,
         }),
         expect.objectContaining({
           key: "assigned_lane_id",
-          value: input.moving_object_classification.assigned_lane_id
-            .map((id) => id.value)
+          value: input
+            .moving_object_classification!.assigned_lane_id.map((id) => id.value)
             .join(","),
         }),
         expect.objectContaining({
           key: "type",
-          value: MovingObject_VehicleClassification_Type[input.vehicle_classification.type],
+          value: MovingObject_VehicleClassification_Type[input.vehicle_classification!.type],
         }),
         expect.objectContaining({
           key: "light_state.indicator_state",
           value:
             MovingObject_VehicleClassification_LightState_IndicatorState[
-              input.vehicle_classification.light_state.indicator_state
+              input.vehicle_classification!.light_state!.indicator_state
             ],
         }),
         expect.objectContaining({
           key: "light_state.brake_light_state",
           value:
             MovingObject_VehicleClassification_LightState_BrakeLightState[
-              input.vehicle_classification.light_state.brake_light_state
+              input.vehicle_classification!.light_state!.brake_light_state
             ],
         }),
         expect.objectContaining({
           key: "light_state.head_light",
           value:
             MovingObject_VehicleClassification_LightState_GenericLightState[
-              input.vehicle_classification.light_state.head_light
+              input.vehicle_classification!.light_state!.head_light
             ],
         }),
       ]),

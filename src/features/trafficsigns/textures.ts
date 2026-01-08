@@ -4,7 +4,6 @@ import {
   TrafficSign_SupplementarySign_Classification,
   TrafficSignValue,
 } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
 interface TrafficSignCustomization {
   getText: (
@@ -44,7 +43,7 @@ export const drawTrafficSignText = (
   const ctx = canvas.getContext("2d")!;
 
   ctx.drawImage(imageElement, 0, 0);
-  ctx.font = options.font ?? `bold ${canvas.width * 0.6}px sans-serif`;
+  ctx.font = options.font ?? `bold ${(canvas.width * 0.6).toString()}px sans-serif`;
   ctx.textAlign = options.textAlign ?? "center";
   ctx.textBaseline = options.textBaseline ?? "middle";
   ctx.fillStyle = options.fillStyle ?? "black";
@@ -66,63 +65,63 @@ const getValueAsText = (
     | TrafficSign_MainSign_Classification
     | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  const tsValue = classification.value as DeepRequired<TrafficSignValue>;
+  const tsValue = classification.value as TrafficSignValue;
   return tsValue.value.toString();
 };
 
 const textures = {
   main: new Map<number, TrafficSignCustomization>([
     [
-      MAIN_TYPE.SPEED_LIMIT_BEGIN,
+      MAIN_TYPE.TYPE_SPEED_LIMIT_BEGIN,
       {
         getText: getValueAsText,
         getOptions: () => ({ y_offset: 8 }),
       },
     ],
     [
-      MAIN_TYPE.SPEED_LIMIT_END,
+      MAIN_TYPE.TYPE_SPEED_LIMIT_END,
       {
         getText: getValueAsText,
         getOptions: () => ({ y_offset: 8 }),
       },
     ],
     [
-      MAIN_TYPE.SPEED_LIMIT_ZONE_BEGIN,
+      MAIN_TYPE.TYPE_SPEED_LIMIT_ZONE_BEGIN,
       {
         getText: getValueAsText,
         getOptions: () => ({ font: "bold 74px sans-serif", y: 86, maxW: 74 }),
       },
     ],
     [
-      MAIN_TYPE.SPEED_LIMIT_ZONE_END,
+      MAIN_TYPE.TYPE_SPEED_LIMIT_ZONE_END,
       {
         getText: getValueAsText,
         getOptions: () => ({ font: "bold 74px sans-serif", y: 86, maxW: 74 }),
       },
     ],
     [
-      MAIN_TYPE.MINIMUM_SPEED_BEGIN,
+      MAIN_TYPE.TYPE_MINIMUM_SPEED_BEGIN,
       {
         getText: getValueAsText,
         getOptions: () => ({ fillStyle: "white", y_offset: 8 }),
       },
     ],
     [
-      MAIN_TYPE.MINIMUM_SPEED_END,
+      MAIN_TYPE.TYPE_MINIMUM_SPEED_END,
       {
         getText: getValueAsText,
         getOptions: () => ({ fillStyle: "white", y_offset: 8 }),
       },
     ],
     [
-      MAIN_TYPE.ADVISORY_SPEED_LIMIT_BEGIN,
+      MAIN_TYPE.TYPE_ADVISORY_SPEED_LIMIT_BEGIN,
       {
         getText: getValueAsText,
         getOptions: () => ({ fillStyle: "white" }),
       },
     ],
     [
-      MAIN_TYPE.ADVISORY_SPEED_LIMIT_END,
+      MAIN_TYPE.TYPE_ADVISORY_SPEED_LIMIT_END,
       {
         getText: getValueAsText,
         getOptions: () => ({ fillStyle: "white" }),

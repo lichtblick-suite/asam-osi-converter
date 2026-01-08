@@ -12,7 +12,7 @@ import { Lane, LogicalLane, LaneBoundary, LogicalLaneBoundary } from "@lichtblic
  * This might not be the case when using partial chunking of lanes/lane boundaries.
  */
 export const hashLanes = (lanes: Lane[] | LogicalLane[]): string => {
-  const hash = lanes.reduce((acc, lane) => acc + lane.id!.value!.toString(), "");
+  const hash = lanes.reduce((acc, lane) => acc + lane.id!.value.toString(), "");
   let hashValue = 0;
   for (let i = 0; i < hash.length; i++) {
     const char = hash.charCodeAt(i);
@@ -37,7 +37,7 @@ export const hashLaneBoundaries = (
   laneBoundaries: LaneBoundary[] | LogicalLaneBoundary[],
 ): string => {
   const hash = laneBoundaries.reduce(
-    (acc, laneBoundary) => acc + laneBoundary.id!.value!.toString(),
+    (acc, laneBoundary) => acc + laneBoundary.id!.value.toString(),
     "",
   );
   let hashValue = 0;

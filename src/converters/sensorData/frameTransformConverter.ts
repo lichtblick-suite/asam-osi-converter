@@ -2,7 +2,6 @@ import { FrameTransforms } from "@foxglove/schemas";
 import { SensorData } from "@lichtblick/asam-osi-types";
 import { osiTimestampToTime } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
-import { DeepRequired } from "ts-essentials";
 
 import {
   OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
@@ -19,9 +18,7 @@ export function convertSensorDataToFrameTransforms(message: SensorData): FrameTr
       );
       return transforms;
     }
-    transforms.transforms.push(
-      buildVirtualMountingPositionFrameTransform(message as DeepRequired<SensorData>),
-    );
+    transforms.transforms.push(buildVirtualMountingPositionFrameTransform(message));
   } catch (error) {
     console.error(
       "Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
@@ -32,8 +29,11 @@ export function convertSensorDataToFrameTransforms(message: SensorData): FrameTr
   return transforms;
 }
 
-function buildVirtualMountingPositionFrameTransform(message: DeepRequired<SensorData>) {
+function buildVirtualMountingPositionFrameTransform(message: SensorData) {
   const mountingPosition = message.mounting_position;
+  if (!mountingPosition?.position || !mountingPosition.orientation) {
+    throw Error("Missing virtual mounting position information in SensorData");
+  }
   return {
     timestamp: osiTimestampToTime(message.timestamp),
     parent_frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,

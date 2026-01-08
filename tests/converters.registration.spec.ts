@@ -11,7 +11,6 @@ import {
   StationaryObject,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext } from "@lichtblick/suite";
-import { DeepRequired } from "ts-essentials";
 
 import { activate } from "@/index";
 
@@ -74,7 +73,7 @@ describe("OSI Visualizer: Message Converter", () => {
     },
     base: mockBaseMoving,
     type: {
-      value: MovingObject_Type.VEHICLE,
+      value: MovingObject_Type.TYPE_VEHICLE,
     },
     model_reference: "",
     vehicle_attributes: {
@@ -89,11 +88,11 @@ describe("OSI Visualizer: Message Converter", () => {
     },
     vehicle_classification: {
       type: {
-        value: MovingObject_VehicleClassification_Type.SMALL_CAR,
+        value: MovingObject_VehicleClassification_Type.TYPE_SMALL_CAR,
       },
       light_state: {},
     },
-  } as unknown as DeepRequired<MovingObject>;
+  } as unknown as MovingObject;
   const mockStationaryObject = {
     id: {
       value: 1,
@@ -105,7 +104,7 @@ describe("OSI Visualizer: Message Converter", () => {
       material: 0,
       density: 0,
     },
-  } as unknown as DeepRequired<StationaryObject>;
+  } as unknown as StationaryObject;
   const mockLaneBoundary = {
     id: {
       value: 2,
@@ -123,18 +122,18 @@ describe("OSI Visualizer: Message Converter", () => {
     ],
     classification: {
       type: {
-        value: LaneBoundary_Classification_Type.NO_LINE,
+        value: LaneBoundary_Classification_Type.TYPE_NO_LINE,
       },
-      color: LaneBoundary_Classification_Color.WHITE,
+      color: LaneBoundary_Classification_Color.COLOR_WHITE,
     },
-  } as unknown as DeepRequired<LaneBoundary>;
+  } as unknown as LaneBoundary;
   const mockLane = {
     id: {
       value: 1000,
     },
     classification: {
       type: {
-        value: Lane_Classification_Type.DRIVING,
+        value: Lane_Classification_Type.TYPE_DRIVING,
       },
       left_lane_boundary_id: [
         {
@@ -166,8 +165,9 @@ describe("OSI Visualizer: Message Converter", () => {
           value: 999,
         },
       ],
+      centerline: [],
     },
-  } as unknown as DeepRequired<Lane>;
+  } as unknown as Lane;
   const mockMessageData = {
     timestamp: {
       seconds: 0,
@@ -185,7 +185,7 @@ describe("OSI Visualizer: Message Converter", () => {
     traffic_sign: [],
     traffic_light: [],
     road_marking: [],
-  } as GroundTruth;
+  } as unknown as GroundTruth;
 
   beforeEach(() => {
     mockExtensionContext.registerMessageConverter = mockRegisterMessageConverter;

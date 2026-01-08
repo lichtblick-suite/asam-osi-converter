@@ -1,7 +1,6 @@
 import { Color } from "@foxglove/schemas";
 import { Timestamp } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { DeepRequired } from "ts-essentials";
 
 export function Key(...key_array: unknown[]): string {
   return key_array.join(":");
@@ -69,7 +68,10 @@ export function convertPathToFileUrl(inputPath: string): string {
   return "";
 }
 
-export function osiTimestampToTime(time: DeepRequired<Timestamp>): Time {
+export function osiTimestampToTime(time: Timestamp | undefined): Time {
+  if (!time) {
+    throw Error("Timestamp not defined.");
+  }
   return {
     sec: time.seconds,
     nsec: time.nanos,

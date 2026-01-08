@@ -1,6 +1,31 @@
 import { ModelPrimitive } from "@foxglove/schemas";
-import { GroundTruth } from "@lichtblick/asam-osi-types";
+import {
+  GroundTruth,
+  Lane,
+  LaneBoundary,
+  LogicalLane,
+  LogicalLaneBoundary,
+  MovingObject,
+  ReferenceLine,
+  RoadMarking,
+  StationaryObject,
+  TrafficLight,
+  TrafficSign,
+} from "@lichtblick/asam-osi-types";
 import { PartialSceneEntity } from "@utils/scene";
+
+export interface OSIObjectLists {
+  movingObjects: MovingObject[];
+  stationaryObjects: StationaryObject[];
+  trafficSigns: TrafficSign[];
+  trafficLights: TrafficLight[];
+  lanes: Lane[];
+  laneBoundaries: LaneBoundary[];
+  logicalLanes: LogicalLane[];
+  logicalLaneBoundaries: LogicalLaneBoundary[];
+  roadMarkings: RoadMarking[];
+  referenceLines: ReferenceLine[];
+}
 
 export interface OSISceneEntities {
   movingObjects: PartialSceneEntity[];

@@ -2,7 +2,6 @@ import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { osiTimestampToTime } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
-import { DeepRequired } from "ts-essentials";
 
 import {
   OSI_GLOBAL_FRAME,
@@ -21,13 +20,8 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
     }
 
     // Return empty FrameTransforms if host vehicle is not contained in moving objects
-    if (
-      message.moving_object &&
-      message.moving_object.some((obj) => obj.id?.value === message.host_vehicle_id?.value)
-    ) {
-      transforms.transforms.push(
-        buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>),
-      );
+    if (message.moving_object.some((obj) => obj.id?.value === message.host_vehicle_id?.value)) {
+      transforms.transforms.push(buildEgoVehicleBBCenterFrameTransform(message));
     } else {
       console.error("Host vehicle not found in moving objects");
       return transforms;
@@ -35,15 +29,11 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
 
     // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
     if (
-      message.moving_object.some(
-        (obj) =>
-          obj.id?.value === message.host_vehicle_id?.value &&
-          obj.vehicle_attributes?.bbcenter_to_rear,
-      )
+      message.moving_object.some((obj) => {
+        return obj.id?.value === message.host_vehicle_id?.value;
+      })
     ) {
-      transforms.transforms.push(
-        buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>),
-      );
+      transforms.transforms.push(buildEgoVehicleRearAxleFrameTransform(message));
     } else {
       console.warn(
         "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
@@ -59,13 +49,21 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
   return transforms;
 };
 
-function buildEgoVehicleBBCenterFrameTransform(
-  osiGroundTruth: DeepRequired<GroundTruth>,
-): FrameTransform {
+function buildEgoVehicleBBCenterFrameTransform(osiGroundTruth: GroundTruth): FrameTransform {
+  if (!osiGroundTruth.host_vehicle_id) {
+    throw Error("Missing information for ego vehicle bounding box center transform");
+  }
   const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
+    if (!obj.id) {
+      throw Error("Missing information for ego vehicle bounding box center transform");
+    }
     return obj.id.value === hostIdentifier;
   })!;
+
+  if (!hostObject.base?.position || !hostObject.base.orientation) {
+    throw Error("Missing information for ego vehicle bounding box center transform");
+  }
 
   // Pose of EGO BB-CENTER in GLOBAL (parent -> child)
   return {
@@ -85,13 +83,21 @@ function buildEgoVehicleBBCenterFrameTransform(
   };
 }
 
-function buildEgoVehicleRearAxleFrameTransform(
-  osiGroundTruth: DeepRequired<GroundTruth>,
-): FrameTransform {
+function buildEgoVehicleRearAxleFrameTransform(osiGroundTruth: GroundTruth): FrameTransform {
+  if (!osiGroundTruth.host_vehicle_id) {
+    throw Error("Missing information for ego vehicle rear axle transform");
+  }
   const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
+    if (!obj.id) {
+      throw Error("Missing information for ego vehicle rear axle transform");
+    }
     return obj.id.value === hostIdentifier;
   })!;
+
+  if (!hostObject.vehicle_attributes?.bbcenter_to_rear) {
+    throw Error("Missing information for ego vehicle rear axle transform");
+  }
 
   // OSI tree: BB_CENTER (parent) -> REAR_AXLE (child) with a pure translation in body frame
   return {

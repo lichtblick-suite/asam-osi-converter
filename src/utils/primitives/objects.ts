@@ -10,7 +10,6 @@ import { Color, CubePrimitive, ModelPrimitive, Vector3, ArrowPrimitive } from "@
 import { StationaryObject, MovingObject, TrafficLight } from "@lichtblick/asam-osi-types";
 import { ColorCode } from "@utils/helper";
 import { eulerToQuaternion, quaternionMultiplication } from "@utils/math";
-import { DeepRequired } from "ts-essentials";
 
 export function objectToCubePrimitive(
   x: number,
@@ -78,10 +77,7 @@ export function objectToModelPrimitive(
 }
 
 export function buildAxisArrow(
-  osiObject:
-    | DeepRequired<StationaryObject>
-    | DeepRequired<MovingObject>
-    | DeepRequired<TrafficLight>,
+  osiObject: StationaryObject | MovingObject | TrafficLight,
   axis_color: Color,
   orientation: Vector3 = { x: 0, y: 0, z: 0 },
   shaft_length: number,
@@ -90,35 +86,36 @@ export function buildAxisArrow(
   head_diameter: number,
   scale: number,
 ): ArrowPrimitive {
-  const baseOrientation = eulerToQuaternion(
-    osiObject.base.orientation.roll,
-    osiObject.base.orientation.pitch,
-    osiObject.base.orientation.yaw,
-  );
-  const localAxisOrientation = eulerToQuaternion(orientation.x, orientation.y, orientation.z);
-  const globalAxisOrientation = quaternionMultiplication(baseOrientation, localAxisOrientation);
-  return {
-    pose: {
-      position: {
-        x: osiObject.base.position.x,
-        y: osiObject.base.position.y,
-        z: osiObject.base.position.z,
+  if (osiObject.base?.position && osiObject.base.orientation) {
+    const baseOrientation = eulerToQuaternion(
+      osiObject.base.orientation.roll,
+      osiObject.base.orientation.pitch,
+      osiObject.base.orientation.yaw,
+    );
+    const localAxisOrientation = eulerToQuaternion(orientation.x, orientation.y, orientation.z);
+    const globalAxisOrientation = quaternionMultiplication(baseOrientation, localAxisOrientation);
+    return {
+      pose: {
+        position: {
+          x: osiObject.base.position.x,
+          y: osiObject.base.position.y,
+          z: osiObject.base.position.z,
+        },
+        orientation: globalAxisOrientation,
       },
-      orientation: globalAxisOrientation,
-    },
-    shaft_length: shaft_length * scale,
-    shaft_diameter: shaft_diameter * scale,
-    head_length: head_length * scale,
-    head_diameter: head_diameter * scale,
-    color: axis_color,
-  };
+      shaft_length: shaft_length * scale,
+      shaft_diameter: shaft_diameter * scale,
+      head_length: head_length * scale,
+      head_diameter: head_diameter * scale,
+      color: axis_color,
+    };
+  } else {
+    throw Error("Missing object information");
+  }
 }
 
 export function buildObjectAxes(
-  osiObject:
-    | DeepRequired<StationaryObject>
-    | DeepRequired<MovingObject>
-    | DeepRequired<TrafficLight>,
+  osiObject: StationaryObject | MovingObject | TrafficLight,
   shaft_length = 0.154,
   shaft_diameter = 0.02,
   head_length = 0.046,

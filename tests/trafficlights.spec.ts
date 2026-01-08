@@ -1,6 +1,5 @@
 import { buildTrafficLightModel, getModelCacheKey } from "@features/trafficlights";
 import { TrafficLight } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
 import { TRAFFIC_LIGHT_COLOR } from "@/config/constants";
 
@@ -38,9 +37,9 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         color: 2,
         mode: 2,
       },
-    } as DeepRequired<TrafficLight>;
-    const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification.color].code;
-    const modelCacheKey = getModelCacheKey(mockTrafficLightStatic.classification, {
+    } as TrafficLight;
+    const mockColor = TRAFFIC_LIGHT_COLOR[mockTrafficLightStatic.classification!.color].code;
+    const modelCacheKey = getModelCacheKey(mockTrafficLightStatic.classification!, {
       sec: 0,
       nsec: 0,
     });

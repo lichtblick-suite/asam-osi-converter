@@ -7,61 +7,53 @@ import {
   LaneBoundary_Classification_Type,
   LaneBoundary_Classification_Color,
 } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
-export function buildLaneMetadata(lane: DeepRequired<Lane>): KeyValuePair[] {
-  const metadata: KeyValuePair[] = [
-    {
-      key: "type",
-      value: Lane_Classification_Type[lane.classification.type],
-    },
-    {
-      key: "subtype",
-      value: Lane_Classification_Subtype[lane.classification.subtype],
-    },
-    {
-      key: "left_lane_boundary_ids",
-      value: lane.classification.left_lane_boundary_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "right_lane_boundary_ids",
-      value: lane.classification.right_lane_boundary_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "left_adjacent_lane_id",
-      value: lane.classification.left_adjacent_lane_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "right_adjacent_lane_id",
-      value: lane.classification.right_adjacent_lane_id.map((id) => id.value).join(", "),
-    },
-    {
-      key: "lane_pairing",
-      value: lane.classification.lane_pairing
-        .map(
-          (pair) =>
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
-            `(${pair.antecessor_lane_id ? pair.antecessor_lane_id.value : ""}, ${pair.successor_lane_id ? pair.successor_lane_id.value : ""})`,
-        )
-        .join(", "),
-    },
-  ];
+export function buildLaneMetadata(lane: Lane): KeyValuePair[] {
+  const metadata: KeyValuePair[] = [];
+
+  if (lane.classification) {
+    metadata.push(
+      {
+        key: "type",
+        value: Lane_Classification_Type[lane.classification.type],
+      },
+      {
+        key: "subtype",
+        value: Lane_Classification_Subtype[lane.classification.subtype],
+      },
+      {
+        key: "left_lane_boundary_ids",
+        value: lane.classification.left_lane_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "right_lane_boundary_ids",
+        value: lane.classification.right_lane_boundary_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "left_adjacent_lane_id",
+        value: lane.classification.left_adjacent_lane_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "right_adjacent_lane_id",
+        value: lane.classification.right_adjacent_lane_id.map((id) => id.value).join(", "),
+      },
+      {
+        key: "lane_pairing",
+        value: lane.classification.lane_pairing
+          .map(
+            (pair) =>
+              `(${pair.antecessor_lane_id ? pair.antecessor_lane_id.value.toString() : ""}, ${pair.successor_lane_id ? pair.successor_lane_id.value.toString() : ""})`,
+          )
+          .join(", "),
+      },
+    );
+  }
 
   return metadata;
 }
 
-export function buildLaneBoundaryMetadata(
-  lane_boundary: DeepRequired<LaneBoundary>,
-): KeyValuePair[] {
+export function buildLaneBoundaryMetadata(lane_boundary: LaneBoundary): KeyValuePair[] {
   const metadata: KeyValuePair[] = [
-    {
-      key: "type",
-      value: LaneBoundary_Classification_Type[lane_boundary.classification.type],
-    },
-    {
-      key: "color",
-      value: LaneBoundary_Classification_Color[lane_boundary.classification.color],
-    },
     {
       key: "width",
       value: lane_boundary.boundary_line[0]?.width!.toString() ?? "0",
@@ -71,6 +63,17 @@ export function buildLaneBoundaryMetadata(
       value: lane_boundary.boundary_line[0]?.height!.toString() ?? "0",
     },
   ];
-
+  if (lane_boundary.classification) {
+    metadata.push(
+      {
+        key: "type",
+        value: LaneBoundary_Classification_Type[lane_boundary.classification.type],
+      },
+      {
+        key: "color",
+        value: LaneBoundary_Classification_Color[lane_boundary.classification.color],
+      },
+    );
+  }
   return metadata;
 }

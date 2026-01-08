@@ -11,7 +11,6 @@ import { Time } from "@lichtblick/suite";
 import { convertDataURIToBinary } from "@utils/helper";
 import { objectToModelPrimitive } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
-import { DeepRequired } from "ts-essentials";
 
 import * as geometries from "./geometries";
 import images from "./images";
@@ -31,22 +30,26 @@ const textureBaseCacheMap = {
 };
 
 export function buildTrafficSignEntity(
-  obj: DeepRequired<TrafficSign>,
+  obj: TrafficSign,
   id_prefix: string,
   frame_id: string,
   time: Time,
 ): PartialSceneEntity {
   const models = [];
 
-  models.push(buildTrafficSignModel("main", obj.main_sign));
+  if (obj.main_sign) {
+    models.push(buildTrafficSignModel("main", obj.main_sign));
+  }
 
-  if (obj.supplementary_sign.length > 0) {
-    for (const item of obj.supplementary_sign) {
-      models.push(buildTrafficSignModel("main", item));
-    }
+  for (const item of obj.supplementary_sign) {
+    models.push(buildTrafficSignModel("main", item));
   }
 
   const metadata = buildTrafficSignMetadata(obj);
+
+  if (!obj.id) {
+    throw Error("Missing TrafficSign id.");
+  }
 
   return {
     timestamp: time,
@@ -54,7 +57,6 @@ export function buildTrafficSignEntity(
     id: generateSceneEntityId(id_prefix, obj.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    // texts,
     models,
     metadata,
   };
@@ -62,34 +64,38 @@ export function buildTrafficSignEntity(
 
 export const buildTrafficSignModel = (
   category: TrafficSignCategory,
-  item: DeepRequired<TrafficSign_MainSign> | DeepRequired<TrafficSign_SupplementarySign>,
+  item: TrafficSign_MainSign | TrafficSign_SupplementarySign,
 ): ModelPrimitive => {
-  let mapKey: string | number = item.classification.type;
+  if (item.base?.position && item.base.orientation && item.base.dimension && item.classification) {
+    let mapKey: string | number = item.classification.type;
 
-  if (textureHandlerMap[category].has(mapKey)) {
-    mapKey = getTextureMapKey(item.classification);
-  }
+    if (textureHandlerMap[category].has(mapKey)) {
+      mapKey = getTextureMapKey(item.classification);
+    }
 
-  if (!modelSignCacheMap[category].has(mapKey)) {
-    modelSignCacheMap[category].set(
-      mapKey,
-      buildGltfModel("plane", processTexture(category, item.classification)),
+    if (!modelSignCacheMap[category].has(mapKey)) {
+      modelSignCacheMap[category].set(
+        mapKey,
+        buildGltfModel("plane", processTexture(category, item.classification)),
+      );
+    }
+
+    return objectToModelPrimitive(
+      item.base.position.x,
+      item.base.position.y,
+      item.base.position.z,
+      item.base.orientation.roll,
+      item.base.orientation.pitch,
+      item.base.orientation.yaw,
+      item.base.dimension.width,
+      item.base.dimension.length,
+      item.base.dimension.height,
+      "",
+      modelSignCacheMap[category].get(mapKey),
     );
+  } else {
+    throw Error("Missing TrafficSign information.");
   }
-
-  return objectToModelPrimitive(
-    item.base.position.x,
-    item.base.position.y,
-    item.base.position.z,
-    item.base.orientation.roll,
-    item.base.orientation.pitch,
-    item.base.orientation.yaw,
-    item.base.dimension.width,
-    item.base.dimension.length,
-    item.base.dimension.height,
-    "",
-    modelSignCacheMap[category].get(mapKey),
-  );
 };
 
 const buildGltfModel = (
@@ -104,7 +110,7 @@ const buildGltfModel = (
 };
 
 const processTexture = (
-  category: DeepRequired<TrafficSignCategory>,
+  category: TrafficSignCategory,
   classification:
     | TrafficSign_MainSign_Classification
     | TrafficSign_SupplementarySign_Classification,
@@ -148,8 +154,8 @@ const getTextureMapKey = (
     | TrafficSign_MainSign_Classification
     | TrafficSign_SupplementarySign_Classification,
 ): string => {
-  const tsValue = classification.value as DeepRequired<TrafficSignValue>;
-  return `${classification.type}|${tsValue.value.toString()}`;
+  const tsValue = classification.value as TrafficSignValue;
+  return `${classification.type.toString()}|${tsValue.value.toString()}`;
 };
 
 const getImage = (file: string): HTMLImageElement => {

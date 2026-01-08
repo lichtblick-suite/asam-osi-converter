@@ -6,16 +6,14 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { ColorCode } from "@utils/helper";
 import { PartialSceneEntity } from "@utils/scene";
-import { DeepRequired, DeepPartial } from "ts-essentials";
+import { DeepPartial } from "ts-essentials";
 
 import { PREFIX_DETECTED_LANE_BOUNDARIES } from "@/config/entityPrefixes";
 import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
 
-export function buildSensorDataSceneEntities(
-  osiSensorData: DeepRequired<SensorData>,
-): PartialSceneEntity[] {
-  const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
-    return { x: boundary.position.x, y: boundary.position.y, z: boundary.position.z };
+export function buildSensorDataSceneEntities(osiSensorData: SensorData): PartialSceneEntity[] {
+  const ToPoint3 = (boundary: LaneBoundary_BoundaryPoint): Point3 => {
+    return { x: boundary.position!.x, y: boundary.position!.y, z: boundary.position!.z };
   };
   const ToLinePrimitive = (points: Point3[], thickness: number): DeepPartial<LinePrimitive> => {
     return {
@@ -33,14 +31,14 @@ export function buildSensorDataSceneEntities(
   };
 
   const makeLinePrimitive = (
-    lane_boundary: DeepRequired<DetectedLaneBoundary>,
+    lane_boundary: DetectedLaneBoundary,
     thickness: number,
   ): DeepPartial<LinePrimitive> => {
     return ToLinePrimitive(lane_boundary.boundary_line.map(ToPoint3), thickness);
   };
 
   const makePrimitiveLines = (
-    lane_boundary: DeepRequired<DetectedLaneBoundary>[],
+    lane_boundary: DetectedLaneBoundary[],
     thickness: number,
   ): DeepPartial<LinePrimitive>[] => {
     return lane_boundary.map((b) => makeLinePrimitive(b, thickness));
@@ -61,7 +59,7 @@ export function buildSensorDataSceneEntities(
   };
 
   const road_output_scene_update: PartialSceneEntity = {
-    timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
+    timestamp: { sec: osiSensorData.timestamp!.seconds, nsec: osiSensorData.timestamp!.nanos },
     frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
     id: PREFIX_DETECTED_LANE_BOUNDARIES,
     lifetime: { sec: 0, nsec: 0 },
@@ -78,7 +76,7 @@ export const convertSensorDataToSceneUpdate = (
   let sceneEntities: PartialSceneEntity[] = [];
 
   try {
-    sceneEntities = buildSensorDataSceneEntities(osiSensorData as DeepRequired<SensorData>);
+    sceneEntities = buildSensorDataSceneEntities(osiSensorData);
   } catch (error) {
     console.error(
       "OsiSensorDataVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",

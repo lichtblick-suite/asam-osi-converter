@@ -1,6 +1,5 @@
 import { buildTrafficSignModel, preloadDynamicTextures } from "@features/trafficsigns";
 import { TrafficSign_MainSign, TrafficSignValue_Unit } from "@lichtblick/asam-osi-types";
-import { DeepRequired } from "ts-essentials";
 
 const mockImage =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -72,7 +71,7 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         type: 0,
         value: 1,
       },
-    } as unknown as DeepRequired<TrafficSign_MainSign>;
+    } as unknown as TrafficSign_MainSign;
 
     expect(buildTrafficSignModel("main", mockMainSignStatic)).toEqual(
       expect.objectContaining({
@@ -105,11 +104,11 @@ describe("OsiGroundTruthVisualizer: 3D Models", () => {
         type: 1,
         value: {
           value: 10,
-          unit: TrafficSignValue_Unit.KILOMETER_PER_HOUR,
+          unit: TrafficSignValue_Unit.UNIT_KILOMETER_PER_HOUR,
           text: "",
         },
       },
-    } as unknown as DeepRequired<TrafficSign_MainSign>;
+    } as unknown as TrafficSign_MainSign;
 
     expect(buildTrafficSignModel("main", mockMainSignDynamic)).toEqual(
       expect.objectContaining({
