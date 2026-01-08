@@ -15,7 +15,7 @@ export function convertSensorDataToFrameTransforms(message: SensorData): FrameTr
   try {
     if (!message.mounting_position) {
       console.error(
-        "Missing mounting position in SensorData message. Can not build FrameTransforms.",
+        "Missing mounting position in SensorData message. Cannot build FrameTransforms.",
       );
       return transforms;
     }
