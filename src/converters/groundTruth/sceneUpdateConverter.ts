@@ -1,6 +1,7 @@
 import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
 import { buildLogicalLaneBoundaryEntity, buildLogicalLaneEntity } from "@features/logicallanes";
 import { createModelPrimitive, buildMovingObjectEntity } from "@features/movingobjects";
+import { buildReferenceLineEntity } from "@features/referenceline";
 import { buildRoadMarkingEntity } from "@features/roadmarkings";
 import { buildStationaryObjectEntity } from "@features/stationaryobjects";
 import { buildTrafficLightEntity } from "@features/trafficlights";
@@ -34,6 +35,7 @@ import {
   PREFIX_LOGICAL_LANE,
   PREFIX_LOGICAL_LANE_BOUNDARY,
   PREFIX_MOVING_OBJECT,
+  PREFIX_REFERENCE_LINE,
   PREFIX_ROAD_MARKING,
   PREFIX_STATIONARY_OBJECT,
   PREFIX_TRAFFIC_LIGHT,
@@ -207,6 +209,18 @@ function buildSceneEntities(
     });
   }
 
+  let referenceLineSceneEntities: PartialSceneEntity[] = [];
+  if (panelSettings != undefined && panelSettings.showReferenceLines) {
+    referenceLineSceneEntities = osiGroundTruth.reference_line.map((reference_line) => {
+      return buildReferenceLineEntity(
+        reference_line,
+        PREFIX_REFERENCE_LINE,
+        OSI_GLOBAL_FRAME,
+        time,
+      );
+    });
+  }
+
   return {
     movingObjects: movingObjectSceneEntities,
     stationaryObjects: stationaryObjectSceneEntities,
@@ -217,6 +231,7 @@ function buildSceneEntities(
     logicalLaneBoundaries: logicalLaneBoundarySceneEntities,
     lanes: laneSceneEntities,
     logicalLanes: logicalLaneSceneEntities,
+    referenceLines: referenceLineSceneEntities,
   };
 }
 
@@ -309,6 +324,12 @@ export function convertGroundTruthToSceneUpdate(
       PREFIX_LOGICAL_LANE,
       timestamp,
     ),
+    ...getDeletedEntities(
+      config.showReferenceLines ? osiGroundTruthReq.reference_line : [],
+      state.previousReferenceLineIds,
+      PREFIX_REFERENCE_LINE,
+      timestamp,
+    ),
   ];
 
   // Frame-level cache check before converting/building anything
@@ -379,6 +400,7 @@ export function convertGroundTruthToSceneUpdate(
       logicalLaneBoundaries,
       lanes,
       logicalLanes,
+      referenceLines,
     } = buildSceneEntities(osiGroundTruthReq, updateFlags, config, modelCache);
 
     // Merge cached and built entities
@@ -392,6 +414,7 @@ export function convertGroundTruthToSceneUpdate(
       logicalLaneBoundaries,
       lanes,
       logicalLanes,
+      referenceLines,
     );
 
     // Update caches
