@@ -6,7 +6,11 @@ import {
   IndicatorLightSide,
 } from "@features/movingobjects/lightstates";
 import { ArrowPrimitive, Color, CubePrimitive, ModelPrimitive } from "@foxglove/schemas";
-import { MovingObject } from "@lichtblick/asam-osi-types";
+import {
+  MovingObject,
+  MovingObject_VehicleClassification_LightState_BrakeLightState,
+  MovingObject_VehicleClassification_LightState_IndicatorState,
+} from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
 import { convertPathToFileUrl } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
@@ -69,16 +73,19 @@ export function buildMovingObjectEntity(
   }
 
   function hasBrakeLightState(obj: MovingObject): obj is MovingObject {
+    const state = obj.vehicle_classification?.light_state?.brake_light_state;
+
     return (
-      "vehicle_classification" in obj &&
-      obj.vehicle_classification?.light_state?.brake_light_state != undefined
+      state != undefined &&
+      state !== MovingObject_VehicleClassification_LightState_BrakeLightState.UNKNOWN
     );
   }
 
   function hasIndicatorState(obj: MovingObject): obj is MovingObject {
+    const indicator_state = obj.vehicle_classification?.light_state?.indicator_state;
     return (
-      "vehicle_classification" in obj &&
-      obj.vehicle_classification?.light_state?.indicator_state != undefined
+      indicator_state != undefined &&
+      indicator_state !== MovingObject_VehicleClassification_LightState_IndicatorState.UNKNOWN
     );
   }
 
