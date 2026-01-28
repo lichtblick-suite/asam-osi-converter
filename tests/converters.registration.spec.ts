@@ -8,6 +8,8 @@ import {
   MovingObject,
   MovingObject_Type,
   MovingObject_VehicleClassification_Type,
+  ReferenceLine,
+  ReferenceLine_Type,
   StationaryObject,
 } from "@lichtblick/asam-osi-types";
 import { ExtensionContext } from "@lichtblick/suite";
@@ -168,6 +170,23 @@ describe("OSI Visualizer: Message Converter", () => {
       ],
     },
   } as unknown as DeepRequired<Lane>;
+  const mockRefLine = {
+    id: {
+      value: 7000,
+    },
+    type: ReferenceLine_Type.POLYLINE_WITH_T_AXIS,
+    poly_line: [
+      {
+        world_position: {
+          x: 1,
+          y: 1,
+          z: 1,
+        },
+        s_position: 20,
+        t_axis_yaw: 0,
+      },
+    ],
+  } as unknown as DeepRequired<ReferenceLine>;
   const mockMessageData = {
     timestamp: {
       seconds: 0,
@@ -185,6 +204,7 @@ describe("OSI Visualizer: Message Converter", () => {
     traffic_sign: [],
     traffic_light: [],
     road_marking: [],
+    reference_line: [mockRefLine],
   } as GroundTruth;
 
   beforeEach(() => {
