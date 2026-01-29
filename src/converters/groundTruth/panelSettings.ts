@@ -6,6 +6,7 @@ export const DEFAULT_CONFIG = {
   showAxes: true,
   showPhysicalLanes: true,
   showLogicalLanes: false,
+  showReferenceLines: true,
   showBoundingBox: true,
   show3dModels: false,
   defaultModelPath: "/opt/models/vehicles/",
@@ -35,6 +36,11 @@ export function generateGroundTruth3DPanelSettings(): PanelSettings<unknown> {
           label: "Show Logical Lanes",
           input: "boolean",
           value: config?.showLogicalLanes,
+        },
+        showReferenceLines: {
+          label: "Show Reference Lines",
+          input: "boolean",
+          value: config?.showReferenceLines,
         },
         showBoundingBox: {
           label: "Show Bounding Box",
@@ -70,6 +76,9 @@ export function generateGroundTruth3DPanelSettings(): PanelSettings<unknown> {
       }
       if (action.action === "update" && action.payload.path[2] === "showLogicalLanes") {
         config.showLogicalLanes = action.payload.value as boolean;
+      }
+      if (action.action === "update" && action.payload.path[2] === "showReferenceLines") {
+        config.showReferenceLines = action.payload.value as boolean;
       }
       if (action.action === "update" && action.payload.path[2] === "showBoundingBox") {
         config.showBoundingBox = action.payload.value as boolean;

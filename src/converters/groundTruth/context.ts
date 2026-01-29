@@ -18,6 +18,7 @@ export function createGroundTruthContext(): GroundTruthContext {
       previousTrafficSignIds: new Set(),
       previousTrafficLightIds: new Set(),
       previousRoadMarkingIds: new Set(),
+      previousReferenceLineIds: new Set(),
       previousConfig: undefined,
     },
   };

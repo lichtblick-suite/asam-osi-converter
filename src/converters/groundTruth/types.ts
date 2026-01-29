@@ -12,6 +12,7 @@ export interface OSISceneEntities {
   logicalLaneBoundaries: PartialSceneEntity[];
   lanes: PartialSceneEntity[];
   logicalLanes: PartialSceneEntity[];
+  referenceLines: PartialSceneEntity[];
 }
 
 export interface OSISceneEntitiesUpdateFlags {
@@ -26,6 +27,7 @@ export type GroundTruthPanelSettings = {
   showAxes: boolean;
   showPhysicalLanes: boolean;
   showLogicalLanes: boolean;
+  showReferenceLines: boolean;
   showBoundingBox: boolean;
   show3dModels: boolean;
   defaultModelPath: string;
@@ -41,6 +43,7 @@ export interface GroundTruthState {
   previousTrafficSignIds: Set<number>;
   previousTrafficLightIds: Set<number>;
   previousRoadMarkingIds: Set<number>;
+  previousReferenceLineIds: Set<number>;
   previousConfig?: GroundTruthPanelSettings;
 }
 
