@@ -50,6 +50,7 @@ import { OSI_GLOBAL_FRAME } from "@/config/frameTransformNames";
  * @param updateFlags - Object containing flags to determine which entities need to be updated.
  * @param panelSettings - Panel settings for GroundTruth topic
  * @param modelCache
+ * @param hostVehicleIdFallback - Optional fallback host vehicle ID if not set in GroundTruth but in SensorView.
  * @returns A list of OSISceneEntities object containing scene entity lists for each entity type.
  * For each entity type with its corresponding update flag set to true, the scene entity list will be updated.
  * For each entity type with its corresponding update flag set to false, the scene entity list will be empty.
@@ -59,8 +60,10 @@ function buildSceneEntities(
   updateFlags: OSISceneEntitiesUpdateFlags,
   panelSettings: GroundTruthPanelSettings | undefined,
   modelCache: Map<string, ModelPrimitive>,
+  hostVehicleIdFallback?: number,
 ): OSISceneEntities {
   const time: Time = osiTimestampToTime(osiGroundTruth.timestamp);
+  const hostVehicleId = osiGroundTruth.host_vehicle_id?.value ?? hostVehicleIdFallback;
 
   // Moving objects
   const movingObjectSceneEntities = osiGroundTruth.moving_object.map((obj) => {
@@ -75,7 +78,7 @@ function buildSceneEntities(
       modelCache.set(modelPathKey, createModelPrimitive(obj, modelPathKey));
     }
 
-    if (obj.id.value === osiGroundTruth.host_vehicle_id.value) {
+    if (hostVehicleId != undefined && obj.id.value === hostVehicleId) {
       entity = buildMovingObjectEntity(
         obj,
         HOST_OBJECT_COLOR,
@@ -239,6 +242,7 @@ export function convertGroundTruthToSceneUpdate(
   ctx: GroundTruthContext,
   osiGroundTruth: GroundTruth,
   event?: Immutable<MessageEvent<GroundTruth>>,
+  hostVehicleIdFallback?: number,
 ): DeepPartial<SceneUpdate> {
   const {
     groundTruthFrameCache,
@@ -401,7 +405,13 @@ export function convertGroundTruthToSceneUpdate(
       lanes,
       logicalLanes,
       referenceLines,
-    } = buildSceneEntities(osiGroundTruthReq, updateFlags, config, modelCache);
+    } = buildSceneEntities(
+      osiGroundTruthReq,
+      updateFlags,
+      config,
+      modelCache,
+      hostVehicleIdFallback,
+    );
 
     // Merge cached and built entities
     sceneEntities = sceneEntities.concat(

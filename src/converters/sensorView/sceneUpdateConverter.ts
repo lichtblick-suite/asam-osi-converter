@@ -9,5 +9,10 @@ export function registerSensorViewConverter(): (
   const ctx = createGroundTruthContext();
 
   return (msg: SensorView, event: Immutable<MessageEvent<SensorView>>) =>
-    convertGroundTruthToSceneUpdate(ctx, msg.global_ground_truth!, event);
+    convertGroundTruthToSceneUpdate(
+      ctx,
+      msg.global_ground_truth!,
+      event,
+      msg.host_vehicle_id?.value,
+    );
 }
