@@ -2,6 +2,11 @@
 
 A Lichtblick extension that converts ASAM Open Simulation Interface (OSI) messages into 3D visualizations.
 
+## Related Agent Docs
+| Document | Purpose | Location |
+| --- | --- | --- |
+| Repository Guidelines | Contributor guide with commands, testing, and PR expectations | `AGENTS.md` |
+
 ## Build, Test, and Lint Commands
 
 ```bash
@@ -95,7 +100,7 @@ TypeScript and Jest are configured with path aliases:
 @/*            → src/*
 ```
 
-Always use these aliases for imports. They're configured in `tsconfig.json`, `jest.config.js`, and `config.ts`.
+Prefer these aliases for imports. They're configured in `tsconfig.json`, `jest.config.js`, and `config.ts`.
 
 ## Key Conventions
 
@@ -131,7 +136,7 @@ Follow Conventional Commits format:
 Types: feat, fix, docs, style, refactor, test, chore, ci
 ```
 
-Commits are validated by commitlint via Husky pre-commit hooks.
+Commits are validated by commitlint via the Husky `commit-msg` hook.
 
 ## Release Process
 
