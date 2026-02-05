@@ -1,5 +1,33 @@
 # Changelog
 
+## [v0.1.3](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.3) (2026-02-05)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.2...v0.1.3)
+
+**Implemented enhancements:**
+
+- Reminder: Reference line for logical lanes [\#144](https://github.com/lichtblick-suite/asam-osi-converter/issues/144)
+- Reorganization/cleanup [\#146](https://github.com/lichtblick-suite/asam-osi-converter/pull/146) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Fixed bugs:**
+
+- Light state visualization for partially set light states [\#129](https://github.com/lichtblick-suite/asam-osi-converter/issues/129)
+- Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
+- Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
+- fix: use SensorView fallback host vehicle if missing [\#160](https://github.com/lichtblick-suite/asam-osi-converter/pull/160) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- fix: hide lights if unknown [\#158](https://github.com/lichtblick-suite/asam-osi-converter/pull/158) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Closed issues:**
+
+- Should I commit yarn.lock and package-lock.json files? [\#86](https://github.com/lichtblick-suite/asam-osi-converter/issues/86)
+
+**Merged pull requests:**
+
+- Chore/prepare v0.1.3 [\#163](https://github.com/lichtblick-suite/asam-osi-converter/pull/163) ([jdsika](https://github.com/jdsika))
+- chore: release v0.1.3 [\#161](https://github.com/lichtblick-suite/asam-osi-converter/pull/161) ([jdsika](https://github.com/jdsika))
+- feat: add switchable reference line visualization [\#159](https://github.com/lichtblick-suite/asam-osi-converter/pull/159) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Add virtual mounting position frame transform [\#157](https://github.com/lichtblick-suite/asam-osi-converter/pull/157) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
 ## [v0.1.2](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.2) (2025-12-11)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.1...v0.1.2)
@@ -30,11 +58,6 @@
 **Implemented enhancements:**
 
 - Reorganization/cleanup [\#146](https://github.com/lichtblick-suite/asam-osi-converter/pull/146) ([thomassedlmayer](https://github.com/thomassedlmayer))
-
-**Fixed bugs:**
-
-- Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
-- Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
 
 **Closed issues:**
 
