@@ -2,7 +2,7 @@ import { GroundTruthContext } from "./types";
 
 export function createGroundTruthContext(): GroundTruthContext {
   return {
-    groundTruthFrameCache: new WeakMap(),
+    groundTruthFrameCache: new Map(),
     laneBoundaryCache: new Map(),
     laneCache: new Map(),
     logicalLaneBoundaryCache: new Map(),
@@ -20,6 +20,7 @@ export function createGroundTruthContext(): GroundTruthContext {
       previousRoadMarkingIds: new Set(),
       previousReferenceLineIds: new Set(),
       previousConfig: undefined,
+      previousConfigSignature: undefined,
     },
   };
 }

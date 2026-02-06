@@ -45,10 +45,11 @@ export interface GroundTruthState {
   previousRoadMarkingIds: Set<number>;
   previousReferenceLineIds: Set<number>;
   previousConfig?: GroundTruthPanelSettings;
+  previousConfigSignature?: string;
 }
 
 export interface GroundTruthContext {
-  groundTruthFrameCache: WeakMap<GroundTruth, PartialSceneEntity[]>;
+  groundTruthFrameCache: Map<string, WeakMap<GroundTruth, PartialSceneEntity[]>>;
   laneBoundaryCache: Map<string, PartialSceneEntity[]>;
   laneCache: Map<string, PartialSceneEntity[]>;
   logicalLaneBoundaryCache: Map<string, PartialSceneEntity[]>;
