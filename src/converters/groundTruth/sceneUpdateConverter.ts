@@ -347,19 +347,23 @@ export function convertGroundTruthToSceneUpdate(
     ),
   ];
 
-  // Frame cache is partitioned by config signature to prevent cross-config reuse
-  let frameCache = ctx.groundTruthFrameCache.get(configSignature);
-  if (!frameCache) {
-    frameCache = new WeakMap();
-    ctx.groundTruthFrameCache.set(configSignature, frameCache);
-  }
+  // Frame cache is partitioned by config signature to prevent cross-config reuse.
+  // Respect `caching=false` by skipping frame-level cache reads/writes entirely.
+  let frameCache: WeakMap<GroundTruth, PartialSceneEntity[]> | undefined;
+  if (caching) {
+    frameCache = ctx.groundTruthFrameCache.get(configSignature);
+    if (!frameCache) {
+      frameCache = new WeakMap();
+      ctx.groundTruthFrameCache.set(configSignature, frameCache);
+    }
 
-  // Frame-level cache check before converting/building anything
-  if (frameCache.has(osiGroundTruth)) {
-    return {
-      deletions,
-      entities: frameCache.get(osiGroundTruth),
-    };
+    // Frame-level cache check before converting/building anything
+    if (frameCache.has(osiGroundTruth)) {
+      return {
+        deletions,
+        entities: frameCache.get(osiGroundTruth),
+      };
+    }
   }
 
   // Conversion logic
@@ -472,7 +476,9 @@ export function convertGroundTruthToSceneUpdate(
     }
 
     // Store GroundTruth frame cache
-    frameCache.set(osiGroundTruth, sceneEntities);
+    if (caching && frameCache) {
+      frameCache.set(osiGroundTruth, sceneEntities);
+    }
   } catch (error) {
     console.error(
       "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
