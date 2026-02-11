@@ -241,7 +241,7 @@ function buildSceneEntities(
 export function convertGroundTruthToSceneUpdate(
   ctx: GroundTruthContext,
   osiGroundTruth: GroundTruth,
-  event?: Immutable<MessageEvent<GroundTruth>>,
+  event?: Immutable<MessageEvent>,
   hostVehicleIdFallback?: number,
 ): DeepPartial<SceneUpdate> {
   const {
@@ -495,9 +495,15 @@ export function convertGroundTruthToSceneUpdate(
 export function registerGroundTruthConverter(): (
   msg: GroundTruth,
   event: Immutable<MessageEvent<GroundTruth>>,
+  globalVariables?: unknown,
 ) => unknown {
   const ctx = createGroundTruthContext();
 
-  return (msg: GroundTruth, event: Immutable<MessageEvent<GroundTruth>>) =>
-    convertGroundTruthToSceneUpdate(ctx, msg, event);
+  return (
+    msg: GroundTruth,
+    event: Immutable<MessageEvent<GroundTruth>>,
+    _globalVariables?: unknown,
+  ) => {
+    return convertGroundTruthToSceneUpdate(ctx, msg, event);
+  };
 }

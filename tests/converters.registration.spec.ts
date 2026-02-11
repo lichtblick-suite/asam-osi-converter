@@ -205,7 +205,7 @@ describe("OSI Visualizer: Message Converter", () => {
     traffic_light: [],
     road_marking: [],
     reference_line: [mockRefLine],
-  } as GroundTruth;
+  } as unknown as DeepRequired<GroundTruth>;
 
   beforeEach(() => {
     mockExtensionContext.registerMessageConverter = mockRegisterMessageConverter;
