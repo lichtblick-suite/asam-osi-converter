@@ -245,7 +245,6 @@ export function convertGroundTruthToSceneUpdate(
   hostVehicleIdFallback?: number,
 ): DeepPartial<SceneUpdate> {
   const {
-    groundTruthFrameCache,
     laneBoundaryCache,
     laneCache,
     logicalLaneBoundaryCache,
@@ -258,18 +257,30 @@ export function convertGroundTruthToSceneUpdate(
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
+  // Cache signature ties caches to settings so data is not reused across different panel settings
+  const configSignature = JSON.stringify({
+    caching: config.caching,
+    showAxes: config.showAxes,
+    showPhysicalLanes: config.showPhysicalLanes,
+    showLogicalLanes: config.showLogicalLanes,
+    showReferenceLines: config.showReferenceLines,
+    showBoundingBox: config.showBoundingBox,
+    show3dModels: config.show3dModels,
+    defaultModelPath: config.defaultModelPath,
+  });
 
   // Reset caches if configuration changed
-  if (config !== state.previousConfig) {
+  if (configSignature !== state.previousConfigSignature) {
     laneBoundaryCache.clear();
     laneCache.clear();
     logicalLaneBoundaryCache.clear();
     logicalLaneCache.clear();
     modelCache.clear();
-    ctx.groundTruthFrameCache = new WeakMap();
+    ctx.groundTruthFrameCache.clear();
   }
 
   state.previousConfig = config;
+  state.previousConfigSignature = configSignature;
   const caching = config.caching;
 
   // Deletions logic (comparing previous step's entities with current step's entities)
@@ -336,12 +347,23 @@ export function convertGroundTruthToSceneUpdate(
     ),
   ];
 
-  // Frame-level cache check before converting/building anything
-  if (groundTruthFrameCache.has(osiGroundTruth)) {
-    return {
-      deletions,
-      entities: groundTruthFrameCache.get(osiGroundTruth),
-    };
+  // Frame cache is partitioned by config signature to prevent cross-config reuse.
+  // Respect `caching=false` by skipping frame-level cache reads/writes entirely.
+  let frameCache: WeakMap<GroundTruth, PartialSceneEntity[]> | undefined;
+  if (caching) {
+    frameCache = ctx.groundTruthFrameCache.get(configSignature);
+    if (!frameCache) {
+      frameCache = new WeakMap();
+      ctx.groundTruthFrameCache.set(configSignature, frameCache);
+    }
+
+    // Frame-level cache check before converting/building anything
+    if (frameCache.has(osiGroundTruth)) {
+      return {
+        deletions,
+        entities: frameCache.get(osiGroundTruth),
+      };
+    }
   }
 
   // Conversion logic
@@ -363,33 +385,41 @@ export function convertGroundTruthToSceneUpdate(
 
     if (caching) {
       // Physical lane boundaries
-      laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
-      if (laneBoundaryCache.has(laneBoundaryHash)) {
-        sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
-        updateFlags.laneBoundaries = false;
+      if (config.showPhysicalLanes) {
+        laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
+        if (laneBoundaryCache.has(laneBoundaryHash)) {
+          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+          updateFlags.laneBoundaries = false;
+        }
       }
 
       // Physical lanes
-      laneHash = hashLanes(osiGroundTruthReq.lane);
-      if (laneCache.has(laneHash)) {
-        sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
-        updateFlags.lanes = false;
+      if (config.showPhysicalLanes) {
+        laneHash = hashLanes(osiGroundTruthReq.lane);
+        if (laneCache.has(laneHash)) {
+          sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+          updateFlags.lanes = false;
+        }
       }
 
       // Logical lane boundaries
-      logicalLaneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.logical_lane_boundary);
-      if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
-        sceneEntities = sceneEntities.concat(
-          logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
-        );
-        updateFlags.logicalLaneBoundaries = false;
+      if (config.showLogicalLanes) {
+        logicalLaneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.logical_lane_boundary);
+        if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
+          sceneEntities = sceneEntities.concat(
+            logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
+          );
+          updateFlags.logicalLaneBoundaries = false;
+        }
       }
 
       // Logical lanes
-      logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
-      if (logicalLaneCache.has(logicalLaneHash)) {
-        sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
-        updateFlags.logicalLanes = false;
+      if (config.showLogicalLanes) {
+        logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
+        if (logicalLaneCache.has(logicalLaneHash)) {
+          sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
+          updateFlags.logicalLanes = false;
+        }
       }
     }
 
@@ -446,7 +476,9 @@ export function convertGroundTruthToSceneUpdate(
     }
 
     // Store GroundTruth frame cache
-    groundTruthFrameCache.set(osiGroundTruth, sceneEntities);
+    if (caching && frameCache) {
+      frameCache.set(osiGroundTruth, sceneEntities);
+    }
   } catch (error) {
     console.error(
       "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
