@@ -33,7 +33,7 @@
     "@foxglove/schemas": "^1.6.2",
     "@lichtblick/asam-osi-types": "^3.7.0",
     "@lichtblick/eslint-plugin": "^1.0.2",
-    "@lichtblick/suite": "^1.5.0",
+    "@lichtblick/suite": "https://github.com/thomassedlmayer/lichtblick.git#workspace=@lichtblick/suite&commit=acaac6dd59da4fb293f5dc1cd80e05ecd08771f5",
     "@types/jest": "^30.0.0",
     "@types/minimatch": "^5.1.2",
     "@types/react": "18.2.55",
@@ -62,5 +62,5 @@
     "ts-node": "^10.9.2",
     "typescript": "5.9.3"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "yarn@4.6.0"
 }

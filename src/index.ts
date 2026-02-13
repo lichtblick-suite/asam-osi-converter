@@ -21,6 +21,7 @@ export function activate(extensionContext: ExtensionContext): void {
     panelSettings: {
       "3D": generateGroundTruth3DPanelSettings(),
     },
+    supportsLatestPerRenderTick: true,
   });
 
   const sensorViewConverter = registerSensorViewConverter();
@@ -31,24 +32,28 @@ export function activate(extensionContext: ExtensionContext): void {
     panelSettings: {
       "3D": generateGroundTruth3DPanelSettings(),
     },
+    supportsLatestPerRenderTick: true,
   });
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
     converter: convertSensorDataToSceneUpdate,
+    supportsLatestPerRenderTick: true,
   });
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.FrameTransforms",
     converter: convertSensorDataToFrameTransforms,
+    supportsLatestPerRenderTick: true,
   });
 
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.GroundTruth",
     toSchemaName: "foxglove.FrameTransforms",
     converter: convertGroundTruthToFrameTransforms,
+    supportsLatestPerRenderTick: true,
   });
 
   extensionContext.registerMessageConverter({
@@ -56,5 +61,6 @@ export function activate(extensionContext: ExtensionContext): void {
     toSchemaName: "foxglove.FrameTransforms",
     converter: (message: SensorView) =>
       convertGroundTruthToFrameTransforms(message.global_ground_truth!),
+    supportsLatestPerRenderTick: true,
   });
 }
