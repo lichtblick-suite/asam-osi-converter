@@ -20,6 +20,7 @@ export function activate(extensionContext: ExtensionContext): void {
     converter: groundTruthConverter,
     panelSettings: {
       "3D": generateGroundTruth3DPanelSettings(),
+      Image: generateGroundTruth3DPanelSettings(),
     },
   });
 

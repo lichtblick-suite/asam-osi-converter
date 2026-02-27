@@ -217,6 +217,32 @@ describe("OSI Visualizer: Message Converter", () => {
     expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(6);
   });
 
+  it("registers GroundTruth SceneUpdate converter with 3D and Image panel settings", () => {
+    activate(mockExtensionContext);
+    const args = mockRegisterMessageConverter.mock.calls[0][0] as {
+      fromSchemaName: string;
+      toSchemaName: string;
+      panelSettings: Record<string, unknown>;
+    };
+    expect(args.fromSchemaName).toBe("osi3.GroundTruth");
+    expect(args.toSchemaName).toBe("foxglove.SceneUpdate");
+    expect(args.panelSettings?.["3D"]).toBeDefined();
+    expect(args.panelSettings?.["Image"]).toBeDefined();
+  });
+
+  it("registers SensorView SceneUpdate converter with 3D and Image panel settings", () => {
+    activate(mockExtensionContext);
+    const args = mockRegisterMessageConverter.mock.calls[1][0] as {
+      fromSchemaName: string;
+      toSchemaName: string;
+      panelSettings: Record<string, unknown>;
+    };
+    expect(args.fromSchemaName).toBe("osi3.SensorView");
+    expect(args.toSchemaName).toBe("foxglove.SceneUpdate");
+    expect(args.panelSettings?.["3D"]).toBeDefined();
+    expect(args.panelSettings?.["Image"]).toBeDefined();
+  });
+
   it("converts a simple message { fromSchemaName: osi_3_msgs/osi_GroundTruth toSchemaName: foxglove.SceneUpdate }", () => {
     activate(mockExtensionContext);
     const messageConverterArgs = mockRegisterMessageConverter.mock.calls[0][0] as {
