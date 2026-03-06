@@ -20,6 +20,7 @@ export function activate(extensionContext: ExtensionContext): void {
     converter: groundTruthConverter,
     panelSettings: {
       "3D": generateGroundTruth3DPanelSettings(),
+      Image: generateGroundTruth3DPanelSettings(),
     },
   });
 
@@ -30,6 +31,7 @@ export function activate(extensionContext: ExtensionContext): void {
     converter: sensorViewConverter,
     panelSettings: {
       "3D": generateGroundTruth3DPanelSettings(),
+      Image: generateGroundTruth3DPanelSettings(),
     },
   });
 

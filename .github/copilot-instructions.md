@@ -79,13 +79,21 @@ Converters follow this structure:
 4. Track entity lifecycle (additions/deletions) for efficient updates
 5. Return SceneUpdate or FrameTransforms schema
 
+The converter function is returned as a closure that captures the `GroundTruthContext` — this context persists across frames and holds caches, previous entity ID sets, and the last known panel config. It is created once per `register*Converter()` call.
+
+**SensorView** delegates to the GroundTruth converter using `msg.global_ground_truth`. **SensorData** is currently limited — it only renders detected lane boundaries and displays a "not supported yet" text label.
+
+Panel settings flow into the converter via `event.topicConfig` (typed as `GroundTruthPanelSettings`). Converters fall back to `DEFAULT_CONFIG` when `topicConfig` is undefined.
+
+Error handling: all converters wrap their main logic in `try/catch`, log with `console.error`, and return an empty `SceneUpdate` on failure rather than propagating exceptions.
+
 ### Feature Builder Pattern
 
 Each feature module exports:
 - `build*Entity()` - Creates a `PartialSceneEntity` with primitives
 - `build*Metadata()` - Creates metadata for panel displays
 - Uses utilities from `@utils/primitives` to create geometric primitives
-- Returns entities with unique IDs generated via `generateSceneEntityId()`
+- Returns entities with unique IDs generated via `generateSceneEntityId(prefix, id)`
 
 ## Path Aliases
 
@@ -105,9 +113,17 @@ Prefer these aliases for imports. They're configured in `tsconfig.json`, `jest.c
 ## Key Conventions
 
 ### Entity ID Generation
-- Use `generateSceneEntityId(prefix, osiId, property?)` from `@utils/scene`
+- Use `generateSceneEntityId(prefix, id)` from `@utils/scene` — produces `"${prefix}_${id}"`
 - Prefixes defined in `src/config/entityPrefixes.ts` (e.g., `PREFIX_MOVING_OBJECT`)
-- Ensures unique IDs for entity tracking and deletion
+- Entity IDs must be stable across frames; `getDeletedEntities()` uses Sets of previous-frame IDs to generate deletion messages when an entity disappears
+
+### Caching System
+The `GroundTruthContext` holds several layers of caches to avoid redundant work:
+- **Frame cache** (`groundTruthFrameCache`): `Map<configSignature, WeakMap<GroundTruth, entities>>` — skips full conversion if the same message object is seen again
+- **Lane/boundary caches**: keyed by hash of entity IDs (via `hashLanes` / `hashLaneBoundaries`) — reuses rendered entities when the set of lane IDs hasn't changed
+- **Model cache**: keyed by `defaultModelPath + model_reference` — reuses loaded 3D model primitives
+
+All caches are cleared whenever panel settings change (detected by comparing JSON-stringified config signatures).
 
 ### Color Management
 - Use `ColorCode(name, opacity)` from `@utils/helper` for consistent colors
@@ -115,7 +131,7 @@ Prefer these aliases for imports. They're configured in `tsconfig.json`, `jest.c
 - Organized by feature (e.g., `MOVING_OBJECT_COLOR`, `LANE_BOUNDARY_TYPE`)
 
 ### Type Safety
-- Use `DeepRequired<T>` from `ts-essentials` for OSI types to handle optional fields
+- Use `DeepRequired<T>` from `ts-essentials` to cast OSI types for processing — this satisfies TypeScript but does not validate at runtime; actual field presence is not guaranteed
 - Strict TypeScript settings enabled (noImplicitAny, noUncheckedIndexedAccess, etc.)
 
 ### Testing
