@@ -396,7 +396,9 @@ export function convertGroundTruthToSceneUpdate(
       // Physical lanes
       if (config.showPhysicalLanes) {
         laneHash = hashLanes(osiGroundTruthReq.lane);
-        if (laneCache.has(laneHash)) {
+        // Lane geometry depends on boundary geometry. Reuse lane cache only if
+        // boundaries were also reused from cache in this frame.
+        if (!updateFlags.laneBoundaries && laneCache.has(laneHash)) {
           sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
           updateFlags.lanes = false;
         }
@@ -416,7 +418,10 @@ export function convertGroundTruthToSceneUpdate(
       // Logical lanes
       if (config.showLogicalLanes) {
         logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
-        if (logicalLaneCache.has(logicalLaneHash)) {
+        // Logical lane geometry depends on logical boundary geometry. Reuse
+        // logical lane cache only if logical boundaries were also reused from
+        // cache in this frame.
+        if (!updateFlags.logicalLaneBoundaries && logicalLaneCache.has(logicalLaneHash)) {
           sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
           updateFlags.logicalLanes = false;
         }
