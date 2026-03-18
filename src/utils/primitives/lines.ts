@@ -48,36 +48,18 @@ export function pointListToTriangleListPrimitive(
   let dashSectionFlag = true; // starts with a dash by default if not defined otherwise in 'dash' property of a boundary point
   let currentColor = color; // opacity ('a' value) of the color alternates for dashed lines
   let previousSectionWasExtrudedFlag = false; // flag is used to access the correct vertices from previous section
+  let hasPreviousSectionVertices = false;
+  // Cache "second point" vertices from the last valid section so the next valid section can
+  // start from exactly the same edge. This keeps mesh continuity even when zero-length
+  // sections are skipped (to avoid NaN normals) and avoids relying on indexing into the
+  // already-emitted vertex buffer.
+  let previousBottomLeft2: Point3 | undefined;
+  let previousBottomRight2: Point3 | undefined;
+  let previousTopLeft2: Point3 | undefined;
+  let previousTopRight2: Point3 | undefined;
 
   // Add vertices and colors for each lane boundary section between the current and next boundary point
   for (let i = 0; i < points.length - 1; i++) {
-    // Handle dash opacity alternation
-    const dashProperty = points[i]!.dash;
-    if (dashed) {
-      // Use 'dash' property to determine if the current section is dash or gap; if UNKNOWN or OTHER the flag alternates every step
-      if (
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.GAP ||
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.END
-      ) {
-        dashSectionFlag = false; // override
-      } else if (
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.START ||
-        dashProperty === LaneBoundary_BoundaryPoint_Dash.CONTINUE
-      ) {
-        dashSectionFlag = true; // override
-      }
-
-      // Set opacity based on the flag
-      if (dashSectionFlag) {
-        currentColor = color;
-      } else {
-        currentColor = {
-          ...color,
-          a: LANE_BOUNDARY_OPACITY[LaneBoundary_Classification_Type.NO_LINE],
-        };
-      }
-      dashSectionFlag = !dashSectionFlag; // alternate opacity for next section (will be overridden if 'dash' property is set)
-    }
     const p1 = points[i]!.position;
     const p2 = points[i + 1]!.position;
     const w1 = points[i]!.width;
@@ -85,11 +67,45 @@ export function pointListToTriangleListPrimitive(
     const h1 = points[i]!.height;
     const h2 = points[i + 1]!.height;
 
+    // Consume explicit dash state before rendering decisions, even for zero-length segments.
+    const dashProperty = points[i]!.dash;
+    const hasExplicitDashProperty =
+      dashProperty === LaneBoundary_BoundaryPoint_Dash.GAP ||
+      dashProperty === LaneBoundary_BoundaryPoint_Dash.END ||
+      dashProperty === LaneBoundary_BoundaryPoint_Dash.START ||
+      dashProperty === LaneBoundary_BoundaryPoint_Dash.CONTINUE;
+    if (dashed) {
+      if (
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.GAP ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.END
+      ) {
+        dashSectionFlag = false;
+      } else if (
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.START ||
+        dashProperty === LaneBoundary_BoundaryPoint_Dash.CONTINUE
+      ) {
+        dashSectionFlag = true;
+      }
+    }
+
     // Calculate the normal vector of the lane boundary
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const dz = p2.z - p1.z;
     const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (distance === 0) {
+      continue;
+    }
+
+    if (dashed) {
+      currentColor = dashSectionFlag
+        ? color
+        : { ...color, a: LANE_BOUNDARY_OPACITY[LaneBoundary_Classification_Type.NO_LINE] };
+      if (!hasExplicitDashProperty) {
+        dashSectionFlag = !dashSectionFlag; // alternate only for implicit fallback on real segments
+      }
+    }
+
     const nx = dy / distance;
     const ny = -dx / distance;
 
@@ -98,8 +114,8 @@ export function pointListToTriangleListPrimitive(
     let bottomRight1 = undefined;
     let topLeft1 = undefined;
     let topRight1 = undefined;
-    if (i === 0) {
-      // Do only for first lane boundary section otherwise use vertices from previous section
+    if (!hasPreviousSectionVertices) {
+      // Do only for first valid lane boundary section otherwise use vertices from previous section
       // Note: Normal vector is perpendicular to the z-axis as OSI does not define any orientation of the lane boundary width/height
       bottomLeft1 = {
         x: p1.x + nx * (w1 / 2),
@@ -136,16 +152,44 @@ export function pointListToTriangleListPrimitive(
       }
     } else {
       // Assign vertices from previous section as first four vertices of the current section
-      if (previousSectionWasExtrudedFlag) {
-        bottomLeft1 = vertices[vertices.length - 2]!;
-        bottomRight1 = vertices[vertices.length - 1]!;
-        topLeft1 = vertices[vertices.length - 8]!;
-        topRight1 = vertices[vertices.length - 7]!;
+      if (
+        previousSectionWasExtrudedFlag &&
+        previousBottomLeft2 &&
+        previousBottomRight2 &&
+        previousTopLeft2 &&
+        previousTopRight2
+      ) {
+        bottomLeft1 = previousBottomLeft2;
+        bottomRight1 = previousBottomRight2;
+        topLeft1 = previousTopLeft2;
+        topRight1 = previousTopRight2;
+      } else if (previousBottomLeft2 && previousBottomRight2) {
+        bottomLeft1 = previousBottomLeft2;
+        bottomRight1 = previousBottomRight2;
+        topLeft1 = previousBottomLeft2; // will only be used when current section is extruded again
+        topRight1 = previousBottomRight2; // will only be used when current section is extruded again
       } else {
-        bottomLeft1 = vertices[vertices.length - 2]!;
-        bottomRight1 = vertices[vertices.length - 1]!;
-        topLeft1 = vertices[vertices.length - 2]!; // will only be used when current section is extruded again
-        topRight1 = vertices[vertices.length - 1]!; // will only be used when current section is extruded again
+        // Fallback for inconsistent state: reinitialize from current point and normal.
+        bottomLeft1 = {
+          x: p1.x + nx * (w1 / 2),
+          y: p1.y + ny * (w1 / 2),
+          z: p1.z,
+        };
+        bottomRight1 = {
+          x: p1.x - nx * (w1 / 2),
+          y: p1.y - ny * (w1 / 2),
+          z: p1.z,
+        };
+        topLeft1 = {
+          x: p1.x + nx * (w1 / 2),
+          y: p1.y + ny * (w1 / 2),
+          z: p1.z + h1,
+        };
+        topRight1 = {
+          x: p1.x - nx * (w1 / 2),
+          y: p1.y - ny * (w1 / 2),
+          z: p1.z + h1,
+        };
       }
     }
 
@@ -239,6 +283,12 @@ export function pointListToTriangleListPrimitive(
     } else {
       previousSectionWasExtrudedFlag = false;
     }
+
+    previousBottomLeft2 = bottomLeft2;
+    previousBottomRight2 = bottomRight2;
+    previousTopLeft2 = topLeft2;
+    previousTopRight2 = topRight2;
+    hasPreviousSectionVertices = true;
 
     // Add bottom surface and corresponding colors (also for non-extruded/0-height sections)
     vertices.push(bottomLeft1);
@@ -583,6 +633,9 @@ export function pointListToDashedLinePrimitive(
     const distance = Math.sqrt(
       Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2) + Math.pow(p2.z - p1.z, 2),
     );
+    if (distance === 0) {
+      continue;
+    }
 
     let current = 0;
     let segment = true;
