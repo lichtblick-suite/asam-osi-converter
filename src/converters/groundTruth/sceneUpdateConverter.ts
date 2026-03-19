@@ -10,7 +10,7 @@ import { buildTrafficSignEntity } from "@features/trafficsigns";
 import { ModelPrimitive, SceneUpdate } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { Immutable, Time, MessageEvent } from "@lichtblick/suite";
-import { hashLaneBoundaries, hashLanes } from "@utils/hashing";
+import { hashBoundaries, hashLanes, hashLogicalLanes } from "@utils/hashing";
 import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
 import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
@@ -378,48 +378,63 @@ export function convertGroundTruthToSceneUpdate(
     };
 
     // Cache reuse (lanes and lane boundaries)
+    // WL-inspired: boundary signatures computed first, then propagated into lane hashes
     let laneBoundaryHash: string | undefined;
     let laneHash: string | undefined;
     let logicalLaneBoundaryHash: string | undefined;
     let logicalLaneHash: string | undefined;
 
     if (caching) {
-      // Physical lane boundaries
-      if (config.showPhysicalLanes) {
-        laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
-        if (laneBoundaryCache.has(laneBoundaryHash)) {
-          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
-          updateFlags.laneBoundaries = false;
-        }
-      }
-
-      // Physical lanes
-      if (config.showPhysicalLanes) {
-        laneHash = hashLanes(osiGroundTruthReq.lane);
-        if (laneCache.has(laneHash)) {
-          sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
-          updateFlags.lanes = false;
-        }
-      }
-
-      // Logical lane boundaries
-      if (config.showLogicalLanes) {
-        logicalLaneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.logical_lane_boundary);
-        if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
-          sceneEntities = sceneEntities.concat(
-            logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
+      try {
+        // Physical lane boundaries → lanes (boundary sigs feed into lane hash)
+        if (config.showPhysicalLanes) {
+          const { hash: bdHash, signatures: bdSigs } = hashBoundaries(
+            osiGroundTruthReq.lane_boundary,
           );
-          updateFlags.logicalLaneBoundaries = false;
-        }
-      }
+          laneBoundaryHash = bdHash;
+          if (laneBoundaryCache.has(laneBoundaryHash)) {
+            sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+            updateFlags.laneBoundaries = false;
+          }
 
-      // Logical lanes
-      if (config.showLogicalLanes) {
-        logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
-        if (logicalLaneCache.has(logicalLaneHash)) {
-          sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
-          updateFlags.logicalLanes = false;
+          laneHash = hashLanes(osiGroundTruthReq.lane, bdSigs);
+          if (laneCache.has(laneHash)) {
+            sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+            updateFlags.lanes = false;
+          }
         }
+
+        // Logical lane boundaries → logical lanes
+        if (config.showLogicalLanes) {
+          const { hash: lbdHash, signatures: lbdSigs } = hashBoundaries(
+            osiGroundTruthReq.logical_lane_boundary,
+          );
+          logicalLaneBoundaryHash = lbdHash;
+          if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
+            sceneEntities = sceneEntities.concat(
+              logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
+            );
+            updateFlags.logicalLaneBoundaries = false;
+          }
+
+          logicalLaneHash = hashLogicalLanes(osiGroundTruthReq.logical_lane, lbdSigs);
+          if (logicalLaneCache.has(logicalLaneHash)) {
+            sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
+            updateFlags.logicalLanes = false;
+          }
+        }
+      } catch (hashError) {
+        // Hash failure: disable caching for this frame, rebuild all lane entities
+        console.error("OsiGroundTruthVisualizer: Hashing failed, rebuilding without cache:", hashError);
+        laneBoundaryHash = undefined;
+        laneHash = undefined;
+        logicalLaneBoundaryHash = undefined;
+        logicalLaneHash = undefined;
+        updateFlags.laneBoundaries = true;
+        updateFlags.logicalLaneBoundaries = true;
+        updateFlags.lanes = true;
+        updateFlags.logicalLanes = true;
+        sceneEntities = [];
       }
     }
 
