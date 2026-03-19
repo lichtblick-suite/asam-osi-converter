@@ -138,10 +138,29 @@ All caches are cleared whenever panel settings change (detected by comparing JSO
 - Tests located in `tests/` directory (separate from `src/`)
 - Test files use `.spec.ts` extension
 - Jest configured with ts-jest preset and jsdom environment
+- Mock OSI objects using double cast: `{ id: { value: 0 }, ... } as unknown as DeepRequired<MovingObject>`
+- Mock feature modules with `jest.mock("@features/trafficsigns", () => ({ preloadDynamicTextures: jest.fn() }))`
+- Use `beforeEach()` for cache/mock cleanup between tests
+
+### Error Handling
+- All converters wrap main logic in `try/catch`, log with `console.error`, and return an empty `SceneUpdate` on failure — never propagate exceptions
+- Math utilities (`src/utils/math.ts`) use fail-soft behavior: return identity/original values on invalid input (NaN, Infinity) instead of throwing
+- Numeric precision: `clean0()` removes floating-point noise below `1e-12`
 
 ### Asset Handling
 - PNG assets loaded as inline base64 via webpack config (`config.ts`)
 - Traffic sign textures preloaded via `preloadDynamicTextures()` at extension activation
+
+## Adding a New Feature
+
+To add a new OSI entity type to the visualization:
+
+1. **Create feature module** in `src/features/<name>/` with `build<Name>Entity()` and optionally `build<Name>Metadata()`
+2. **Add entity prefix** in `src/config/entityPrefixes.ts` (e.g., `PREFIX_<NAME>`)
+3. **Add color/rendering constants** in `src/config/constants.ts`
+4. **Wire into GroundTruth converter** — call the builder in `src/converters/groundTruth/sceneUpdateConverter.ts` `buildSceneEntities()`, add ID tracking to `GroundTruthState` for deletion detection
+5. **Add panel setting** if the feature needs a visibility toggle — update `GroundTruthPanelSettings` and `DEFAULT_CONFIG`
+6. **Add tests** in `tests/<name>.spec.ts`
 
 ## Commit Guidelines
 
