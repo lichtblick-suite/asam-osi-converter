@@ -269,7 +269,7 @@ export function pointListToTriangleListPrimitive(
       }
 
       // Add "end" surface for last lane boundary section to close the 3d polygon
-      if (i === points.length - 1) {
+      if (i === points.length - 2) {
         vertices.push(bottomLeft2);
         vertices.push(bottomRight2);
         vertices.push(topLeft2);
