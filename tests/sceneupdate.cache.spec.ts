@@ -6,7 +6,7 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
 import { convertGroundTruthToSceneUpdate, createGroundTruthContext } from "@converters";
-import { hashLaneBoundaries, hashLanes } from "@utils/hashing";
+import { createLaneBoundaryCacheKey, createRenderedPhysicalLaneCacheKey } from "@utils/hashing";
 import { DeepRequired } from "ts-essentials";
 
 jest.mock("@features/trafficlights", () => ({
@@ -35,6 +35,7 @@ function createGroundTruthMessage(
   laneId: number,
   leftBoundaryId: number,
   rightBoundaryId: number,
+  isHostVehicleLane = false,
 ): GroundTruth {
   return {
     timestamp: { seconds: 1, nanos: 0 },
@@ -92,7 +93,7 @@ function createGroundTruthMessage(
         id: { value: laneId },
         classification: {
           type: { value: Lane_Classification_Type.DRIVING },
-          is_host_vehicle_lane: false,
+          is_host_vehicle_lane: isHostVehicleLane,
           centerline_is_driving_direction: true,
           centerline: [],
           left_lane_boundary_id: [{ value: leftBoundaryId }],
@@ -149,12 +150,27 @@ describe("GroundTruth scene update caching", () => {
     convertGroundTruthToSceneUpdate(ctx, firstFrame, event);
     expect(mockedBuildLaneEntity).toHaveBeenCalledTimes(1);
 
-    const laneKey = hashLanes(secondFrame.lane as any);
-    const boundaryKey = hashLaneBoundaries(secondFrame.lane_boundary as any);
+    const laneKey = createRenderedPhysicalLaneCacheKey(secondFrame.lane as any);
+    const boundaryKey = createLaneBoundaryCacheKey(secondFrame.lane_boundary as any);
     expect(ctx.laneCache.has(laneKey)).toBe(true);
     expect(ctx.laneBoundaryCache.has(boundaryKey)).toBe(false);
 
     convertGroundTruthToSceneUpdate(ctx, secondFrame, event);
+    expect(mockedBuildLaneEntity).toHaveBeenCalledTimes(2);
+  });
+
+  it("rebuilds lanes when host-lane flag changes with stable lane and boundary ids", () => {
+    const ctx = createGroundTruthContext();
+
+    const firstFrame = createGroundTruthMessage(4, 70, 80, false);
+    const secondFrame = createGroundTruthMessage(4, 70, 80, true);
+
+    convertGroundTruthToSceneUpdate(ctx, firstFrame, event);
+    expect(mockedBuildLaneBoundaryEntity).toHaveBeenCalledTimes(2);
+    expect(mockedBuildLaneEntity).toHaveBeenCalledTimes(1);
+
+    convertGroundTruthToSceneUpdate(ctx, secondFrame, event);
+    expect(mockedBuildLaneBoundaryEntity).toHaveBeenCalledTimes(2);
     expect(mockedBuildLaneEntity).toHaveBeenCalledTimes(2);
   });
 });

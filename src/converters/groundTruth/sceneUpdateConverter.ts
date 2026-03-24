@@ -10,7 +10,11 @@ import { buildTrafficSignEntity } from "@features/trafficsigns";
 import { ModelPrimitive, SceneUpdate } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { Immutable, Time, MessageEvent } from "@lichtblick/suite";
-import { hashLaneBoundaries, hashLanes } from "@utils/hashing";
+import {
+  createLaneBoundaryCacheKey,
+  createLaneCacheKey,
+  createRenderedPhysicalLaneCacheKey,
+} from "@utils/hashing";
 import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
 import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
@@ -386,7 +390,7 @@ export function convertGroundTruthToSceneUpdate(
     if (caching) {
       // Physical lane boundaries
       if (config.showPhysicalLanes) {
-        laneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.lane_boundary);
+        laneBoundaryHash = createLaneBoundaryCacheKey(osiGroundTruthReq.lane_boundary);
         if (laneBoundaryCache.has(laneBoundaryHash)) {
           sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
           updateFlags.laneBoundaries = false;
@@ -395,7 +399,7 @@ export function convertGroundTruthToSceneUpdate(
 
       // Physical lanes
       if (config.showPhysicalLanes) {
-        laneHash = hashLanes(osiGroundTruthReq.lane);
+        laneHash = createRenderedPhysicalLaneCacheKey(osiGroundTruthReq.lane);
         // Lane geometry depends on boundary geometry. Reuse lane cache only if
         // boundaries were also reused from cache in this frame.
         if (!updateFlags.laneBoundaries && laneCache.has(laneHash)) {
@@ -406,7 +410,7 @@ export function convertGroundTruthToSceneUpdate(
 
       // Logical lane boundaries
       if (config.showLogicalLanes) {
-        logicalLaneBoundaryHash = hashLaneBoundaries(osiGroundTruthReq.logical_lane_boundary);
+        logicalLaneBoundaryHash = createLaneBoundaryCacheKey(osiGroundTruthReq.logical_lane_boundary);
         if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
           sceneEntities = sceneEntities.concat(
             logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
@@ -417,7 +421,7 @@ export function convertGroundTruthToSceneUpdate(
 
       // Logical lanes
       if (config.showLogicalLanes) {
-        logicalLaneHash = hashLanes(osiGroundTruthReq.logical_lane);
+        logicalLaneHash = createLaneCacheKey(osiGroundTruthReq.logical_lane);
         // Logical lane geometry depends on logical boundary geometry. Reuse
         // logical lane cache only if logical boundaries were also reused from
         // cache in this frame.
