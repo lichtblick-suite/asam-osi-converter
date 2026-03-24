@@ -1,9 +1,9 @@
 import {
   createLaneCacheKey,
   createRenderedPhysicalLaneCacheKey,
-} from "@utils/hashing";
+} from "@utils/cacheKeys";
 
-describe("Hashing utilities", () => {
+describe("Cache key utilities", () => {
   it("creates different lane keys for ambiguous concatenation cases", () => {
     const lanesA = [{ id: { value: 1 } }, { id: { value: 23 } }];
     const lanesB = [{ id: { value: 12 } }, { id: { value: 3 } }];

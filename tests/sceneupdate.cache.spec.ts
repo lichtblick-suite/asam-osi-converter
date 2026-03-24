@@ -6,7 +6,7 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
 import { convertGroundTruthToSceneUpdate, createGroundTruthContext } from "@converters";
-import { createLaneBoundaryCacheKey, createRenderedPhysicalLaneCacheKey } from "@utils/hashing";
+import { createLaneBoundaryCacheKey, createRenderedPhysicalLaneCacheKey } from "@utils/cacheKeys";
 import { DeepRequired } from "ts-essentials";
 
 jest.mock("@features/trafficlights", () => ({

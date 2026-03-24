@@ -14,7 +14,7 @@ import {
   createLaneBoundaryCacheKey,
   createLaneCacheKey,
   createRenderedPhysicalLaneCacheKey,
-} from "@utils/hashing";
+} from "@utils/cacheKeys";
 import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
 import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
@@ -382,38 +382,38 @@ export function convertGroundTruthToSceneUpdate(
     };
 
     // Cache reuse (lanes and lane boundaries)
-    let laneBoundaryHash: string | undefined;
-    let laneHash: string | undefined;
-    let logicalLaneBoundaryHash: string | undefined;
-    let logicalLaneHash: string | undefined;
+    let laneBoundaryCacheKey: string | undefined;
+    let laneCacheKey: string | undefined;
+    let logicalLaneBoundaryCacheKey: string | undefined;
+    let logicalLaneCacheKey: string | undefined;
 
     if (caching) {
       // Physical lane boundaries
       if (config.showPhysicalLanes) {
-        laneBoundaryHash = createLaneBoundaryCacheKey(osiGroundTruthReq.lane_boundary);
-        if (laneBoundaryCache.has(laneBoundaryHash)) {
-          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryHash)!);
+        laneBoundaryCacheKey = createLaneBoundaryCacheKey(osiGroundTruthReq.lane_boundary);
+        if (laneBoundaryCache.has(laneBoundaryCacheKey)) {
+          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryCacheKey)!);
           updateFlags.laneBoundaries = false;
         }
       }
 
       // Physical lanes
       if (config.showPhysicalLanes) {
-        laneHash = createRenderedPhysicalLaneCacheKey(osiGroundTruthReq.lane);
+        laneCacheKey = createRenderedPhysicalLaneCacheKey(osiGroundTruthReq.lane);
         // Lane geometry depends on boundary geometry. Reuse lane cache only if
         // boundaries were also reused from cache in this frame.
-        if (!updateFlags.laneBoundaries && laneCache.has(laneHash)) {
-          sceneEntities = sceneEntities.concat(laneCache.get(laneHash)!);
+        if (!updateFlags.laneBoundaries && laneCache.has(laneCacheKey)) {
+          sceneEntities = sceneEntities.concat(laneCache.get(laneCacheKey)!);
           updateFlags.lanes = false;
         }
       }
 
       // Logical lane boundaries
       if (config.showLogicalLanes) {
-        logicalLaneBoundaryHash = createLaneBoundaryCacheKey(osiGroundTruthReq.logical_lane_boundary);
-        if (logicalLaneBoundaryCache.has(logicalLaneBoundaryHash)) {
+        logicalLaneBoundaryCacheKey = createLaneBoundaryCacheKey(osiGroundTruthReq.logical_lane_boundary);
+        if (logicalLaneBoundaryCache.has(logicalLaneBoundaryCacheKey)) {
           sceneEntities = sceneEntities.concat(
-            logicalLaneBoundaryCache.get(logicalLaneBoundaryHash)!,
+            logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!,
           );
           updateFlags.logicalLaneBoundaries = false;
         }
@@ -421,12 +421,12 @@ export function convertGroundTruthToSceneUpdate(
 
       // Logical lanes
       if (config.showLogicalLanes) {
-        logicalLaneHash = createLaneCacheKey(osiGroundTruthReq.logical_lane);
+        logicalLaneCacheKey = createLaneCacheKey(osiGroundTruthReq.logical_lane);
         // Logical lane geometry depends on logical boundary geometry. Reuse
         // logical lane cache only if logical boundaries were also reused from
         // cache in this frame.
-        if (!updateFlags.logicalLaneBoundaries && logicalLaneCache.has(logicalLaneHash)) {
-          sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneHash)!);
+        if (!updateFlags.logicalLaneBoundaries && logicalLaneCache.has(logicalLaneCacheKey)) {
+          sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneCacheKey)!);
           updateFlags.logicalLanes = false;
         }
       }
@@ -467,21 +467,21 @@ export function convertGroundTruthToSceneUpdate(
     );
 
     // Update caches
-    if (caching && updateFlags.laneBoundaries && laneBoundaryHash) {
+    if (caching && updateFlags.laneBoundaries && laneBoundaryCacheKey) {
       laneBoundaryCache.clear();
-      laneBoundaryCache.set(laneBoundaryHash, laneBoundaries);
+      laneBoundaryCache.set(laneBoundaryCacheKey, laneBoundaries);
     }
-    if (caching && updateFlags.lanes && laneHash) {
+    if (caching && updateFlags.lanes && laneCacheKey) {
       laneCache.clear();
-      laneCache.set(laneHash, lanes);
+      laneCache.set(laneCacheKey, lanes);
     }
-    if (caching && updateFlags.logicalLaneBoundaries && logicalLaneBoundaryHash) {
+    if (caching && updateFlags.logicalLaneBoundaries && logicalLaneBoundaryCacheKey) {
       logicalLaneBoundaryCache.clear();
-      logicalLaneBoundaryCache.set(logicalLaneBoundaryHash, logicalLaneBoundaries);
+      logicalLaneBoundaryCache.set(logicalLaneBoundaryCacheKey, logicalLaneBoundaries);
     }
-    if (caching && updateFlags.logicalLanes && logicalLaneHash) {
+    if (caching && updateFlags.logicalLanes && logicalLaneCacheKey) {
       logicalLaneCache.clear();
-      logicalLaneCache.set(logicalLaneHash, logicalLanes);
+      logicalLaneCache.set(logicalLaneCacheKey, logicalLanes);
     }
 
     // Store GroundTruth frame cache
