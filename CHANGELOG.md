@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.1.4](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.4) (2026-03-06)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.3...v0.1.4)
+
+**Merged pull requests:**
+
+- chore: bump version and update deps [\#166](https://github.com/lichtblick-suite/asam-osi-converter/pull/166) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- fix: resolve topic visibility [\#165](https://github.com/lichtblick-suite/asam-osi-converter/pull/165) ([gabriela-almeida-ctw](https://github.com/gabriela-almeida-ctw))
+- fix: use config signature to avoid stale cache [\#164](https://github.com/lichtblick-suite/asam-osi-converter/pull/164) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
 ## [v0.1.3](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.3) (2026-02-05)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.2...v0.1.3)

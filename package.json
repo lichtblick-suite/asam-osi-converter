@@ -4,7 +4,7 @@
   "description": "Visualises data following the standard of the ASAM Open Simulation Interface (ASAM OSI) using the native 3D panel of Lichtblick",
   "publisher": "Lichtblick",
   "homepage": "https://www.asam.net/standards/detail/osi/",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "main": "./dist/extension.js",
   "keywords": [
@@ -24,7 +24,7 @@
     "prepare": "husky"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=20.19.0",
     "npm": ">=10.0.0"
   },
   "devDependencies": {
