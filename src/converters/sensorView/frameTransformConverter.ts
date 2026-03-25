@@ -31,5 +31,6 @@ export function convertSensorViewToFrameTransforms(
     undefined,
     undefined,
     context,
+    msg.host_vehicle_id?.value,
   );
 }

@@ -20,18 +20,31 @@ export const convertGroundTruthToFrameTransforms = (
   _event?: unknown,
   _globalVariables?: Readonly<Record<string, VariableValue>>,
   context?: MessageConverterContext,
+  hostVehicleIdFallback?: number,
 ): FrameTransforms => {
   const emitAlert = context?.emitAlert;
   const transforms = { transforms: [] } as FrameTransforms;
+  const hostVehicleId = message.host_vehicle_id?.value ?? hostVehicleIdFallback;
+  const usingHostVehicleIdFallback =
+    message.host_vehicle_id?.value == undefined && hostVehicleIdFallback != undefined;
+
+  if (usingHostVehicleIdFallback) {
+    const alert: MessageConverterAlert = {
+      severity: "warn",
+      message: "GroundTruth host_vehicle_id missing, using SensorView host_vehicle_id fallback",
+      tip: "Set host_vehicle_id in GroundTruth to avoid fallback behavior.",
+    };
+    emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-fallback-used");
+  }
 
   try {
     // Return empty FrameTransforms if host vehicle id is not set
-    if (!message.host_vehicle_id) {
+    if (hostVehicleId == undefined) {
       console.error("Missing host vehicle id GroundTruth message. Cannot build FrameTransforms.");
       const alert: MessageConverterAlert = {
         severity: "warn",
         message: "GroundTruth is missing host_vehicle_id",
-        tip: "FrameTransforms requires host_vehicle_id and a matching moving_object.",
+        tip: "FrameTransforms requires host_vehicle_id in GroundTruth or SensorView.",
       };
       emitAlert?.(alert, "groundtruth-frametransforms-missing-host-vehicle-id");
       return transforms;
@@ -40,10 +53,10 @@ export const convertGroundTruthToFrameTransforms = (
     // Return empty FrameTransforms if host vehicle is not contained in moving objects
     if (
       message.moving_object &&
-      message.moving_object.some((obj) => obj.id?.value === message.host_vehicle_id?.value)
+      message.moving_object.some((obj) => obj.id?.value === hostVehicleId)
     ) {
       transforms.transforms.push(
-        buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>),
+        buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>, hostVehicleId),
       );
     } else {
       console.error("Host vehicle not found in moving objects");
@@ -60,12 +73,12 @@ export const convertGroundTruthToFrameTransforms = (
     if (
       message.moving_object.some(
         (obj) =>
-          obj.id?.value === message.host_vehicle_id?.value &&
+          obj.id?.value === hostVehicleId &&
           obj.vehicle_attributes?.bbcenter_to_rear,
       )
     ) {
       transforms.transforms.push(
-        buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>),
+        buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>, hostVehicleId),
       );
     } else {
       console.warn(
@@ -97,8 +110,8 @@ export const convertGroundTruthToFrameTransforms = (
 
 function buildEgoVehicleBBCenterFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
+  hostIdentifier: number,
 ): FrameTransform {
-  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;
@@ -123,8 +136,8 @@ function buildEgoVehicleBBCenterFrameTransform(
 
 function buildEgoVehicleRearAxleFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
+  hostIdentifier: number,
 ): FrameTransform {
-  const hostIdentifier = osiGroundTruth.host_vehicle_id.value;
   const hostObject = osiGroundTruth.moving_object.find((obj) => {
     return obj.id.value === hostIdentifier;
   })!;

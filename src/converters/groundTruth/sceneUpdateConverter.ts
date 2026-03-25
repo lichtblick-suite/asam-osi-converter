@@ -268,6 +268,17 @@ export function convertGroundTruthToSceneUpdate(
 
   const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
+  const usingHostVehicleIdFallback =
+    osiGroundTruth.host_vehicle_id?.value == undefined && hostVehicleIdFallback != undefined;
+
+  if (usingHostVehicleIdFallback) {
+    const alert: MessageConverterAlert = {
+      severity: "warn",
+      message: "GroundTruth host_vehicle_id missing, using SensorView host_vehicle_id fallback",
+      tip: "Set host_vehicle_id in GroundTruth to avoid fallback behavior.",
+    };
+    emitAlert?.(alert, "groundtruth-sceneupdate-host-vehicle-fallback-used");
+  }
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
   // Cache signature ties caches to settings so data is not reused across different panel settings
