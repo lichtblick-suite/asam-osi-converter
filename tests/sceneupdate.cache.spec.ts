@@ -1,11 +1,11 @@
+import { convertGroundTruthToSceneUpdate, createGroundTruthContext } from "@converters";
+import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
 import {
   Lane_Classification_Type,
   LaneBoundary_Classification_Color,
   LaneBoundary_Classification_Type,
   type GroundTruth,
 } from "@lichtblick/asam-osi-types";
-import { buildLaneBoundaryEntity, buildLaneEntity } from "@features/lanes";
-import { convertGroundTruthToSceneUpdate, createGroundTruthContext } from "@converters";
 import { createLaneBoundaryCacheKey, createRenderedPhysicalLaneCacheKey } from "@utils/cacheKeys";
 import { DeepRequired } from "ts-essentials";
 

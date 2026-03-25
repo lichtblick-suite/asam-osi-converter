@@ -410,7 +410,9 @@ export function convertGroundTruthToSceneUpdate(
 
       // Logical lane boundaries
       if (config.showLogicalLanes) {
-        logicalLaneBoundaryCacheKey = createLaneBoundaryCacheKey(osiGroundTruthReq.logical_lane_boundary);
+        logicalLaneBoundaryCacheKey = createLaneBoundaryCacheKey(
+          osiGroundTruthReq.logical_lane_boundary,
+        );
         if (logicalLaneBoundaryCache.has(logicalLaneBoundaryCacheKey)) {
           sceneEntities = sceneEntities.concat(
             logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!,

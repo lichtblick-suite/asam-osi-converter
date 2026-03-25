@@ -35,8 +35,7 @@ export const createRenderedPhysicalLaneCacheKey = (lanes: Lane[]): string => {
   const laneKeys = lanes.map((lane) => {
     const id = lane.id?.value?.toString() ?? "undefined";
     const isHostVehicleLane = lane.classification?.is_host_vehicle_lane;
-    const hostFlag =
-      isHostVehicleLane === undefined ? "u" : isHostVehicleLane ? "1" : "0";
+    const hostFlag = isHostVehicleLane === undefined ? "u" : isHostVehicleLane ? "1" : "0";
     return `${id}@${hostFlag}`;
   });
   return `${laneKeys.length}|${laneKeys.join(":")}`;

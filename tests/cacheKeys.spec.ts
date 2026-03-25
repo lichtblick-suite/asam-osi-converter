@@ -1,7 +1,4 @@
-import {
-  createLaneCacheKey,
-  createRenderedPhysicalLaneCacheKey,
-} from "@utils/cacheKeys";
+import { createLaneCacheKey, createRenderedPhysicalLaneCacheKey } from "@utils/cacheKeys";
 
 describe("Cache key utilities", () => {
   it("creates different lane keys for ambiguous concatenation cases", () => {
