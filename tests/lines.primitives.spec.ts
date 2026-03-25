@@ -1,8 +1,11 @@
 import { Color } from "@foxglove/schemas";
-import { LaneBoundary_BoundaryPoint_Dash, LaneBoundary_Classification_Type } from "@lichtblick/asam-osi-types";
+import {
+  LaneBoundary_BoundaryPoint_Dash,
+  LaneBoundary_Classification_Type,
+} from "@lichtblick/asam-osi-types";
 
-import { MarkerPoint, pointListToTriangleListPrimitive } from "@/utils/primitives/lines";
 import { LANE_BOUNDARY_OPACITY } from "@/config/constants";
+import { MarkerPoint, pointListToTriangleListPrimitive } from "@/utils/primitives/lines";
 
 describe("pointListToTriangleListPrimitive", () => {
   const color: Color = { r: 1, g: 1, b: 1, a: 1 };
@@ -27,17 +30,37 @@ describe("pointListToTriangleListPrimitive", () => {
 
   it("does not advance implicit dash alternation on zero-length segments", () => {
     const pointsWithDuplicate: MarkerPoint[] = [
-      { position: { x: 0, y: 0, z: 0 }, width: 0.2, height: 0, dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN },
-      { position: { x: 0, y: 0, z: 0 }, width: 0.2, height: 0, dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN },
-      { position: { x: 1, y: 0, z: 0 }, width: 0.2, height: 0, dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN },
-      { position: { x: 2, y: 0, z: 0 }, width: 0.2, height: 0, dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN },
+      {
+        position: { x: 0, y: 0, z: 0 },
+        width: 0.2,
+        height: 0,
+        dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+      },
+      {
+        position: { x: 0, y: 0, z: 0 },
+        width: 0.2,
+        height: 0,
+        dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+      },
+      {
+        position: { x: 1, y: 0, z: 0 },
+        width: 0.2,
+        height: 0,
+        dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+      },
+      {
+        position: { x: 2, y: 0, z: 0 },
+        width: 0.2,
+        height: 0,
+        dash: LaneBoundary_BoundaryPoint_Dash.UNKNOWN,
+      },
     ];
 
-    const primitive = pointListToTriangleListPrimitive(
-      pointsWithDuplicate,
-      color,
-      { dashed: true, arrows: false, invertArrows: false },
-    );
+    const primitive = pointListToTriangleListPrimitive(pointsWithDuplicate, color, {
+      dashed: true,
+      arrows: false,
+      invertArrows: false,
+    });
 
     // First rendered section remains a dash because zero-length sections do not advance fallback phase.
     expect(primitive.colors[0]?.a).toBe(color.a);
@@ -45,7 +68,12 @@ describe("pointListToTriangleListPrimitive", () => {
 
   it("applies explicit dash enums even when the segment is zero-length", () => {
     const pointsWithDuplicateAndExplicitDash: MarkerPoint[] = [
-      { position: { x: 0, y: 0, z: 0 }, width: 0.2, height: 0, dash: LaneBoundary_BoundaryPoint_Dash.GAP },
+      {
+        position: { x: 0, y: 0, z: 0 },
+        width: 0.2,
+        height: 0,
+        dash: LaneBoundary_BoundaryPoint_Dash.GAP,
+      },
       {
         position: { x: 0, y: 0, z: 0 },
         width: 0.2,
@@ -60,11 +88,11 @@ describe("pointListToTriangleListPrimitive", () => {
       },
     ];
 
-    const primitive = pointListToTriangleListPrimitive(
-      pointsWithDuplicateAndExplicitDash,
-      color,
-      { dashed: true, arrows: false, invertArrows: false },
-    );
+    const primitive = pointListToTriangleListPrimitive(pointsWithDuplicateAndExplicitDash, color, {
+      dashed: true,
+      arrows: false,
+      invertArrows: false,
+    });
 
     // GAP on the zero-length segment is still consumed and controls the first rendered segment.
     expect(primitive.colors[0]?.a).toBe(
@@ -86,7 +114,11 @@ describe("pointListToTriangleListPrimitive", () => {
     ];
 
     const withDuplicate = pointListToTriangleListPrimitive(pointsWithDuplicate, color, options);
-    const withoutDuplicate = pointListToTriangleListPrimitive(pointsWithoutDuplicate, color, options);
+    const withoutDuplicate = pointListToTriangleListPrimitive(
+      pointsWithoutDuplicate,
+      color,
+      options,
+    );
 
     expect(withDuplicate.points).toHaveLength(withoutDuplicate.points.length);
     expect(withDuplicate.colors).toHaveLength(withoutDuplicate.colors.length);
