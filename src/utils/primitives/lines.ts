@@ -358,39 +358,6 @@ function appendArrowVerticesAndColors(
   }
 }
 
-/**
- * Compares two lists of LaneBoundaryPoints based on their proximity of start and end points.
- * The function is used to sort lane boundaries.
- *
- * @returns Negative value if the first argument is less than the second argument, zero if they're equal, and a positive value otherwise.
- */
-const compareStartToEnd = (a: MarkerPoint[], b: MarkerPoint[]) => {
-  if (a.length === 0 || b.length === 0) {
-    return 0; // return 0 to indicate that a and b are equal and don't have to be reordered
-  }
-  const aStart = a[0]?.position;
-  const aEnd = a[a.length - 1]?.position;
-  const bStart = b[0]?.position;
-  const bEnd = b[b.length - 1]?.position;
-
-  if (!aStart || !aEnd || !bStart || !bEnd) {
-    return 0; // return 0 to indicate that a and b can not be reordered
-  }
-
-  const distanceAEndToBStart = Math.sqrt(
-    Math.pow(aEnd.x - bStart.x, 2) +
-      Math.pow(aEnd.y - bStart.y, 2) +
-      Math.pow(aEnd.z - bStart.z, 2),
-  );
-
-  const distanceBEndToAStart = Math.sqrt(
-    Math.pow(bEnd.x - aStart.x, 2) +
-      Math.pow(bEnd.y - aStart.y, 2) +
-      Math.pow(bEnd.z - aStart.z, 2),
-  );
-  return distanceAEndToBStart - distanceBEndToAStart;
-};
-
 function add(a: number, b: number): number {
   return a + b;
 }
@@ -461,10 +428,6 @@ export function laneToTriangleListPrimitive(
   try {
     const vertices: Point3[] = [];
     const colors: Color[] = [];
-
-    // Keep a stable processing order for deterministic output.
-    leftLaneBoundaries.sort(compareStartToEnd);
-    rightLaneBoundaries.sort(compareStartToEnd);
 
     const appendLaneSideTriangles = (
       boundaries: MarkerPoint[][],
