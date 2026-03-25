@@ -1,5 +1,10 @@
 import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
+import {
+  MessageConverterAlert,
+  MessageConverterContext,
+  VariableValue,
+} from "@lichtblick/suite";
 import { osiTimestampToTime } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
@@ -10,13 +15,25 @@ import {
   OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
 } from "@/config/frameTransformNames";
 
-export const convertGroundTruthToFrameTransforms = (message: GroundTruth): FrameTransforms => {
+export const convertGroundTruthToFrameTransforms = (
+  message: GroundTruth,
+  _event?: unknown,
+  _globalVariables?: Readonly<Record<string, VariableValue>>,
+  context?: MessageConverterContext,
+): FrameTransforms => {
+  const emitAlert = context?.emitAlert;
   const transforms = { transforms: [] } as FrameTransforms;
 
   try {
     // Return empty FrameTransforms if host vehicle id is not set
     if (!message.host_vehicle_id) {
       console.error("Missing host vehicle id GroundTruth message. Cannot build FrameTransforms.");
+      const alert: MessageConverterAlert = {
+        severity: "warn",
+        message: "GroundTruth is missing host_vehicle_id",
+        tip: "FrameTransforms requires host_vehicle_id and a matching moving_object.",
+      };
+      emitAlert?.(alert, "groundtruth-frametransforms-missing-host-vehicle-id");
       return transforms;
     }
 
@@ -30,6 +47,12 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
       );
     } else {
       console.error("Host vehicle not found in moving objects");
+      const alert: MessageConverterAlert = {
+        severity: "warn",
+        message: "GroundTruth host vehicle not found in moving_object",
+        tip: "Ensure host_vehicle_id refers to an entry in moving_object.",
+      };
+      emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-not-found");
       return transforms;
     }
 
@@ -48,12 +71,25 @@ export const convertGroundTruthToFrameTransforms = (message: GroundTruth): Frame
       console.warn(
         "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
       );
+      const alert: MessageConverterAlert = {
+        severity: "info",
+        message: "GroundTruth ego vehicle has no bbcenter_to_rear",
+        tip: "Rear-axle FrameTransform is skipped when bbcenter_to_rear is missing.",
+      };
+      emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
     }
   } catch (error) {
     console.error(
       "Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
       error,
     );
+    const alert: MessageConverterAlert = {
+      severity: "error",
+      message: "GroundTruth FrameTransforms conversion failed",
+      error: error instanceof Error ? error : new Error(String(error)),
+      tip: "Check if input messages match the expected OSI GroundTruth schema.",
+    };
+    emitAlert?.(alert, "groundtruth-frametransforms-conversion-error");
   }
 
   return transforms;
