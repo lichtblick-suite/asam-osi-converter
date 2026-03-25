@@ -4,6 +4,12 @@ import {
   LaneBoundary_BoundaryPoint,
   DetectedLaneBoundary,
 } from "@lichtblick/asam-osi-types";
+import {
+  MessageConverterAlert,
+  MessageConverterContext,
+  MessageConverterEmitAlert,
+  VariableValue,
+} from "@lichtblick/suite";
 import { ColorCode } from "@utils/helper";
 import { PartialSceneEntity } from "@utils/scene";
 import { DeepRequired, DeepPartial } from "ts-essentials";
@@ -13,6 +19,7 @@ import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTr
 
 export function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
+  alertHook?: MessageConverterEmitAlert,
 ): PartialSceneEntity[] {
   const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
     return { x: boundary.position.x, y: boundary.position.y, z: boundary.position.z };
@@ -60,6 +67,15 @@ export function buildSensorDataSceneEntities(
     };
   };
 
+  alertHook?.(
+    {
+      severity: "info",
+      message: "SensorData conversion is in early stages",
+      tip: "Currently, only lane boundaries are visualized from SensorData. More features will be added in the future.",
+    },
+    "sensordata-conversion-info",
+  );
+
   const road_output_scene_update: PartialSceneEntity = {
     timestamp: { sec: osiSensorData.timestamp.seconds, nsec: osiSensorData.timestamp.nanos },
     frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
@@ -74,16 +90,30 @@ export function buildSensorDataSceneEntities(
 
 export const convertSensorDataToSceneUpdate = (
   osiSensorData: SensorData,
+  _event?: unknown,
+  _globalVariables?: Readonly<Record<string, VariableValue>>,
+  context?: MessageConverterContext,
 ): DeepPartial<SceneUpdate> => {
+  const emitAlert: MessageConverterEmitAlert | undefined = context?.emitAlert;
   let sceneEntities: PartialSceneEntity[] = [];
 
   try {
-    sceneEntities = buildSensorDataSceneEntities(osiSensorData as DeepRequired<SensorData>);
+    sceneEntities = buildSensorDataSceneEntities(
+      osiSensorData as DeepRequired<SensorData>,
+      emitAlert,
+    );
   } catch (error) {
     console.error(
       "OsiSensorDataVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
       error,
     );
+    const alert: MessageConverterAlert = {
+      severity: "error",
+      message: "SensorData conversion failed",
+      error: error instanceof Error ? error : new Error(String(error)),
+      tip: "Check if input messages match the expected OSI SensorData schema.",
+    };
+    emitAlert?.(alert, "sensordata-conversion-error");
   }
   return {
     deletions: [],
