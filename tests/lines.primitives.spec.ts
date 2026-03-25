@@ -5,7 +5,11 @@ import {
 } from "@lichtblick/asam-osi-types";
 
 import { LANE_BOUNDARY_OPACITY } from "@/config/constants";
-import { MarkerPoint, pointListToTriangleListPrimitive } from "@/utils/primitives/lines";
+import {
+  MarkerPoint,
+  laneToTriangleListPrimitive,
+  pointListToTriangleListPrimitive,
+} from "@/utils/primitives/lines";
 
 describe("pointListToTriangleListPrimitive", () => {
   const color: Color = { r: 1, g: 1, b: 1, a: 1 };
@@ -130,5 +134,89 @@ describe("pointListToTriangleListPrimitive", () => {
       expect(pWith.y).toBeCloseTo(pWithout.y, 10);
       expect(pWith.z).toBeCloseTo(pWithout.z, 10);
     }
+  });
+});
+
+describe("laneToTriangleListPrimitive", () => {
+  const color: Color = { r: 0.5, g: 0.5, b: 0.5, a: 0.8 };
+  const laneWidth = 3;
+
+  const mkPoint = (x: number, y: number, z = 0): MarkerPoint => ({
+    position: { x, y, z },
+    width: 0.2,
+    height: 0,
+  });
+
+  it("generates 6 vertices per quad for a single boundary on each side", () => {
+    // 3-point boundary → 2 quads → 12 vertices per side, 24 total
+    const left: MarkerPoint[][] = [[mkPoint(0, 5), mkPoint(1, 5), mkPoint(2, 5)]];
+    const right: MarkerPoint[][] = [[mkPoint(0, -5), mkPoint(1, -5), mkPoint(2, -5)]];
+
+    const result = laneToTriangleListPrimitive(left, right, color, laneWidth);
+
+    expect(result.points).toHaveLength(24);
+    expect(result.colors).toHaveLength(24);
+  });
+
+  it("processes multiple boundaries per side independently without jump edges", () => {
+    // Two separate left boundaries far apart — should never produce cross-boundary triangles
+    const boundaryA: MarkerPoint[] = [mkPoint(0, 10), mkPoint(1, 10)];
+    const boundaryB: MarkerPoint[] = [mkPoint(0, -10), mkPoint(1, -10)];
+    const left: MarkerPoint[][] = [boundaryA, boundaryB];
+
+    const result = laneToTriangleListPrimitive(left, [], color, laneWidth);
+
+    // Each 2-point boundary → 1 quad → 6 vertices; two boundaries → 12 total
+    expect(result.points).toHaveLength(12);
+
+    // Vertices from the first quad (boundary A, y≈10) must not appear in the second quad (boundary B, y≈-10)
+    const firstQuadY = result.points.slice(0, 6).map((p) => p.y);
+    const secondQuadY = result.points.slice(6, 12).map((p) => p.y);
+
+    for (const y of firstQuadY) {
+      expect(y).toBeGreaterThan(0);
+    }
+    for (const y of secondQuadY) {
+      expect(y).toBeLessThan(0);
+    }
+  });
+
+  it("returns an empty primitive for empty boundary arrays", () => {
+    const result = laneToTriangleListPrimitive([], [], color, laneWidth);
+
+    expect(result.points).toHaveLength(0);
+    expect(result.colors).toHaveLength(0);
+  });
+
+  it("skips single-point boundaries without crashing", () => {
+    const left: MarkerPoint[][] = [[mkPoint(5, 5)]];
+    const right: MarkerPoint[][] = [[mkPoint(5, -5)]];
+
+    const result = laneToTriangleListPrimitive(left, right, color, laneWidth);
+
+    expect(result.points).toHaveLength(0);
+  });
+
+  it("skips boundaries that deduplicate to fewer than 2 points", () => {
+    const allDuplicates: MarkerPoint[][] = [[mkPoint(1, 1), mkPoint(1, 1), mkPoint(1, 1)]];
+
+    const result = laneToTriangleListPrimitive(allDuplicates, [], color, laneWidth);
+
+    expect(result.points).toHaveLength(0);
+  });
+
+  it("applies transparency gradient on offset vertices", () => {
+    const left: MarkerPoint[][] = [[mkPoint(0, 0), mkPoint(1, 0)]];
+
+    const result = laneToTriangleListPrimitive(left, [], color, laneWidth);
+
+    // 1 quad = 6 vertices; boundary-edge vertices (indices 0,1,3) get full color,
+    // offset vertices (indices 2,4,5) get a=0
+    expect(result.colors[0]!.a).toBe(color.a);
+    expect(result.colors[1]!.a).toBe(color.a);
+    expect(result.colors[2]!.a).toBe(0);
+    expect(result.colors[3]!.a).toBe(color.a);
+    expect(result.colors[4]!.a).toBe(0);
+    expect(result.colors[5]!.a).toBe(0);
   });
 });
