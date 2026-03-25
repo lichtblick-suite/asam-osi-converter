@@ -462,112 +462,65 @@ export function laneToTriangleListPrimitive(
     const vertices: Point3[] = [];
     const colors: Color[] = [];
 
-    // Order multiple left and right boundaries based on start/end point proximity
-    // Note that this sorting might not guarantee a correct order for all cases
-    // Maybe each boundary line should be considered separately and not be merged so that they're not connected with each other and don't have to be sorted
+    // Keep a stable processing order for deterministic output.
     leftLaneBoundaries.sort(compareStartToEnd);
     rightLaneBoundaries.sort(compareStartToEnd);
 
-    // Merge multiple right/left boundaries into one left and one right boundary
-    let mergedLeftBoundaries: MarkerPoint[] = [];
-    for (const boundary of leftLaneBoundaries) {
-      mergedLeftBoundaries.push(...boundary);
-    }
-    let mergedRightBoundaries: MarkerPoint[] = [];
-    for (const boundary of rightLaneBoundaries) {
-      mergedRightBoundaries.push(...boundary);
-    }
+    const appendLaneSideTriangles = (
+      boundaries: MarkerPoint[][],
+      operation: (a: number, b: number) => number,
+    ) => {
+      for (const boundary of boundaries) {
+        // De-duplicate within each segment only. Do not merge segments, as
+        // that can introduce long artificial jump edges between boundaries.
+        const deduplicatedBoundary = boundary.filter(
+          (point, index, self) =>
+            index ===
+            self.findIndex(
+              (p) =>
+                p.position.x === point.position.x &&
+                p.position.y === point.position.y &&
+                p.position.z === point.position.z,
+            ),
+        );
 
-    // Remove duplicates from merged boundaries
-    mergedLeftBoundaries = mergedLeftBoundaries.filter(
-      (point, index, self) =>
-        index ===
-        self.findIndex(
-          (p) =>
-            p.position.x === point.position.x &&
-            p.position.y === point.position.y &&
-            p.position.z === point.position.z,
-        ),
-    );
+        if (deduplicatedBoundary.length < 2) {
+          continue;
+        }
 
-    mergedRightBoundaries = mergedRightBoundaries.filter(
-      (point, index, self) =>
-        index ===
-        self.findIndex(
-          (p) =>
-            p.position.x === point.position.x &&
-            p.position.y === point.position.y &&
-            p.position.z === point.position.z,
-        ),
-    );
+        const boundaryEdge = createOffsetLine(deduplicatedBoundary, operation);
+        const offsetBoundary = createOffsetLine(deduplicatedBoundary, operation, laneWidth);
+        if (boundaryEdge.length !== offsetBoundary.length) {
+          throw new Error(
+            "The length of offset point list does not equal the length of boundary point list",
+          );
+        }
 
-    // Create edge line for both left and right boundaries using lane boundary width to prevent z-fighting of lane surface are and lane boundaries and facilitate clicking interactions
-    const leftBoundariesEdge: Point3[] = createOffsetLine(mergedLeftBoundaries, add);
-    const rightBoundariesEdge: Point3[] = createOffsetLine(mergedRightBoundaries, subtract);
+        for (let i = 0; i < boundaryEdge.length - 1; i++) {
+          const p1 = boundaryEdge[i]!;
+          const p2 = boundaryEdge[i + 1]!;
+          const op1 = offsetBoundary[i]!;
+          const op2 = offsetBoundary[i + 1]!;
 
-    // Draw surface area pointing from the boundary line to the side of the lane
-    // Create offset line for both left and right boundaries
-    const offsetLeftBoundaries: Point3[] = createOffsetLine(mergedLeftBoundaries, add, laneWidth);
-    const offsetRightBoundaries: Point3[] = createOffsetLine(
-      mergedRightBoundaries,
-      subtract,
-      laneWidth,
-    );
+          vertices.push(p1);
+          colors.push(color);
+          vertices.push(p2);
+          colors.push(color);
+          vertices.push(op1);
+          colors.push({ r: color.r, g: color.g, b: color.b, a: 0 }); // create transparency gradient towards the offset line
+          vertices.push(p2);
+          colors.push(color);
+          vertices.push(op1);
+          colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+          vertices.push(op2);
+          colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
+        }
+      }
+    };
 
-    // Check precondition for triangle list primitive creation
-    if (
-      leftBoundariesEdge.length !== offsetLeftBoundaries.length ||
-      mergedRightBoundaries.length !== offsetRightBoundaries.length
-    ) {
-      throw new Error(
-        "The length of offset point list does not equal the length of left boundary point list",
-      );
-    }
+    appendLaneSideTriangles(leftLaneBoundaries, add);
+    appendLaneSideTriangles(rightLaneBoundaries, subtract);
 
-    // Create triangle list primitive that connect each left and right boundary point with their corresponding offset point list
-    for (let i = 0; i < leftBoundariesEdge.length - 1; i++) {
-      const p1 = leftBoundariesEdge[i]!;
-      const p2 = leftBoundariesEdge[i + 1]!;
-
-      const op1 = offsetLeftBoundaries[i]!;
-      const op2 = offsetLeftBoundaries[i + 1]!;
-
-      // Add vertices and colors for the surface area between the current and next lane boundary points
-      vertices.push(p1);
-      colors.push(color);
-      vertices.push(p2);
-      colors.push(color);
-      vertices.push(op1);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 }); // create transparency gradient towards the offset line
-      vertices.push(p2);
-      colors.push(color);
-      vertices.push(op1);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
-      vertices.push(op2);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
-    }
-
-    for (let i = 0; i < rightBoundariesEdge.length - 1; i++) {
-      const p1 = rightBoundariesEdge[i]!;
-      const p2 = rightBoundariesEdge[i + 1]!;
-
-      const op1 = offsetRightBoundaries[i]!;
-      const op2 = offsetRightBoundaries[i + 1]!;
-
-      // Add vertices and colors for the surface area between the current and next lane boundary points
-      vertices.push(p1);
-      colors.push(color);
-      vertices.push(p2);
-      colors.push(color);
-      vertices.push(op1);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
-      vertices.push(p2);
-      colors.push(color);
-      vertices.push(op1);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
-      vertices.push(op2);
-      colors.push({ r: color.r, g: color.g, b: color.b, a: 0 });
-    }
     return {
       pose: {
         position: { x: 0, y: 0, z: 0 },
