@@ -9,7 +9,15 @@ import { buildTrafficLightMetadata } from "@features/trafficlights/metadata";
 import { buildTrafficSignEntity } from "@features/trafficsigns";
 import { ModelPrimitive, SceneUpdate } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
-import { Immutable, Time, MessageEvent } from "@lichtblick/suite";
+import {
+  Immutable,
+  Time,
+  MessageEvent,
+  MessageConverterAlert,
+  MessageConverterEmitAlert,
+  MessageConverterContext,
+  VariableValue,
+} from "@lichtblick/suite";
 import {
   createLaneBoundaryCacheKey,
   createLaneCacheKey,
@@ -247,6 +255,7 @@ export function convertGroundTruthToSceneUpdate(
   osiGroundTruth: GroundTruth,
   event?: Immutable<MessageEvent<GroundTruth>>,
   hostVehicleIdFallback?: number,
+  emitAlert?: MessageConverterEmitAlert,
 ): DeepPartial<SceneUpdate> {
   const {
     laneBoundaryCache,
@@ -259,6 +268,17 @@ export function convertGroundTruthToSceneUpdate(
 
   const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
+  const usingHostVehicleIdFallback =
+    osiGroundTruth.host_vehicle_id?.value == undefined && hostVehicleIdFallback != undefined;
+
+  if (usingHostVehicleIdFallback) {
+    const alert: MessageConverterAlert = {
+      severity: "warn",
+      message: "GroundTruth host_vehicle_id missing, using SensorView host_vehicle_id fallback",
+      tip: "Set host_vehicle_id in GroundTruth to avoid fallback behavior.",
+    };
+    emitAlert?.(alert, "groundtruth-sceneupdate-host-vehicle-fallback-used");
+  }
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
   // Cache signature ties caches to settings so data is not reused across different panel settings
@@ -495,6 +515,13 @@ export function convertGroundTruthToSceneUpdate(
       "OsiGroundTruthVisualizer: Error during message conversion:\n%s\nSkipping message! (Input message not compatible?)",
       error,
     );
+    const alert: MessageConverterAlert = {
+      severity: "error",
+      message: "GroundTruth conversion failed",
+      error: error instanceof Error ? error : new Error(String(error)),
+      tip: "Check if input messages match the expected OSI GroundTruth schema.",
+    };
+    emitAlert?.(alert, "groundtruth-conversion-error");
   }
 
   return {
@@ -506,9 +533,15 @@ export function convertGroundTruthToSceneUpdate(
 export function registerGroundTruthConverter(): (
   msg: GroundTruth,
   event: Immutable<MessageEvent<GroundTruth>>,
+  _globalVariables?: Readonly<Record<string, VariableValue>>,
+  context?: MessageConverterContext,
 ) => unknown {
   const ctx = createGroundTruthContext();
 
-  return (msg: GroundTruth, event: Immutable<MessageEvent<GroundTruth>>) =>
-    convertGroundTruthToSceneUpdate(ctx, msg, event);
+  return (
+    msg: GroundTruth,
+    event: Immutable<MessageEvent<GroundTruth>>,
+    _globalVariables?: Readonly<Record<string, VariableValue>>,
+    context?: MessageConverterContext,
+  ) => convertGroundTruthToSceneUpdate(ctx, msg, event, undefined, context?.emitAlert);
 }
