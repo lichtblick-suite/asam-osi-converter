@@ -1,14 +1,12 @@
 import {
-  buildSensorDataSceneEntities,
   convertGroundTruthToFrameTransforms,
   convertSensorDataToFrameTransforms,
-  convertSensorDataToSceneUpdate,
   convertSensorViewToFrameTransforms,
+  registerSensorDataSceneUpdateConverter,
   registerSensorViewConverter,
 } from "@converters";
 import { GroundTruth, SensorData, SensorView } from "@lichtblick/asam-osi-types";
 import { MessageConverterContext } from "@lichtblick/suite";
-import { DeepRequired } from "ts-essentials";
 
 jest.mock("@features/trafficsigns", () => ({
   preloadDynamicTextures: jest.fn(),
@@ -193,14 +191,18 @@ describe("emitAlert — SensorData FrameTransforms", () => {
 });
 
 describe("emitAlert — SensorData SceneUpdate", () => {
-  it("emits info alert on every successful conversion", () => {
+  const dummyEvent = {} as any;
+
+  it("emits info alert only once per registered converter instance", () => {
     const { context, emitAlert } = mockContext();
+    const converter = registerSensorDataSceneUpdateConverter();
     const msg = {
       timestamp: baseTimestamp,
       lane_boundary: [],
-    } as unknown as DeepRequired<SensorData>;
+    } as unknown as SensorData;
 
-    buildSensorDataSceneEntities(msg, context.emitAlert);
+    converter(msg, dummyEvent, undefined, context);
+    converter(msg, dummyEvent, undefined, context);
 
     expect(emitAlert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -209,20 +211,6 @@ describe("emitAlert — SensorData SceneUpdate", () => {
       }),
       "sensordata-conversion-info",
     );
-  });
-
-  it("passes emitAlert through convertSensorDataToSceneUpdate", () => {
-    const { context, emitAlert } = mockContext();
-    const msg = {
-      timestamp: baseTimestamp,
-      lane_boundary: [],
-    } as unknown as SensorData;
-
-    convertSensorDataToSceneUpdate(msg, undefined, undefined, context);
-
-    expect(emitAlert).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: "info" }),
-      "sensordata-conversion-info",
-    );
+    expect(emitAlert).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,7 +1,7 @@
 import {
   convertGroundTruthToFrameTransforms,
   registerGroundTruthConverter,
-  convertSensorDataToSceneUpdate,
+  registerSensorDataSceneUpdateConverter,
   registerSensorViewConverter,
   convertSensorViewToFrameTransforms,
   generateGroundTruth3DPanelSettings,
@@ -38,7 +38,7 @@ export function activate(extensionContext: ExtensionContext): void {
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: convertSensorDataToSceneUpdate,
+    converter: registerSensorDataSceneUpdateConverter(),
   });
 
   extensionContext.registerMessageConverter({
