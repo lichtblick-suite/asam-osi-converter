@@ -24,9 +24,10 @@ export const convertGroundTruthToFrameTransforms = (
 ): FrameTransforms => {
   const emitAlert = context?.emitAlert;
   const transforms = { transforms: [] } as FrameTransforms;
-  const hostVehicleId = message.host_vehicle_id?.value ?? hostVehicleIdFallback;
+  const gtHostVehicleId = message.host_vehicle_id?.value;
+  const hostVehicleId = gtHostVehicleId ?? hostVehicleIdFallback;
   const usingHostVehicleIdFallback =
-    message.host_vehicle_id?.value == undefined && hostVehicleIdFallback != undefined;
+    gtHostVehicleId == undefined && hostVehicleIdFallback != undefined;
 
   if (usingHostVehicleIdFallback) {
     const alert: MessageConverterAlert = {
@@ -35,6 +36,24 @@ export const convertGroundTruthToFrameTransforms = (
       tip: "Set host_vehicle_id in GroundTruth to avoid fallback behavior.",
     };
     emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-fallback-used");
+  }
+
+  if (
+    gtHostVehicleId != undefined &&
+    hostVehicleIdFallback != undefined &&
+    gtHostVehicleId !== hostVehicleIdFallback
+  ) {
+    const alert: MessageConverterAlert = {
+      severity: "warn",
+      message:
+        "GroundTruth host_vehicle_id (" +
+        String(gtHostVehicleId) +
+        ") differs from SensorView host_vehicle_id (" +
+        String(hostVehicleIdFallback) +
+        ")",
+      tip: "Using GroundTruth host_vehicle_id. Ensure both sources agree.",
+    };
+    emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-id-divergence");
   }
 
   try {
@@ -50,15 +69,10 @@ export const convertGroundTruthToFrameTransforms = (
       return transforms;
     }
 
-    // Return empty FrameTransforms if host vehicle is not contained in moving objects
-    if (
-      message.moving_object &&
-      message.moving_object.some((obj) => obj.id?.value === hostVehicleId)
-    ) {
-      transforms.transforms.push(
-        buildEgoVehicleBBCenterFrameTransform(message as DeepRequired<GroundTruth>, hostVehicleId),
-      );
-    } else {
+    // Find host vehicle once — reuse for all subsequent checks
+    const hostObject = message.moving_object?.find((obj) => obj.id?.value === hostVehicleId);
+
+    if (!hostObject) {
       console.error("Host vehicle not found in moving objects");
       const alert: MessageConverterAlert = {
         severity: "warn",
@@ -69,16 +83,20 @@ export const convertGroundTruthToFrameTransforms = (
       return transforms;
     }
 
+    transforms.transforms.push(
+      buildEgoVehicleBBCenterFrameTransform(
+        message as DeepRequired<GroundTruth>,
+        hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+      ),
+    );
+
     // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
-    if (
-      message.moving_object.some(
-        (obj) =>
-          obj.id?.value === hostVehicleId &&
-          obj.vehicle_attributes?.bbcenter_to_rear,
-      )
-    ) {
+    if (hostObject.vehicle_attributes?.bbcenter_to_rear) {
       transforms.transforms.push(
-        buildEgoVehicleRearAxleFrameTransform(message as DeepRequired<GroundTruth>, hostVehicleId),
+        buildEgoVehicleRearAxleFrameTransform(
+          message as DeepRequired<GroundTruth>,
+          hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+        ),
       );
     } else {
       console.warn(
@@ -108,14 +126,12 @@ export const convertGroundTruthToFrameTransforms = (
   return transforms;
 };
 
+type DeepRequiredMovingObject = DeepRequired<GroundTruth>["moving_object"][number];
+
 function buildEgoVehicleBBCenterFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
-  hostIdentifier: number,
+  hostObject: DeepRequiredMovingObject,
 ): FrameTransform {
-  const hostObject = osiGroundTruth.moving_object.find((obj) => {
-    return obj.id.value === hostIdentifier;
-  })!;
-
   // Pose of EGO BB-CENTER in GLOBAL (parent -> child)
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
@@ -136,12 +152,8 @@ function buildEgoVehicleBBCenterFrameTransform(
 
 function buildEgoVehicleRearAxleFrameTransform(
   osiGroundTruth: DeepRequired<GroundTruth>,
-  hostIdentifier: number,
+  hostObject: DeepRequiredMovingObject,
 ): FrameTransform {
-  const hostObject = osiGroundTruth.moving_object.find((obj) => {
-    return obj.id.value === hostIdentifier;
-  })!;
-
   // OSI tree: BB_CENTER (parent) -> REAR_AXLE (child) with a pure translation in body frame
   return {
     timestamp: osiTimestampToTime(osiGroundTruth.timestamp),

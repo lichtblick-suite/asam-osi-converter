@@ -268,8 +268,9 @@ export function convertGroundTruthToSceneUpdate(
 
   const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
+  const gtHostVehicleId = osiGroundTruth.host_vehicle_id?.value;
   const usingHostVehicleIdFallback =
-    osiGroundTruth.host_vehicle_id?.value == undefined && hostVehicleIdFallback != undefined;
+    gtHostVehicleId == undefined && hostVehicleIdFallback != undefined;
 
   if (usingHostVehicleIdFallback) {
     const alert: MessageConverterAlert = {
@@ -278,6 +279,24 @@ export function convertGroundTruthToSceneUpdate(
       tip: "Set host_vehicle_id in GroundTruth to avoid fallback behavior.",
     };
     emitAlert?.(alert, "groundtruth-sceneupdate-host-vehicle-fallback-used");
+  }
+
+  if (
+    gtHostVehicleId != undefined &&
+    hostVehicleIdFallback != undefined &&
+    gtHostVehicleId !== hostVehicleIdFallback
+  ) {
+    const alert: MessageConverterAlert = {
+      severity: "warn",
+      message:
+        "GroundTruth host_vehicle_id (" +
+        String(gtHostVehicleId) +
+        ") differs from SensorView host_vehicle_id (" +
+        String(hostVehicleIdFallback) +
+        ")",
+      tip: "Using GroundTruth host_vehicle_id. Ensure both sources agree.",
+    };
+    emitAlert?.(alert, "groundtruth-sceneupdate-host-vehicle-id-divergence");
   }
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
@@ -391,7 +410,7 @@ export function convertGroundTruthToSceneUpdate(
   }
 
   // Conversion logic
-  let sceneEntities: PartialSceneEntity[] = [];
+  const sceneEntities: PartialSceneEntity[] = [];
 
   try {
     const updateFlags: OSISceneEntitiesUpdateFlags = {
@@ -412,7 +431,7 @@ export function convertGroundTruthToSceneUpdate(
       if (config.showPhysicalLanes) {
         laneBoundaryCacheKey = createLaneBoundaryCacheKey(osiGroundTruthReq.lane_boundary);
         if (laneBoundaryCache.has(laneBoundaryCacheKey)) {
-          sceneEntities = sceneEntities.concat(laneBoundaryCache.get(laneBoundaryCacheKey)!);
+          sceneEntities.push(...laneBoundaryCache.get(laneBoundaryCacheKey)!);
           updateFlags.laneBoundaries = false;
         }
       }
@@ -423,7 +442,7 @@ export function convertGroundTruthToSceneUpdate(
         // Lane geometry depends on boundary geometry. Reuse lane cache only if
         // boundaries were also reused from cache in this frame.
         if (!updateFlags.laneBoundaries && laneCache.has(laneCacheKey)) {
-          sceneEntities = sceneEntities.concat(laneCache.get(laneCacheKey)!);
+          sceneEntities.push(...laneCache.get(laneCacheKey)!);
           updateFlags.lanes = false;
         }
       }
@@ -434,8 +453,8 @@ export function convertGroundTruthToSceneUpdate(
           osiGroundTruthReq.logical_lane_boundary,
         );
         if (logicalLaneBoundaryCache.has(logicalLaneBoundaryCacheKey)) {
-          sceneEntities = sceneEntities.concat(
-            logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!,
+          sceneEntities.push(
+            ...logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!,
           );
           updateFlags.logicalLaneBoundaries = false;
         }
@@ -448,7 +467,7 @@ export function convertGroundTruthToSceneUpdate(
         // logical lane cache only if logical boundaries were also reused from
         // cache in this frame.
         if (!updateFlags.logicalLaneBoundaries && logicalLaneCache.has(logicalLaneCacheKey)) {
-          sceneEntities = sceneEntities.concat(logicalLaneCache.get(logicalLaneCacheKey)!);
+          sceneEntities.push(...logicalLaneCache.get(logicalLaneCacheKey)!);
           updateFlags.logicalLanes = false;
         }
       }
@@ -475,17 +494,17 @@ export function convertGroundTruthToSceneUpdate(
     );
 
     // Merge cached and built entities
-    sceneEntities = sceneEntities.concat(
-      movingObjects,
-      stationaryObjects,
-      trafficSigns,
-      trafficLights,
-      roadMarkings,
-      laneBoundaries,
-      logicalLaneBoundaries,
-      lanes,
-      logicalLanes,
-      referenceLines,
+    sceneEntities.push(
+      ...movingObjects,
+      ...stationaryObjects,
+      ...trafficSigns,
+      ...trafficLights,
+      ...roadMarkings,
+      ...laneBoundaries,
+      ...logicalLaneBoundaries,
+      ...lanes,
+      ...logicalLanes,
+      ...referenceLines,
     );
 
     // Update caches
