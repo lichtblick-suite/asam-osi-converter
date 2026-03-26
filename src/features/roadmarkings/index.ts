@@ -1,7 +1,6 @@
-import { Point3 } from "@foxglove/schemas";
 import { RoadMarking, TrafficSign_MainSign_Classification_Type } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { pointListToTriangleListPrimitive } from "@utils/primitives/lines";
+import { objectToCubePrimitive } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
@@ -22,37 +21,32 @@ export function buildRoadMarkingEntity(
     return undefined;
   }
 
-  const roadMarkingPoints = [
-    {
-      position: {
-        x: roadMarking.base.position.x,
-        y: roadMarking.base.position.y,
-        z: roadMarking.base.position.z,
-      } as Point3,
-      width: roadMarking.base.dimension.width,
-      height: roadMarking.base.dimension.height,
-    },
-    {
-      position: {
-        x: roadMarking.base.position.x + roadMarking.base.dimension.length,
-        y: roadMarking.base.position.y,
-        z: roadMarking.base.position.z,
-      } as Point3,
-      width: roadMarking.base.dimension.width,
-      height: roadMarking.base.dimension.height,
-    },
-  ];
+  const pos = roadMarking.base.position;
+  const ori = roadMarking.base.orientation;
+  const dim = roadMarking.base.dimension;
 
-  // Define color and opacity based on OSI classification
-  const rgb = ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color];
-  const color = { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
-
-  // Set option for dashed lines
-  const options = {
-    dashed: false,
-    arrows: false,
-    invertArrows: false,
-  };
+  // OSI road marking coordinate system (different from other objects):
+  //   x-axis = surface normal (upward from ground)
+  //   y-axis = lateral
+  //   z-axis = along driving direction
+  // Per OSI Dimension3d: length = x-axis, width = y-axis, height = z-axis
+  //
+  // CubePrimitive size maps to the object's local axes:
+  //   size.x = length (local x = protrusion from ground)
+  //   size.y = width  (local y = lateral extent)
+  //   size.z = height (local z = extent in driving direction)
+  const cube = objectToCubePrimitive(
+    pos.x,
+    pos.y,
+    pos.z,
+    ori.roll,
+    ori.pitch,
+    ori.yaw,
+    dim.width,
+    dim.length,
+    dim.height,
+    { ...ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color], a: 1 },
+  );
 
   return {
     timestamp: time,
@@ -60,7 +54,7 @@ export function buildRoadMarkingEntity(
     id: generateSceneEntityId(id_prefix, roadMarking.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    triangles: [pointListToTriangleListPrimitive(roadMarkingPoints, color, options)],
+    cubes: [cube],
     metadata: buildRoadMarkingMetadata(roadMarking),
   };
 }
