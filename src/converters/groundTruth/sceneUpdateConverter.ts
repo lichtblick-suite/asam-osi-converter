@@ -175,16 +175,16 @@ function buildSceneEntities(
   // Lanes
   let laneSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.lanes && panelSettings != undefined && panelSettings.showPhysicalLanes) {
-    // Re-generate lanes only when update.lanes is true
+    const boundaryById = new Map(
+      osiGroundTruth.lane_boundary.map((b) => [b.id.value, b]),
+    );
     laneSceneEntities = osiGroundTruth.lane.map((lane) => {
-      const rightLaneBoundaryIds = lane.classification.right_lane_boundary_id.map((id) => id.value);
-      const leftLaneBoundaryIds = lane.classification.left_lane_boundary_id.map((id) => id.value);
-      const leftLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
-        leftLaneBoundaryIds.includes(b.id.value),
-      );
-      const rightLaneBoundaries = osiGroundTruth.lane_boundary.filter((b) =>
-        rightLaneBoundaryIds.includes(b.id.value),
-      );
+      const leftLaneBoundaries = lane.classification.left_lane_boundary_id
+        .map((id) => boundaryById.get(id.value))
+        .filter((b): b is NonNullable<typeof b> => b != undefined);
+      const rightLaneBoundaries = lane.classification.right_lane_boundary_id
+        .map((id) => boundaryById.get(id.value))
+        .filter((b): b is NonNullable<typeof b> => b != undefined);
       return buildLaneEntity(lane, OSI_GLOBAL_FRAME, time, leftLaneBoundaries, rightLaneBoundaries);
     });
   }
@@ -204,15 +204,16 @@ function buildSceneEntities(
   // Logical lanes
   let logicalLaneSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.logicalLanes && panelSettings != undefined && panelSettings.showLogicalLanes) {
+    const logicalBoundaryById = new Map(
+      osiGroundTruth.logical_lane_boundary.map((b) => [b.id.value, b]),
+    );
     logicalLaneSceneEntities = osiGroundTruth.logical_lane.map((logical_lane) => {
-      const rightLaneBoundaryIds = logical_lane.right_boundary_id.map((id) => id.value);
-      const leftLaneBoundaryIds = logical_lane.left_boundary_id.map((id) => id.value);
-      const leftLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
-        leftLaneBoundaryIds.includes(b.id.value),
-      );
-      const rightLaneBoundaries = osiGroundTruth.logical_lane_boundary.filter((b) =>
-        rightLaneBoundaryIds.includes(b.id.value),
-      );
+      const leftLaneBoundaries = logical_lane.left_boundary_id
+        .map((id) => logicalBoundaryById.get(id.value))
+        .filter((b): b is NonNullable<typeof b> => b != undefined);
+      const rightLaneBoundaries = logical_lane.right_boundary_id
+        .map((id) => logicalBoundaryById.get(id.value))
+        .filter((b): b is NonNullable<typeof b> => b != undefined);
 
       return buildLogicalLaneEntity(
         logical_lane,
