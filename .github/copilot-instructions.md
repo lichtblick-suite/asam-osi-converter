@@ -173,6 +173,10 @@ Types: feat, fix, docs, style, refactor, test, chore, ci
 
 Commits are validated by commitlint via the Husky `commit-msg` hook.
 
+**Always sign commits** with `git commit -s -S` (DCO sign-off + GPG signature).
+
+**Never mention "Copilot"** in commit messages, PR descriptions, code comments, or any other repository content. Do not add `Co-authored-by: Copilot` trailers.
+
 ## Release Process
 
 1. Audit dependencies: `yarn audit --summary`
