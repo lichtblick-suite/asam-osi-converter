@@ -41,4 +41,11 @@
 
 - Commits follow Conventional Commits: `<type>(<scope>): <description>` with 72-char max header.
 - Common types in history: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`.
+- **Always sign commits**: use `git commit -s -S` (DCO sign-off + GPG signature) for every commit.
+- **Never mention "Copilot"** in commit messages, PR descriptions, code comments, or any other repository content. Do not add `Co-authored-by: Copilot` trailers.
 - PRs should include a short summary, testing notes (e.g., `yarn test`, `yarn lint`), and link related issues. CODEOWNERS are listed in `CODEOWNERS`; follow the repo’s required review rules.
+
+## Lint & Autofix Safety
+
+- When running `yarn lint` (autofix), **only stage files that belong to your current change**. Never commit autofixes to unrelated files.
+- Prettier changes are formatting-only and safe. ESLint autofixes (e.g., `prefer-optional-chain`) can alter logic — review every diff line before committing.
