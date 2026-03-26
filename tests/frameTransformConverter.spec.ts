@@ -44,7 +44,7 @@ function minimalGroundTruth(overrides?: Partial<GroundTruth>): GroundTruth {
   } as GroundTruth;
 }
 
-describe("frameTransformConverter — host vehicle single-lookup refactor", () => {
+describe("frameTransformConverter — host vehicle resolution", () => {
   it("produces BB center + rear axle transforms when host vehicle has bbcenter_to_rear", () => {
     const result = convertGroundTruthToFrameTransforms(
       minimalGroundTruth(),
@@ -64,22 +64,6 @@ describe("frameTransformConverter — host vehicle single-lookup refactor", () =
     expect(rearAxle.parent_frame_id).toBe("ego_vehicle_bb_center");
     expect(rearAxle.child_frame_id).toBe("ego_vehicle_rear_axle");
     expect(rearAxle.translation).toEqual({ x: -1.5, y: 0, z: 0 });
-  });
-
-  it("produces only BB center transform when bbcenter_to_rear is missing", () => {
-    const msg = minimalGroundTruth();
-    // Remove bbcenter_to_rear from the host vehicle
-    (msg.moving_object as Array<Record<string, unknown>>)[0]!.vehicle_attributes = {};
-
-    const { context, emitAlert } = mockContext();
-    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, context);
-
-    expect(result.transforms).toHaveLength(1);
-    expect(result.transforms[0]!.child_frame_id).toBe("ego_vehicle_bb_center");
-    expect(emitAlert).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: "info" }),
-      "groundtruth-frametransforms-missing-bbcenter-to-rear",
-    );
   });
 
   it("returns empty transforms when host vehicle not in moving_object", () => {
@@ -112,6 +96,24 @@ describe("frameTransformConverter — host vehicle single-lookup refactor", () =
 
     expect(result.transforms).toHaveLength(2);
     expect(result.transforms[0]!.translation).toEqual({ x: 10, y: 20, z: 0.5 });
+  });
+});
+
+describe("frameTransformConverter — rear axle handling", () => {
+  it("produces only BB center transform when bbcenter_to_rear is missing", () => {
+    const msg = minimalGroundTruth();
+    // Remove bbcenter_to_rear from the host vehicle
+    (msg.moving_object as Array<Record<string, unknown>>)[0]!.vehicle_attributes = {};
+
+    const { context, emitAlert } = mockContext();
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, context);
+
+    expect(result.transforms).toHaveLength(1);
+    expect(result.transforms[0]!.child_frame_id).toBe("ego_vehicle_bb_center");
+    expect(emitAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: "info" }),
+      "groundtruth-frametransforms-missing-bbcenter-to-rear",
+    );
   });
 });
 
