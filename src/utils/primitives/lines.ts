@@ -436,16 +436,20 @@ export function laneToTriangleListPrimitive(
       for (const boundary of boundaries) {
         // De-duplicate within each segment only. Do not merge segments, as
         // that can introduce long artificial jump edges between boundaries.
-        const deduplicatedBoundary = boundary.filter(
-          (point, index, self) =>
-            index ===
-            self.findIndex(
-              (p) =>
-                p.position.x === point.position.x &&
-                p.position.y === point.position.y &&
-                p.position.z === point.position.z,
-            ),
-        );
+        const seen = new Set<string>();
+        const deduplicatedBoundary: MarkerPoint[] = [];
+        for (const point of boundary) {
+          const key =
+            String(point.position.x) +
+            "," +
+            String(point.position.y) +
+            "," +
+            String(point.position.z);
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduplicatedBoundary.push(point);
+          }
+        }
 
         if (deduplicatedBoundary.length < 2) {
           continue;

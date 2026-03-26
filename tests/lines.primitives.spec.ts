@@ -219,4 +219,79 @@ describe("laneToTriangleListPrimitive", () => {
     expect(result.colors[4]!.a).toBe(0);
     expect(result.colors[5]!.a).toBe(0);
   });
+
+  describe("deduplication", () => {
+    // Reference implementation: the old O(n²) filter+findIndex approach.
+    // Used purely as an oracle to prove the optimised code produces identical output.
+    function referenceDeduplicate(points: MarkerPoint[]): MarkerPoint[] {
+      return points.filter(
+        (point, index, self) =>
+          index ===
+          self.findIndex(
+            (p) =>
+              p.position.x === point.position.x &&
+              p.position.y === point.position.y &&
+              p.position.z === point.position.z,
+          ),
+      );
+    }
+
+    it("produces identical output to the reference O(n²) dedup", () => {
+      // Boundary with scattered duplicates in various positions
+      const boundary: MarkerPoint[] = [
+        mkPoint(0, 0),
+        mkPoint(1, 0),
+        mkPoint(1, 0), // dup of [1]
+        mkPoint(2, 0),
+        mkPoint(0, 0), // dup of [0]
+        mkPoint(3, 0),
+      ];
+      const withDups: MarkerPoint[][] = [[...boundary]];
+      const withoutDups: MarkerPoint[][] = [referenceDeduplicate(boundary)];
+
+      const resultDups = laneToTriangleListPrimitive(withDups, [], color, laneWidth);
+      const resultClean = laneToTriangleListPrimitive(withoutDups, [], color, laneWidth);
+
+      expect(resultDups.points).toHaveLength(resultClean.points.length);
+      for (let i = 0; i < resultDups.points.length; i++) {
+        expect(resultDups.points[i]!.x).toBeCloseTo(resultClean.points[i]!.x, 10);
+        expect(resultDups.points[i]!.y).toBeCloseTo(resultClean.points[i]!.y, 10);
+        expect(resultDups.points[i]!.z).toBeCloseTo(resultClean.points[i]!.z, 10);
+      }
+    });
+
+    it("preserves first-occurrence ordering when removing duplicates", () => {
+      // Points where duplicate removal order matters for geometry:
+      // A(0,0) B(1,2) A(0,0) C(2,4) → should keep [A, B, C] not [B, A, C]
+      const boundary: MarkerPoint[][] = [
+        [mkPoint(0, 0), mkPoint(1, 2), mkPoint(0, 0), mkPoint(2, 4)],
+      ];
+
+      const result = laneToTriangleListPrimitive(boundary, [], color, laneWidth);
+
+      // 3 unique points → 2 quads → 12 vertices
+      expect(result.points).toHaveLength(12);
+
+      // First boundary-edge vertex (p1 of first quad) derives from A(0,0),
+      // not B(1,2), proving the first occurrence is kept.
+      // createOffsetLine shifts x slightly, so check it's closer to 0 than to 1.
+      expect(Math.abs(result.points[0]!.x)).toBeLessThan(0.5);
+    });
+
+    it("handles consecutive duplicates the same as scattered duplicates", () => {
+      const consecutive: MarkerPoint[][] = [
+        [mkPoint(0, 0), mkPoint(0, 0), mkPoint(1, 0), mkPoint(2, 0)],
+      ];
+      const scattered: MarkerPoint[][] = [
+        [mkPoint(0, 0), mkPoint(1, 0), mkPoint(0, 0), mkPoint(2, 0)],
+      ];
+
+      const resultConsec = laneToTriangleListPrimitive(consecutive, [], color, laneWidth);
+      const resultScatter = laneToTriangleListPrimitive(scattered, [], color, laneWidth);
+
+      // Both should produce the same number of triangles (3 unique points → 2 quads → 12 verts)
+      expect(resultConsec.points).toHaveLength(12);
+      expect(resultScatter.points).toHaveLength(12);
+    });
+  });
 });
