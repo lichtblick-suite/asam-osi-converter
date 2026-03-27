@@ -175,9 +175,7 @@ function buildSceneEntities(
   // Lanes
   let laneSceneEntities: PartialSceneEntity[] = [];
   if (updateFlags.lanes && panelSettings != undefined && panelSettings.showPhysicalLanes) {
-    const boundaryById = new Map(
-      osiGroundTruth.lane_boundary.map((b) => [b.id.value, b]),
-    );
+    const boundaryById = new Map(osiGroundTruth.lane_boundary.map((b) => [b.id.value, b]));
     laneSceneEntities = osiGroundTruth.lane.map((lane) => {
       const leftLaneBoundaries = lane.classification.left_lane_boundary_id
         .map((id) => boundaryById.get(id.value))
@@ -454,9 +452,7 @@ export function convertGroundTruthToSceneUpdate(
           osiGroundTruthReq.logical_lane_boundary,
         );
         if (logicalLaneBoundaryCache.has(logicalLaneBoundaryCacheKey)) {
-          sceneEntities.push(
-            ...logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!,
-          );
+          sceneEntities.push(...logicalLaneBoundaryCache.get(logicalLaneBoundaryCacheKey)!);
           updateFlags.logicalLaneBoundaries = false;
         }
       }

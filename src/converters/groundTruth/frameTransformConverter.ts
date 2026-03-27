@@ -1,10 +1,6 @@
 import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
-import {
-  MessageConverterAlert,
-  MessageConverterContext,
-  VariableValue,
-} from "@lichtblick/suite";
+import { MessageConverterAlert, MessageConverterContext, VariableValue } from "@lichtblick/suite";
 import { osiTimestampToTime } from "@utils/helper";
 import { eulerToQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";

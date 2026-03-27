@@ -85,7 +85,7 @@ export function buildTrafficLightEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     arrows: buildAxes(),
-    cubes: config?.showBoundingBox ?? false ? [cube] : [],
+    cubes: (config?.showBoundingBox ?? false) ? [cube] : [],
     models: [buildTrafficLightModel(obj, trafficLightColor, modelCacheKey)],
     metadata,
   };
