@@ -136,13 +136,7 @@ describe("frameTransformConverter — host vehicle ID divergence", () => {
   it("uses GT host_vehicle_id when both are present but differ", () => {
     // GT says host is 42 (at position 10,20,0.5), SensorView says 99 (at 50,30,0)
     const msg = minimalGroundTruth({ host_vehicle_id: { value: 42 } });
-    const result = convertGroundTruthToFrameTransforms(
-      msg,
-      undefined,
-      undefined,
-      undefined,
-      99,
-    );
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, undefined, 99);
 
     // Should use GT's value (42), producing transforms for vehicle at (10,20,0.5)
     expect(result.transforms).toHaveLength(2);
