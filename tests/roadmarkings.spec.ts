@@ -35,13 +35,13 @@ function createRoadMarking(
       },
       orientation: {
         roll: overrides.roll ?? 0,
-        pitch: overrides.pitch ?? -Math.PI / 2,
-        yaw: overrides.yaw ?? Math.PI,
+        pitch: overrides.pitch ?? 0,
+        yaw: overrides.yaw ?? 0,
       },
       dimension: {
         width: overrides.width ?? 4,
-        length: overrides.length ?? 0.004,
-        height: overrides.height ?? 0.3,
+        length: overrides.length ?? 0.3,
+        height: overrides.height ?? 0.004,
       },
     },
     classification: {
@@ -87,7 +87,7 @@ describe("buildRoadMarkingEntity", () => {
     });
 
     it("does not offset the cube from base.position (old bug: started at edge)", () => {
-      const marking = createRoadMarking({ x: 50, y: 30, z: 0, height: 0.5 });
+      const marking = createRoadMarking({ x: 50, y: 30, z: 0, length: 10 });
       const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
       expect(result).toBeDefined();
 
@@ -99,13 +99,13 @@ describe("buildRoadMarkingEntity", () => {
 
   describe("orientation", () => {
     it("applies orientation from base.orientation", () => {
-      // Spec-compliant road marking: pitch=-pi/2, yaw=pi + additional yaw rotation
-      const marking = createRoadMarking({ roll: 0, pitch: -Math.PI / 2, yaw: Math.PI / 4 });
+      const yaw = Math.PI / 4;
+      const marking = createRoadMarking({ yaw });
       const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
-      const expected = eulerToQuaternion(0, -Math.PI / 2, Math.PI / 4);
+      const expected = eulerToQuaternion(0, 0, yaw);
       expect(cube.pose!.orientation!.w).toBeCloseTo(expected.w, 6);
       expect(cube.pose!.orientation!.x).toBeCloseTo(expected.x, 6);
       expect(cube.pose!.orientation!.y).toBeCloseTo(expected.y, 6);
@@ -135,17 +135,17 @@ describe("buildRoadMarkingEntity", () => {
       // OSI road marking: length=x=protrusion, width=y=lateral, height=z=driving direction
       // objectToCubePrimitive: size.x=length, size.y=width, size.z=height
       const marking = createRoadMarking({
-        length: 0.004,
+        length: 0.3,
         width: 4.0,
-        height: 0.3,
+        height: 0.004,
       });
       const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
-      expect(cube.size!.x).toBeCloseTo(0.004); // length (protrusion from ground, along local x)
-      expect(cube.size!.y).toBeCloseTo(4.0); // width (lateral extent, along local y)
-      expect(cube.size!.z).toBeCloseTo(0.3); // height (driving direction, along local z)
+      expect(cube.size!.x).toBeCloseTo(0.3); // length (along local x)
+      expect(cube.size!.y).toBeCloseTo(4.0); // width (along local y)
+      expect(cube.size!.z).toBeCloseTo(0.004); // height (along local z)
     });
   });
 
