@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Lanes
 
 You can find more information about lanes and its metadata from ASAM OSI standards: [osi3::Lane Struct Reference](https://www.asam.net/static_downloads/ASAM_OSI_reference-documentation_v3.5.0/structosi3_1_1Lane.html)
@@ -12,7 +16,7 @@ Color of the lane may change depending on its type:
 | OTHER        | `{ r: 0, g: 1, b: 1, a: 0.6 }`         |
 | DRIVING      | `{ r: 0, g: 1, b: 1, a: 0.5 }`         |
 | INTERSECTION | `{ r: 1, g: 0, b: 0, a: 0.3 }`         |
-| NONDRIVING   | `{ r: 1, g: 0.43, b: 0.36, a: 0.5 }`   |
+| NONDRIVING   | `{ r: 1, g: 111/255, b: 91/255, a: 0.5 }` |
 
 ## Width
 
@@ -34,4 +38,4 @@ Lane boundary colors and alpha values may change depending on `osi3::LaneBoundar
 
 In DRIVING mode:
 
-![](/docs/images/LanesExample.png)
+![Lanes Example](../images/LanesExample.png)

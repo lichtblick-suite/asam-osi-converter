@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Logical Lanes
 
 You can find more information about logical lanes and its metadata from ASAM OSI standards: [osi3::LogicalLane Struct Reference](https://www.asam.net/static_downloads/ASAM_OSI_reference-documentation_v3.5.0/structosi3_1_1LogicalLane.html)
@@ -25,4 +29,4 @@ You can find more information about logical lane boundaries and its metadata fro
 
 # Example
 
-![](/docs/images/LogicalLanesExample.png)
+![Logical Lanes Example](../images/LogicalLanesExample.png)
