@@ -1,3 +1,4 @@
+import { buildRoadMarkingEntity } from "@features/roadmarkings";
 import {
   RoadMarking,
   RoadMarking_Classification_Color,
@@ -6,8 +7,6 @@ import {
 } from "@lichtblick/asam-osi-types";
 import { eulerToQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
-
-import { buildRoadMarkingEntity } from "@features/roadmarkings";
 
 function createRoadMarking(
   overrides: Partial<{
@@ -132,7 +131,6 @@ describe("buildRoadMarkingEntity", () => {
 
   describe("dimension mapping", () => {
     it("maps OSI dimensions correctly to cube size", () => {
-      // OSI road marking: length=x=protrusion, width=y=lateral, height=z=driving direction
       // objectToCubePrimitive: size.x=length, size.y=width, size.z=height
       const marking = createRoadMarking({
         length: 0.3,
@@ -146,6 +144,42 @@ describe("buildRoadMarkingEntity", () => {
       expect(cube.size!.x).toBeCloseTo(0.3); // length (along local x)
       expect(cube.size!.y).toBeCloseTo(4.0); // width (along local y)
       expect(cube.size!.z).toBeCloseTo(0.004); // height (along local z)
+    });
+
+    it("produces correct primitive for spec-compliant stop line trace", () => {
+      // Per OSI RoadMarking spec, local frame: x=surface normal (up), y=lateral, z=driving direction
+      // Dimension3d: length=x=0.004 (protrusion), width=y=4.0 (lateral), height=z=0.3 (driving dir)
+      // Orientation pitch=-π/2, yaw=π rotates local frame so x→up, z→forward
+      const marking = createRoadMarking({
+        x: 25.0,
+        y: -15.25,
+        z: 0.002,
+        length: 0.004,
+        width: 4.0,
+        height: 0.3,
+        roll: 0,
+        pitch: -Math.PI / 2,
+        yaw: Math.PI,
+      });
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      expect(result).toBeDefined();
+
+      const cube = result!.cubes![0]!;
+
+      // Position: centered at base.position
+      expect(cube.pose!.position).toEqual({ x: 25.0, y: -15.25, z: 0.002 });
+
+      // Size in local frame: length=0.004, width=4.0, height=0.3
+      expect(cube.size!.x).toBeCloseTo(0.004);
+      expect(cube.size!.y).toBeCloseTo(4.0);
+      expect(cube.size!.z).toBeCloseTo(0.3);
+
+      // Quaternion: eulerToQuaternion(0, -π/2, π) → (w≈0, x≈0.707, y≈0, z≈0.707)
+      const q = cube.pose!.orientation!;
+      expect(q.w).toBeCloseTo(0, 5);
+      expect(q.x).toBeCloseTo(Math.SQRT1_2, 5);
+      expect(q.y).toBeCloseTo(0, 5);
+      expect(q.z).toBeCloseTo(Math.SQRT1_2, 5);
     });
   });
 
