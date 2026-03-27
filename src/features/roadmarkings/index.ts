@@ -25,16 +25,23 @@ export function buildRoadMarkingEntity(
   const ori = roadMarking.base.orientation;
   const dim = roadMarking.base.dimension;
 
-  // OSI road marking coordinate system (different from other objects):
-  //   x-axis = surface normal (upward from ground)
-  //   y-axis = lateral
-  //   z-axis = along driving direction
-  // Per OSI Dimension3d: length = x-axis, width = y-axis, height = z-axis
+  // OSI road marking coordinate system (differs from vehicles/stationary objects):
+  //   local x-axis = surface normal (upward from ground)
+  //   local y-axis = lateral
+  //   local z-axis = driving direction (bottom-to-top of marking image)
   //
-  // CubePrimitive size maps to the object's local axes:
-  //   size.x = length (local x = protrusion from ground)
-  //   size.y = width  (local y = lateral extent)
-  //   size.z = height (local z = extent in driving direction)
+  // Per OSI Dimension3d, dimensions follow the local frame:
+  //   length = along local x = protrusion from ground (very small, ~mm)
+  //   width  = along local y = lateral extent
+  //   height = along local z = extent in driving direction
+  //
+  // The orientation (roll, pitch, yaw) encodes the rotation from global to
+  // this local frame. objectToCubePrimitive uses the same (roll, pitch, yaw,
+  // width, length, height) argument pattern as all other OSI objects — the
+  // quaternion rotation handles making the local axes point correctly in
+  // the global frame. No dimension swapping is needed.
+  //
+  // See: https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/gen/structosi3_1_1RoadMarking.html
   const cube = objectToCubePrimitive(
     pos.x,
     pos.y,
