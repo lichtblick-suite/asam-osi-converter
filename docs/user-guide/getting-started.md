@@ -18,7 +18,7 @@ Open a file or stream that follows the ASAM OSI standard. The extension supports
 
 :::warning[MCAP format draft]
 
-Current ASAM OSI [tracefile formats](https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/interface/architecture/trace_file_formats.html) do not yet include the official MCAP Multitrace Format. You can use the [ASAM OSI Utilities](https://github.com/Lichtblick-Suite/asam-osi-utilities/blob/main/examples/convert_osi2mcap.cpp) to create OSI MCAP traces according to the current [specification draft](https://github.com/OpenSimulationInterface/open-simulation-interface/pull/841).
+Current ASAM OSI [tracefile formats](https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/interface/architecture/trace_file_formats.html) do not yet include the official MCAP Multitrace Format. You can use the [ASAM OSI Utilities](https://github.com/Lichtblick-Suite/asam-osi-utilities/blob/main/cpp/examples/convert_osi2mcap.cpp) to create OSI MCAP traces according to the current [specification draft](https://github.com/OpenSimulationInterface/open-simulation-interface/pull/841).
 
 :::
 

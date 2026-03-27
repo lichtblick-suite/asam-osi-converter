@@ -41,12 +41,6 @@ Renders static scene objects with bounding boxes. Colors are determined by the o
 
 Renders traffic lights using built-in 3D models with dynamically colored textures based on the light state (red, yellow, green). Includes mode handling (standard, flashing, counting).
 
-:::note
-
-Only road markings with `traffic_main_sign_type == STOP` are currently rendered. Other marking types are filtered out.
-
-:::
-
 ## Traffic signs
 
 **Module:** `src/features/trafficsigns/`
@@ -62,6 +56,12 @@ Renders traffic signs using dynamically loaded PNG textures. Textures are preloa
 **Primitives:** CubePrimitive
 
 Renders road markings (currently STOP markings only) as oriented cubes. Position is centered on `base.position`, orientation applied from `base.orientation`, and dimensions follow the OSI road marking coordinate system where the x-axis is the surface normal.
+
+:::note
+
+Only road markings with `traffic_main_sign_type == STOP` are currently rendered. Other marking types are filtered out.
+
+:::
 
 ## Lanes
 

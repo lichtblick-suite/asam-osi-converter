@@ -16,7 +16,7 @@ Color of the lane may change depending on its type:
 | OTHER        | `{ r: 0, g: 1, b: 1, a: 0.6 }`         |
 | DRIVING      | `{ r: 0, g: 1, b: 1, a: 0.5 }`         |
 | INTERSECTION | `{ r: 1, g: 0, b: 0, a: 0.3 }`         |
-| NONDRIVING   | `{ r: 1, g: 0.43, b: 0.36, a: 0.5 }`   |
+| NONDRIVING   | `{ r: 1, g: 111/255, b: 91/255, a: 0.5 }` |
 
 ## Width
 

@@ -28,10 +28,10 @@ global
 
 ### GroundTruth / SensorView
 
-Produces **2 transforms**:
+Produces **1–2 transforms**:
 
 1. **Global → BB Center**: Uses `host_vehicle.base.position` and `host_vehicle.base.orientation`
-2. **BB Center → Rear Axle**: Uses `host_vehicle.vehicle_attributes.bbcenter_to_rear` (pure translation in body frame)
+2. **BB Center → Rear Axle** *(conditional)*: Uses `host_vehicle.vehicle_attributes.bbcenter_to_rear` (pure translation in body frame). Only produced if `bbcenter_to_rear` is present.
 
 ### SensorData
 
