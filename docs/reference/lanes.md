@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Lanes
 
 You can find more information about lanes and its metadata from ASAM OSI standards: [osi3::Lane Struct Reference](https://www.asam.net/static_downloads/ASAM_OSI_reference-documentation_v3.5.0/structosi3_1_1Lane.html)
@@ -34,4 +38,4 @@ Lane boundary colors and alpha values may change depending on `osi3::LaneBoundar
 
 In DRIVING mode:
 
-![](/docs/images/LanesExample.png)
+![Lanes Example](../images/LanesExample.png)

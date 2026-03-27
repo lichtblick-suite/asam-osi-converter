@@ -117,3 +117,7 @@ dist
 
 # Playground
 .playground/
+
+# Docusaurus
+website/build/
+website/.docusaurus/
