@@ -1,6 +1,8 @@
+import { GroundTruthPanelSettings } from "@converters";
+import { ArrowPrimitive } from "@foxglove/schemas";
 import { RoadMarking, TrafficSign_MainSign_Classification_Type } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { objectToCubePrimitive } from "@utils/primitives/objects";
+import { buildObjectAxes, objectToCubePrimitive } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
@@ -13,6 +15,7 @@ export function buildRoadMarkingEntity(
   id_prefix: string,
   frame_id: string,
   time: Time,
+  config: GroundTruthPanelSettings | undefined,
 ): PartialSceneEntity | undefined {
   if (
     roadMarking.classification.traffic_main_sign_type !==
@@ -41,6 +44,13 @@ export function buildRoadMarkingEntity(
     { ...ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color], a: 1 },
   );
 
+  function buildAxes(): ArrowPrimitive[] {
+    if (!(config?.showAxes ?? false)) {
+      return [];
+    }
+    return buildObjectAxes(roadMarking);
+  }
+
   return {
     timestamp: time,
     frame_id,
@@ -48,6 +58,7 @@ export function buildRoadMarkingEntity(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     cubes: [cube],
+    arrows: buildAxes(),
     metadata: buildRoadMarkingMetadata(roadMarking),
   };
 }

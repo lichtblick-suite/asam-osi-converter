@@ -8,6 +8,19 @@ import {
 import { eulerToQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
 
+import { GroundTruthPanelSettings } from "@/converters/groundTruth/types";
+
+const DEFAULT_TEST_CONFIG: GroundTruthPanelSettings = {
+  caching: true,
+  showAxes: true,
+  showPhysicalLanes: true,
+  showLogicalLanes: false,
+  showReferenceLines: true,
+  showBoundingBox: true,
+  show3dModels: false,
+  defaultModelPath: "/opt/models/vehicles/",
+};
+
 function createRoadMarking(
   overrides: Partial<{
     id: number;
@@ -63,13 +76,13 @@ describe("buildRoadMarkingEntity", () => {
   describe("filtering", () => {
     it("returns undefined for non-STOP road markings", () => {
       const marking = createRoadMarking({ mainSignType: 0 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeUndefined();
     });
 
     it("returns entity for STOP road markings", () => {
       const marking = createRoadMarking();
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
       expect(result!.id).toBe("road_marking_1");
     });
@@ -78,7 +91,7 @@ describe("buildRoadMarkingEntity", () => {
   describe("position and centering", () => {
     it("places the cube centered on base.position", () => {
       const marking = createRoadMarking({ x: 100, y: 200, z: 5 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -87,7 +100,7 @@ describe("buildRoadMarkingEntity", () => {
 
     it("does not offset the cube from base.position (old bug: started at edge)", () => {
       const marking = createRoadMarking({ x: 50, y: 30, z: 0, length: 10 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -100,7 +113,7 @@ describe("buildRoadMarkingEntity", () => {
     it("applies orientation from base.orientation", () => {
       const yaw = Math.PI / 4;
       const marking = createRoadMarking({ yaw });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -117,7 +130,7 @@ describe("buildRoadMarkingEntity", () => {
         pitch: -Math.PI / 2,
         yaw: Math.PI / 3,
       });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -137,7 +150,7 @@ describe("buildRoadMarkingEntity", () => {
         width: 4.0,
         height: 0.004,
       });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -155,7 +168,7 @@ describe("buildRoadMarkingEntity", () => {
         pitch: 0.2,
         yaw: 0.3,
       });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -168,7 +181,7 @@ describe("buildRoadMarkingEntity", () => {
   describe("color", () => {
     it("uses the classification color", () => {
       const marking = createRoadMarking({ color: RoadMarking_Classification_Color.RED });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
@@ -181,7 +194,7 @@ describe("buildRoadMarkingEntity", () => {
   describe("metadata", () => {
     it("includes type, color, width, and height in metadata", () => {
       const marking = createRoadMarking({ width: 5, height: 0.3 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
       expect(result).toBeDefined();
 
       const metadata = result!.metadata!;
@@ -199,13 +212,39 @@ describe("buildRoadMarkingEntity", () => {
   describe("scene entity properties", () => {
     it("sets correct frame_id, timestamp, and frame_locked", () => {
       const marking = createRoadMarking({ id: 42 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, "test_frame", { sec: 10, nsec: 500 });
+      const result = buildRoadMarkingEntity(marking, PREFIX, "test_frame", { sec: 10, nsec: 500 }, undefined);
       expect(result).toBeDefined();
 
       expect(result!.frame_id).toBe("test_frame");
       expect(result!.timestamp).toEqual({ sec: 10, nsec: 500 });
       expect(result!.frame_locked).toBe(true);
       expect(result!.id).toBe("road_marking_42");
+    });
+  });
+
+  describe("axes display", () => {
+    it("shows axes when config.showAxes is true", () => {
+      const marking = createRoadMarking();
+      const config = { ...DEFAULT_TEST_CONFIG, showAxes: true };
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, config);
+      expect(result).toBeDefined();
+      expect(result!.arrows).toBeDefined();
+      expect(result!.arrows!.length).toBe(3);
+    });
+
+    it("hides axes when config.showAxes is false", () => {
+      const marking = createRoadMarking();
+      const config = { ...DEFAULT_TEST_CONFIG, showAxes: false };
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, config);
+      expect(result).toBeDefined();
+      expect(result!.arrows).toEqual([]);
+    });
+
+    it("hides axes when no config is provided", () => {
+      const marking = createRoadMarking();
+      const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME, undefined);
+      expect(result).toBeDefined();
+      expect(result!.arrows).toEqual([]);
     });
   });
 });
