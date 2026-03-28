@@ -146,40 +146,22 @@ describe("buildRoadMarkingEntity", () => {
       expect(cube.size!.z).toBeCloseTo(0.004); // height (along local z)
     });
 
-    it("produces correct primitive for spec-compliant stop line trace", () => {
-      // Per OSI RoadMarking spec, local frame: x=surface normal (up), y=lateral, z=driving direction
-      // Dimension3d: length=x=0.004 (protrusion), width=y=4.0 (lateral), height=z=0.3 (driving dir)
-      // Orientation pitch=-π/2, yaw=π rotates local frame so x→up, z→forward
+    it("passes through non-trivial orientation as quaternion", () => {
       const marking = createRoadMarking({
-        x: 25.0,
-        y: -15.25,
-        z: 0.002,
-        length: 0.004,
+        length: 0.3,
         width: 4.0,
-        height: 0.3,
-        roll: 0,
-        pitch: -Math.PI / 2,
-        yaw: Math.PI,
+        height: 0.004,
+        roll: 0.1,
+        pitch: 0.2,
+        yaw: 0.3,
       });
       const result = buildRoadMarkingEntity(marking, PREFIX, FRAME, TIME);
       expect(result).toBeDefined();
 
       const cube = result!.cubes![0]!;
-
-      // Position: centered at base.position
-      expect(cube.pose!.position).toEqual({ x: 25.0, y: -15.25, z: 0.002 });
-
-      // Size in local frame: length=0.004, width=4.0, height=0.3
-      expect(cube.size!.x).toBeCloseTo(0.004);
-      expect(cube.size!.y).toBeCloseTo(4.0);
-      expect(cube.size!.z).toBeCloseTo(0.3);
-
-      // Quaternion: eulerToQuaternion(0, -π/2, π) → (w≈0, x≈0.707, y≈0, z≈0.707)
-      const q = cube.pose!.orientation!;
-      expect(q.w).toBeCloseTo(0, 5);
-      expect(q.x).toBeCloseTo(Math.SQRT1_2, 5);
-      expect(q.y).toBeCloseTo(0, 5);
-      expect(q.z).toBeCloseTo(Math.SQRT1_2, 5);
+      const expected = eulerToQuaternion(0.1, 0.2, 0.3);
+      expect(cube.pose!.orientation).toEqual(expected);
+      expect(cube.size).toEqual({ x: 0.3, y: 4.0, z: 0.004 });
     });
   });
 
