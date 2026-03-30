@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
       - name: Extract and validate version
@@ -71,14 +70,13 @@ jobs:
           token: ${{ secrets.LICHTBLICK_GITHUB_TOKEN }} 
 
       - name: Commit updated CHANGELOG.md
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git"
           git add CHANGELOG.md
           git diff --cached --quiet && echo "No changelog changes to commit" || {
-            git commit -m "docs: update CHANGELOG for ${{ steps.version.outputs.tag }}"
+            git commit -m "docs: update CHANGELOG for ${{ steps.version.outputs.tag }} [skip ci]"
             git push origin main
           }
 
