@@ -154,6 +154,7 @@ function buildSceneEntities(
       PREFIX_ROAD_MARKING,
       OSI_GLOBAL_FRAME,
       time,
+      panelSettings,
     );
 
     if (result != undefined) {
