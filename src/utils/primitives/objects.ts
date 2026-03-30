@@ -6,7 +6,14 @@
  * the visualization pipeline to consistently display simulated objects.
  */
 
-import { Color, CubePrimitive, ModelPrimitive, Vector3, ArrowPrimitive } from "@foxglove/schemas";
+import {
+  Color,
+  CubePrimitive,
+  ModelPrimitive,
+  Vector3,
+  ArrowPrimitive,
+  Quaternion,
+} from "@foxglove/schemas";
 import {
   StationaryObject,
   MovingObject,
@@ -132,36 +139,59 @@ export function buildObjectAxes(
   head_diameter = 0.05,
   scale = 2.0,
 ): ArrowPrimitive[] {
+  const orientation = eulerToQuaternion(
+    osiObject.base.orientation.roll,
+    osiObject.base.orientation.pitch,
+    osiObject.base.orientation.yaw,
+  );
+  const position = {
+    x: osiObject.base.position.x,
+    y: osiObject.base.position.y,
+    z: osiObject.base.position.z,
+  };
+  return buildAxesAtPose(
+    position,
+    orientation,
+    shaft_length,
+    shaft_diameter,
+    head_length,
+    head_diameter,
+    scale,
+  );
+}
+
+export function buildAxesAtPose(
+  position: Vector3,
+  orientation: Quaternion,
+  shaft_length = 0.154,
+  shaft_diameter = 0.02,
+  head_length = 0.046,
+  head_diameter = 0.05,
+  scale = 2.0,
+): ArrowPrimitive[] {
+  const makeArrow = (axisColor: Color, axisOrientation: Vector3): ArrowPrimitive => {
+    const localAxisOrientation = eulerToQuaternion(
+      axisOrientation.x,
+      axisOrientation.y,
+      axisOrientation.z,
+    );
+    const globalAxisOrientation = quaternionMultiplication(orientation, localAxisOrientation);
+    return {
+      pose: {
+        position,
+        orientation: globalAxisOrientation,
+      },
+      shaft_length: shaft_length * scale,
+      shaft_diameter: shaft_diameter * scale,
+      head_length: head_length * scale,
+      head_diameter: head_diameter * scale,
+      color: axisColor,
+    };
+  };
+
   return [
-    buildAxisArrow(
-      osiObject,
-      ColorCode("r", 1),
-      { x: 0, y: 0, z: 0 },
-      shaft_length,
-      shaft_diameter,
-      head_length,
-      head_diameter,
-      scale,
-    ),
-    buildAxisArrow(
-      osiObject,
-      ColorCode("g", 1),
-      { x: 0, y: 0, z: Math.PI / 2 },
-      shaft_length,
-      shaft_diameter,
-      head_length,
-      head_diameter,
-      scale,
-    ),
-    buildAxisArrow(
-      osiObject,
-      ColorCode("b", 1),
-      { x: 0, y: -Math.PI / 2, z: 0 },
-      shaft_length,
-      shaft_diameter,
-      head_length,
-      head_diameter,
-      scale,
-    ),
+    makeArrow(ColorCode("r", 1), { x: 0, y: 0, z: 0 }),
+    makeArrow(ColorCode("g", 1), { x: 0, y: 0, z: Math.PI / 2 }),
+    makeArrow(ColorCode("b", 1), { x: 0, y: -Math.PI / 2, z: 0 }),
   ];
 }
