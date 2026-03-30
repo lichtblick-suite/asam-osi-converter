@@ -1,4 +1,4 @@
-import { Point3, LinePrimitive, LineType, TextPrimitive, SceneUpdate } from "@foxglove/schemas";
+import { Point3, LinePrimitive, LineType, SceneUpdate } from "@foxglove/schemas";
 import {
   SensorData,
   LaneBoundary_BoundaryPoint,
@@ -53,20 +53,6 @@ export function buildSensorDataSceneEntities(
     return lane_boundary.map((b) => makeLinePrimitive(b, thickness));
   };
 
-  const makeInfoText = (): DeepPartial<TextPrimitive> => {
-    return {
-      pose: {
-        position: { x: 0, y: 0, z: 0 },
-        orientation: { x: 0, y: 0, z: 0, w: -10 },
-      },
-      billboard: true,
-      font_size: 30,
-      scale_invariant: true,
-      color: ColorCode("green", 1),
-      text: "SensorData not supported yet",
-    };
-  };
-
   alertHook?.(
     {
       severity: "info",
@@ -83,7 +69,6 @@ export function buildSensorDataSceneEntities(
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
     lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
-    texts: [makeInfoText()],
   };
   return [road_output_scene_update];
 }
