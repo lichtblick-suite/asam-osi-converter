@@ -1,7 +1,8 @@
-import { Point3 } from "@foxglove/schemas";
+import { GroundTruthPanelSettings } from "@converters";
+import { ArrowPrimitive } from "@foxglove/schemas";
 import { RoadMarking, TrafficSign_MainSign_Classification_Type } from "@lichtblick/asam-osi-types";
 import { Time } from "@lichtblick/suite";
-import { pointListToTriangleListPrimitive } from "@utils/primitives/lines";
+import { buildObjectAxes, objectToCubePrimitive } from "@utils/primitives/objects";
 import { generateSceneEntityId, PartialSceneEntity } from "@utils/scene";
 import { DeepRequired } from "ts-essentials";
 
@@ -14,6 +15,7 @@ export function buildRoadMarkingEntity(
   id_prefix: string,
   frame_id: string,
   time: Time,
+  config: GroundTruthPanelSettings | undefined,
 ): PartialSceneEntity | undefined {
   if (
     roadMarking.classification.traffic_main_sign_type !==
@@ -22,37 +24,32 @@ export function buildRoadMarkingEntity(
     return undefined;
   }
 
-  const roadMarkingPoints = [
-    {
-      position: {
-        x: roadMarking.base.position.x,
-        y: roadMarking.base.position.y,
-        z: roadMarking.base.position.z,
-      } as Point3,
-      width: roadMarking.base.dimension.width,
-      height: roadMarking.base.dimension.height,
-    },
-    {
-      position: {
-        x: roadMarking.base.position.x + roadMarking.base.dimension.length,
-        y: roadMarking.base.position.y,
-        z: roadMarking.base.position.z,
-      } as Point3,
-      width: roadMarking.base.dimension.width,
-      height: roadMarking.base.dimension.height,
-    },
-  ];
+  const pos = roadMarking.base.position;
+  const ori = roadMarking.base.orientation;
+  const dim = roadMarking.base.dimension;
 
-  // Define color and opacity based on OSI classification
-  const rgb = ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color];
-  const color = { r: rgb.r, g: rgb.g, b: rgb.b, a: 1 };
+  // Road markings use BaseStationary, same as other objects. The orientation
+  // quaternion handles whatever local-frame convention the trace author used.
+  // See: https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/gen/structosi3_1_1RoadMarking.html
+  const cube = objectToCubePrimitive(
+    pos.x,
+    pos.y,
+    pos.z,
+    ori.roll,
+    ori.pitch,
+    ori.yaw,
+    dim.width,
+    dim.length,
+    dim.height,
+    { ...ROAD_MARKING_COLOR[roadMarking.classification.monochrome_color], a: 1 },
+  );
 
-  // Set option for dashed lines
-  const options = {
-    dashed: false,
-    arrows: false,
-    invertArrows: false,
-  };
+  function buildAxes(): ArrowPrimitive[] {
+    if (!(config?.showAxes ?? false)) {
+      return [];
+    }
+    return buildObjectAxes(roadMarking);
+  }
 
   return {
     timestamp: time,
@@ -60,7 +57,8 @@ export function buildRoadMarkingEntity(
     id: generateSceneEntityId(id_prefix, roadMarking.id.value),
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    triangles: [pointListToTriangleListPrimitive(roadMarkingPoints, color, options)],
+    cubes: [cube],
+    arrows: buildAxes(),
     metadata: buildRoadMarkingMetadata(roadMarking),
   };
 }
