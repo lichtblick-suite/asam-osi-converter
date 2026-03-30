@@ -40,6 +40,7 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             confirm="${{ github.event.inputs.confirm }}"
+            confirm="${confirm#v}"
             if [ "${confirm}" != "${version}" ]; then
               echo "::error::Confirmation input '${confirm}' does not match package.json version '${version}'"
               exit 1
