@@ -4,9 +4,7 @@
 
 A converter extension which visualizes data following the standard of the [ASAM Open Simulation Interface (ASAM OSI)](https://www.asam.net/standards/detail/osi/) using the native 3D panel of Lichtblick.
 
-:warning: **Current version not compliant with official ASAM OSI**:
-
-Current ASAM OSI [tracefile formats](https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/interface/architecture/trace_file_formats.html) do not yet include the draft for the MCAP Multitrace Format. This will be officially completed in this [OpenX Project Proposal](https://code.asam.net/simulation/openx/-/issues/17). You can use the [ASAM OSI Utilities](https://github.com/Lichtblick-Suite/asam-osi-utilities/blob/main/examples/convert_osi2mcap.cpp) to create OSI MCAP traces according to the current [specification draft](https://github.com/OpenSimulationInterface/open-simulation-interface/pull/841).
+This extension reads OSI messages from [MCAP trace files](https://opensimulationinterface.github.io/osi-antora-generator/asamosi/latest/interface/architecture/trace_file_formats.html) — the multi-channel trace format officially specified since [OSI v3.8.0-rc1](https://github.com/OpenSimulationInterface/open-simulation-interface/releases/tag/v3.8.0-rc1). You can create compliant MCAP traces using the [ASAM OSI Utilities](https://github.com/Lichtblick-Suite/asam-osi-utilities).
 
 ## Getting started
 
@@ -113,31 +111,26 @@ Since this project relies on older but stable build tooling, prefer minor/patch 
 
 ## **3. Release Process**
 
-The release workflow is triggered when a push of a tag (`v[0-9].[0-9]+.[0-9]+`) occurs.
-The release workflow creates a changelog, builds the foxe extension based on the version specified in `package.json` and finally creates a release on github with the corresponding artifacts.
+The release workflow is triggered in one of two ways:
 
-Make sure to bump the version number in `package.json` and commit and push before tagging.
-
-### Steps to Tag a Release
-
-1. Ensure all changes for the release are committed and pushed to the main branch.
-2. Use the following command to create a new tag:
+1. **Push a signed tag:**
 
    ```bash
    git tag -s -a v<version> -m "Release v<version>"
-   ```
-
-   Example:
-
-   ```bash
-   git tag -s -a v1.0.0 -m "ASAM OSI Converter v1.0.0"
-   ```
-
-3. Push the tag to the remote repository:
-
-   ```bash
    git push origin v<version>
    ```
+
+2. **Manual trigger:** Go to **Actions → release → Run workflow** and type the version from `package.json` (e.g. `0.2.0`) to confirm.
+
+Both paths read the version from `package.json` as the single source of truth. The tag-push path validates that the pushed tag matches `package.json`. The manual path validates the tag does not already exist and creates it automatically.
+
+The workflow generates a changelog, builds the `.foxe` extension, runs a ScanCode license scan, and creates a GitHub Release with all artifacts.
+
+### Steps
+
+1. Ensure all changes for the release are committed and pushed to the main branch.
+2. Bump the version in `package.json`, commit and push.
+3. Either push a signed tag or use the manual trigger in GitHub Actions.
 
 ---
 

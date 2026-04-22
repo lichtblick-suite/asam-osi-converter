@@ -3,18 +3,62 @@ name: release
 on:
   push:
     tags: ["v[0-9].[0-9]+.[0-9]+"]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type the version from package.json (e.g. 0.2.0) to confirm release"
+        required: true
+        type: string
 
 jobs:
-  changelog:
+  release:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
-        
+
+      - name: Extract and validate version
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="v${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            pushed_tag="${{ github.ref_name }}"
+            if [ "${pushed_tag}" != "${tag}" ]; then
+              echo "::error::Pushed tag '${pushed_tag}' does not match package.json version '${tag}'"
+              exit 1
+            fi
+            echo "✅ Tag '${tag}' matches package.json version"
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            confirm="${{ github.event.inputs.confirm }}"
+            confirm="${confirm#v}"
+            if [ "${confirm}" != "${version}" ]; then
+              echo "::error::Confirmation input '${confirm}' does not match package.json version '${version}'"
+              exit 1
+            fi
+            if git ls-remote --tags origin | grep -q "refs/tags/${tag}$"; then
+              echo "::error::Tag '${tag}' already exists on remote. Bump the version in package.json first."
+              exit 1
+            fi
+            echo "✅ Version '${version}' confirmed, tag '${tag}' does not exist yet"
+          fi
+
+      - name: Create and push tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
       - name: Switch to main branch
         run: |
           git checkout main
@@ -26,14 +70,15 @@ jobs:
           token: ${{ secrets.LICHTBLICK_GITHUB_TOKEN }} 
 
       - name: Commit updated CHANGELOG.md
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git"
           git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG for ${{ github.ref_name }}"
-          git push origin main
+          git diff --cached --quiet && echo "No changelog changes to commit" || {
+            git commit -m "docs: update CHANGELOG for ${{ steps.version.outputs.tag }} [skip ci]"
+            git push origin main
+          }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -62,21 +107,15 @@ jobs:
           cd scancode-toolkit
           ./scancode --json-pp ../scancode-result.json ../
 
-      - name: Extract version
-        id: extract_version
-        run: |
-          version=$(node -p "require('./package.json').version")
-          echo "version=$version" >> $GITHUB_ENV
-
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         id: create_release
         uses: "plu5/automatic-releases-with-sha-action@main"
         with:
           repo_token: "${{ secrets.PAT_TOKEN }}"
+          automatic_release_tag: ${{ steps.version.outputs.tag }}
           prerelease: false
-          title: ASAM OSI Converter ${{ github.ref_name }}
+          title: ASAM OSI Converter ${{ steps.version.outputs.tag }}
           files: |
             CHANGELOG.md
             scancode-result.json
-            lichtblick.asam-osi-converter-${{ env.version }}.foxe
+            lichtblick.asam-osi-converter-${{ steps.version.outputs.version }}.foxe
