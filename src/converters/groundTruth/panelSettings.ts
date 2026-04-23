@@ -21,6 +21,8 @@ export function generateGroundTruth3DPanelSettings(): PanelSettings<unknown> {
           input: "boolean",
           value: config?.caching,
           help: "Enables caching of lanes and lane boundaries.",
+          error:
+            "Note: Caching is a performance optimization and assumes stable geometry per lane ID. Turn it OFF for highest correctness.",
         },
         showAxes: {
           label: "Show axes",
