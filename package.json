@@ -4,7 +4,7 @@
   "description": "Visualises data following the standard of the ASAM Open Simulation Interface (ASAM OSI) using the native 3D panel of Lichtblick",
   "publisher": "Lichtblick",
   "homepage": "https://www.asam.net/standards/detail/osi/",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "license": "MIT",
   "main": "./dist/extension.js",
   "keywords": [
@@ -33,7 +33,7 @@
     "@foxglove/schemas": "^1.6.2",
     "@lichtblick/asam-osi-types": "^3.7.0",
     "@lichtblick/eslint-plugin": "^1.0.2",
-    "@lichtblick/suite": "^1.24.3",
+    "@lichtblick/suite": "^1.25.0",
     "@types/jest": "^30.0.0",
     "@types/minimatch": "^5.1.2",
     "@types/react": "18.2.55",
