@@ -41,7 +41,7 @@ function minimalGroundTruth(overrides?: Partial<GroundTruth>): GroundTruth {
       },
     ],
     ...overrides,
-  } as GroundTruth;
+  };
 }
 
 describe("emitAlert — GroundTruth FrameTransforms", () => {
@@ -104,7 +104,7 @@ describe("emitAlert — GroundTruth FrameTransforms", () => {
           vehicle_attributes: {},
         },
       ],
-    } as Partial<GroundTruth>);
+    });
 
     convertGroundTruthToFrameTransforms(msg, undefined, undefined, context);
 
@@ -147,7 +147,7 @@ describe("emitAlert — SensorView SceneUpdate", () => {
     const { context, emitAlert } = mockContext();
     const converter = registerSensorViewConverter();
 
-    converter({} as SensorView, dummyEvent, undefined, context);
+    converter({}, dummyEvent, undefined, context);
 
     expect(emitAlert).toHaveBeenCalledWith(
       expect.objectContaining({ severity: "warn" }),
@@ -159,7 +159,7 @@ describe("emitAlert — SensorView SceneUpdate", () => {
     const { context } = mockContext();
     const converter = registerSensorViewConverter();
 
-    const result = converter({} as SensorView, dummyEvent, undefined, context) as {
+    const result = converter({}, dummyEvent, undefined, context) as {
       deletions: unknown[];
       entities: unknown[];
     };

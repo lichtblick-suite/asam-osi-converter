@@ -611,5 +611,5 @@ export function pointListToDashedLinePrimitive(
     color: { r: 0, g: 0, b: 0, a: 0 },
     colors: new_colors,
     indices: [],
-  } as LinePrimitive;
+  };
 }

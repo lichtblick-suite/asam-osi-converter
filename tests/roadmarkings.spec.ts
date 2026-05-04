@@ -212,7 +212,13 @@ describe("buildRoadMarkingEntity", () => {
   describe("scene entity properties", () => {
     it("sets correct frame_id, timestamp, and frame_locked", () => {
       const marking = createRoadMarking({ id: 42 });
-      const result = buildRoadMarkingEntity(marking, PREFIX, "test_frame", { sec: 10, nsec: 500 }, undefined);
+      const result = buildRoadMarkingEntity(
+        marking,
+        PREFIX,
+        "test_frame",
+        { sec: 10, nsec: 500 },
+        undefined,
+      );
       expect(result).toBeDefined();
 
       expect(result!.frame_id).toBe("test_frame");

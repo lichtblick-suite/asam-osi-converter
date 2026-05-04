@@ -41,7 +41,7 @@ function minimalGroundTruth(overrides?: Partial<GroundTruth>): GroundTruth {
       },
     ],
     ...overrides,
-  } as GroundTruth;
+  };
 }
 
 describe("frameTransformConverter — host vehicle resolution", () => {

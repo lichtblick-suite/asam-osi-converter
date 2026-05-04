@@ -1,5 +1,4 @@
-import { TriangleListPrimitive, type Point3 } from "@foxglove/schemas";
-import { Time } from "@foxglove/schemas";
+import { TriangleListPrimitive, Time } from "@foxglove/schemas";
 import { LaneBoundary, LaneBoundary_Classification_Type, Lane } from "@lichtblick/asam-osi-types";
 import {
   pointListToTriangleListPrimitive,
@@ -42,7 +41,7 @@ export function buildLaneBoundaryEntity(
   // Create LaneBoundaryPoint objects using only necessary fields for rendering
   const laneBoundaryPoints = osiLaneBoundary.boundary_line.map((point) => {
     return {
-      position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+      position: { x: point.position.x, y: point.position.y, z: point.position.z },
       width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
       height: point.height,
       dash: point.dash,
@@ -83,7 +82,7 @@ export function buildLaneEntity(
   for (const lb of osiLeftLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
       return {
-        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        position: { x: point.position.x, y: point.position.y, z: point.position.z },
         width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
         height: point.height,
         dash: point.dash,
@@ -95,7 +94,7 @@ export function buildLaneEntity(
   for (const lb of osiRightLaneBoundaries) {
     const laneBoundaryPoints = lb.boundary_line.map((point) => {
       return {
-        position: { x: point.position.x, y: point.position.y, z: point.position.z } as Point3,
+        position: { x: point.position.x, y: point.position.y, z: point.position.z },
         width: point.width === 0 ? LANE_BOUNDARY_MIN_RENDERING_WIDTH : point.width, // prevent zero-width lane boundaries from being invisible
         height: point.height,
         dash: point.dash,
@@ -109,7 +108,7 @@ export function buildLaneEntity(
   if (LANE_CENTERLINE_SHOW) {
     const centerlinePoints = osiLane.classification.centerline.map((point) => {
       return {
-        position: { x: point.x, y: point.y, z: point.z } as Point3,
+        position: { x: point.x, y: point.y, z: point.z },
         width: LANE_CENTERLINE_WIDTH,
         height: 0,
       };
