@@ -1,4 +1,4 @@
-import { Point3, Time } from "@foxglove/schemas";
+import { Time } from "@foxglove/schemas";
 import { ReferenceLine } from "@lichtblick/asam-osi-types";
 import { MarkerPoint, pointListToTriangleListPrimitive } from "@utils/index";
 import { PartialSceneEntity, generateSceneEntityId } from "@utils/scene";
@@ -19,7 +19,7 @@ export function buildReferenceLineEntity(
         x: p.world_position.x,
         y: p.world_position.y,
         z: p.world_position.z,
-      } as Point3,
+      },
       width: REFERENCE_LINE_VISUALIZATION_WIDTH,
       height: 0.0,
     }));

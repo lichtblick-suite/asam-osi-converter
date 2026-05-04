@@ -1,4 +1,3 @@
-import { type Point3 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas";
 import { LogicalLane, LogicalLaneBoundary } from "@lichtblick/asam-osi-types";
 import {
@@ -33,7 +32,7 @@ export function buildLogicalLaneBoundaryEntity(
         x: point.position.x,
         y: point.position.y,
         z: point.position.z + LOGICAL_LANE_RENDERING_HEIGHT_OFFSET,
-      } as Point3,
+      },
       width: LOGICAL_LANE_BOUNDARY_RENDERING_WIDTH,
       height: 0,
     };
@@ -74,7 +73,7 @@ export function buildLogicalLaneEntity(
           x: point.position.x,
           y: point.position.y,
           z: point.position.z + LOGICAL_LANE_RENDERING_HEIGHT_OFFSET,
-        } as Point3,
+        },
         width: LOGICAL_LANE_BOUNDARY_RENDERING_WIDTH,
         height: 0, // no need to set height for logical lanes
       };
@@ -89,7 +88,7 @@ export function buildLogicalLaneEntity(
           x: point.position.x,
           y: point.position.y,
           z: point.position.z + LOGICAL_LANE_RENDERING_HEIGHT_OFFSET,
-        } as Point3,
+        },
         width: LOGICAL_LANE_BOUNDARY_RENDERING_WIDTH,
         height: 0, // no need to set height for logical lanes
       };

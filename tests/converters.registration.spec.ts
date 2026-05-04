@@ -8,7 +8,6 @@ import {
   MovingObject,
   MovingObject_Type,
   MovingObject_VehicleClassification_Type,
-  ReferenceLine,
   ReferenceLine_Type,
   StationaryObject,
 } from "@lichtblick/asam-osi-types";
@@ -186,7 +185,7 @@ describe("OSI Visualizer: Message Converter", () => {
         t_axis_yaw: 0,
       },
     ],
-  } as unknown as DeepRequired<ReferenceLine>;
+  };
   const mockMessageData = {
     timestamp: {
       seconds: 0,
