@@ -615,10 +615,10 @@
     "@foxglove/message-definition" "0.5.0"
     md5-typescript "^1.0.5"
 
-"@foxglove/schemas@^1.6.2":
-  version "1.10.2"
-  resolved "https://registry.yarnpkg.com/@foxglove/schemas/-/schemas-1.10.2.tgz#0c5e31747b2ed8d394a8fd605cae01c70d6bc44c"
-  integrity sha512-g/oeJSwXxL7/mB6Qmo0kc28sQTzUmvZVPbTFeN8nVQwpv6Ov02udWK8KFBhYha3y55qNLYYeqOmRogUOqBfwVA==
+"@foxglove/schemas@^1.9.0":
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/@foxglove/schemas/-/schemas-1.13.0.tgz#ed2353e3f4cee0b345cb8b639d64b592ae6e737c"
+  integrity sha512-kryzL2dcZUSbGsF7MfZK0QCztP0mzkQ4sL/kgZg5fIed92DxrYvnOLmHlguoL3U2atc9BucrdTNm7ZfjVBVkIQ==
   dependencies:
     "@foxglove/rosmsg-msgs-common" "^3.2.2"
     tslib "^2"
