@@ -1,8 +1,6 @@
 name: release
 
 on:
-  push:
-    tags: ["v[0-9].[0-9]+.[0-9]+"]
   workflow_dispatch:
     inputs:
       confirm:
@@ -29,31 +27,19 @@ jobs:
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
-          if [ "${{ github.event_name }}" = "push" ]; then
-            pushed_tag="${{ github.ref_name }}"
-            if [ "${pushed_tag}" != "${tag}" ]; then
-              echo "::error::Pushed tag '${pushed_tag}' does not match package.json version '${tag}'"
-              exit 1
-            fi
-            echo "✅ Tag '${tag}' matches package.json version"
+          confirm="${{ github.event.inputs.confirm }}"
+          confirm="${confirm#v}"
+          if [ "${confirm}" != "${version}" ]; then
+            echo "::error::Confirmation input '${confirm}' does not match package.json version '${version}'"
+            exit 1
           fi
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            confirm="${{ github.event.inputs.confirm }}"
-            confirm="${confirm#v}"
-            if [ "${confirm}" != "${version}" ]; then
-              echo "::error::Confirmation input '${confirm}' does not match package.json version '${version}'"
-              exit 1
-            fi
-            if git ls-remote --tags origin | grep -q "refs/tags/${tag}$"; then
-              echo "::error::Tag '${tag}' already exists on remote. Bump the version in package.json first."
-              exit 1
-            fi
-            echo "✅ Version '${version}' confirmed, tag '${tag}' does not exist yet"
+          if git ls-remote --tags origin | grep -q "refs/tags/${tag}$"; then
+            echo "::error::Tag '${tag}' already exists on remote. Bump the version in package.json first."
+            exit 1
           fi
+          echo "✅ Version '${version}' confirmed, tag '${tag}' does not exist yet"
 
       - name: Create and push tag
-        if: github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
