@@ -1,5 +1,66 @@
 # Changelog
 
+## [v1.0.0](https://github.com/lichtblick-suite/asam-osi-converter/tree/v1.0.0) (2026-05-05)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.2.0...v1.0.0)
+
+**Fixed bugs:**
+
+- fix\(ci\): add persist-credentials: false to unblock PAT push [\#194](https://github.com/lichtblick-suite/asam-osi-converter/pull/194) ([jdsika](https://github.com/jdsika))
+- fix\(ci\): use PAT\_TOKEN for tag push in release workflow [\#193](https://github.com/lichtblick-suite/asam-osi-converter/pull/193) ([jdsika](https://github.com/jdsika))
+
+**Closed issues:**
+
+- chore: remaining security vulnerabilities blocked on eslint@9 migration [\#180](https://github.com/lichtblick-suite/asam-osi-converter/issues/180)
+- Performance issue: please add possibility to decrease amount of info visualized via GUI [\#135](https://github.com/lichtblick-suite/asam-osi-converter/issues/135)
+- @foxglove/schemas [\#97](https://github.com/lichtblick-suite/asam-osi-converter/issues/97)
+
+**Merged pull requests:**
+
+- chore\(deps\): patch brace-expansion ReDoS vulnerabilities [\#192](https://github.com/lichtblick-suite/asam-osi-converter/pull/192) ([jdsika](https://github.com/jdsika))
+- chore\(deps\): migrate to ESLint 9 and @lichtblick/eslint-plugin 2.x [\#191](https://github.com/lichtblick-suite/asam-osi-converter/pull/191) ([jdsika](https://github.com/jdsika))
+- chore\(deps\): upgrade @foxglove/schemas from 1.6.2 to 1.9.0 [\#190](https://github.com/lichtblick-suite/asam-osi-converter/pull/190) ([jdsika](https://github.com/jdsika))
+- feat: add caching stable geometry disclaimer [\#189](https://github.com/lichtblick-suite/asam-osi-converter/pull/189) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- feat: add sampling support to all converters [\#187](https://github.com/lichtblick-suite/asam-osi-converter/pull/187) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+## [v0.2.0](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.2.0) (2026-03-30)
+
+[Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.4...v0.2.0)
+
+**Implemented enhancements:**
+
+- refactor: optimize converter array assembly and host vehicle lookup [\#177](https://github.com/lichtblick-suite/asam-osi-converter/pull/177) ([jdsika](https://github.com/jdsika))
+- refactor: replace O\(L\*B\) lane boundary lookups with Map-based O\(L+B\) [\#176](https://github.com/lichtblick-suite/asam-osi-converter/pull/176) ([jdsika](https://github.com/jdsika))
+- refactor: replace O\(n²\) lane boundary dedup with O\(n\) Set-based approach [\#175](https://github.com/lichtblick-suite/asam-osi-converter/pull/175) ([jdsika](https://github.com/jdsika))
+- feat: use emitAlert hook for basic conversion fails [\#174](https://github.com/lichtblick-suite/asam-osi-converter/pull/174) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- Fix/caching-improvements [\#172](https://github.com/lichtblick-suite/asam-osi-converter/pull/172) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Fixed bugs:**
+
+- Road marking dimension/position/orientation issues [\#114](https://github.com/lichtblick-suite/asam-osi-converter/issues/114)
+- fix\(roadmarkings\): replace triangle list with cube primitive, add axis arrows [\#183](https://github.com/lichtblick-suite/asam-osi-converter/pull/183) ([jdsika](https://github.com/jdsika))
+- fix: replace boundary merge with per-segment processing [\#173](https://github.com/lichtblick-suite/asam-osi-converter/pull/173) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- fix: avoid NaN on zero-length line segments [\#170](https://github.com/lichtblick-suite/asam-osi-converter/pull/170) ([thomassedlmayer](https://github.com/thomassedlmayer))
+
+**Closed issues:**
+
+- chore: align dependency versions with Lichtblick framework [\#162](https://github.com/lichtblick-suite/asam-osi-converter/issues/162)
+- docs: document caching, panel settings, and architecture [\#103](https://github.com/lichtblick-suite/asam-osi-converter/issues/103)
+- Feature: Adding intermediate `"odometry"` frame between `<root>` and the vehicle's frames [\#92](https://github.com/lichtblick-suite/asam-osi-converter/issues/92)
+- Performance issue: please add possibility to decrease amount of info visualized via GUI [\#135](https://github.com/lichtblick-suite/asam-osi-converter/issues/135)
+
+**Merged pull requests:**
+
+- fix: remove temporary billboard text for sensordata [\#188](https://github.com/lichtblick-suite/asam-osi-converter/pull/188) ([thomassedlmayer](https://github.com/thomassedlmayer))
+- docs: add Docusaurus documentation site [\#185](https://github.com/lichtblick-suite/asam-osi-converter/pull/185) ([jdsika](https://github.com/jdsika))
+- build\(deps\): bump handlebars from 4.7.8 to 4.7.9 in the npm\_and\_yarn group across 1 directory [\#184](https://github.com/lichtblick-suite/asam-osi-converter/pull/184) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): align dependency versions with Lichtblick framework [\#182](https://github.com/lichtblick-suite/asam-osi-converter/pull/182) ([jdsika](https://github.com/jdsika))
+- chore\(deps\): patch picomatch ReDoS vulnerabilities [\#179](https://github.com/lichtblick-suite/asam-osi-converter/pull/179) ([jdsika](https://github.com/jdsika))
+- chore: bump version to 0.2.0 [\#178](https://github.com/lichtblick-suite/asam-osi-converter/pull/178) ([jdsika](https://github.com/jdsika))
+- build\(deps\): bump flatted from 3.3.4 to 3.4.2 in the npm\_and\_yarn group across 1 directory [\#171](https://github.com/lichtblick-suite/asam-osi-converter/pull/171) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore: bump version to 0.1.5, update agent docs and gitignore [\#169](https://github.com/lichtblick-suite/asam-osi-converter/pull/169) ([jdsika](https://github.com/jdsika))
+- chore\(deps\): bump minimum Node.js engine to \>=20.19.0 [\#167](https://github.com/lichtblick-suite/asam-osi-converter/pull/167) ([jdsika](https://github.com/jdsika))
+
 ## [v0.1.4](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.4) (2026-03-06)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.3...v0.1.4)
@@ -21,9 +82,10 @@
 
 **Fixed bugs:**
 
-- Light state visualization for partially set light states [\#129](https://github.com/lichtblick-suite/asam-osi-converter/issues/129)
 - Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
 - Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
+- Light state visualization for partially set light states [\#129](https://github.com/lichtblick-suite/asam-osi-converter/issues/129)
+- MCAP/OSI visualization not working - GroundTruth & SensorView [\#109](https://github.com/lichtblick-suite/asam-osi-converter/issues/109)
 - fix: use SensorView fallback host vehicle if missing [\#160](https://github.com/lichtblick-suite/asam-osi-converter/pull/160) ([thomassedlmayer](https://github.com/thomassedlmayer))
 - fix: hide lights if unknown [\#158](https://github.com/lichtblick-suite/asam-osi-converter/pull/158) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
@@ -47,11 +109,6 @@
 - Add traffic light box colors [\#156](https://github.com/lichtblick-suite/asam-osi-converter/pull/156) ([thomassedlmayer](https://github.com/thomassedlmayer))
 - Enable traffic light mode switching, add traffic light axes, support flashing [\#155](https://github.com/lichtblick-suite/asam-osi-converter/pull/155) ([thomassedlmayer](https://github.com/thomassedlmayer))
 
-**Fixed bugs:**
-
-- Bug: Traffic light back side [\#134](https://github.com/lichtblick-suite/asam-osi-converter/issues/134)
-- Bug: Traffic lights color changes properly? [\#131](https://github.com/lichtblick-suite/asam-osi-converter/issues/131)
-
 ## [v0.1.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.1.1) (2025-12-05)
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.1.0...v0.1.1)
@@ -65,13 +122,8 @@
 
 [Full Changelog](https://github.com/lichtblick-suite/asam-osi-converter/compare/v0.0.9...v0.1.0)
 
-**Implemented enhancements:**
-
-- Reorganization/cleanup [\#146](https://github.com/lichtblick-suite/asam-osi-converter/pull/146) ([thomassedlmayer](https://github.com/thomassedlmayer))
-
 **Closed issues:**
 
-- Should I commit yarn.lock and package-lock.json files? [\#86](https://github.com/lichtblick-suite/asam-osi-converter/issues/86)
 - Magic numbers in the code [\#68](https://github.com/lichtblick-suite/asam-osi-converter/issues/68)
 
 **Merged pull requests:**
