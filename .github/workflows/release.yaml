@@ -53,9 +53,13 @@ jobs:
           git pull origin main
 
       - name: Generate changelog for this release
-        uses: janheinrichmerker/action-github-changelog-generator@v2.4
+        uses: orhun/git-cliff-action@v4
         with:
-          token: ${{ secrets.LICHTBLICK_GITHUB_TOKEN }} 
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+          GITHUB_TOKEN: ${{ secrets.LICHTBLICK_GITHUB_TOKEN }}
 
       - name: Commit updated CHANGELOG.md
         run: |
@@ -96,14 +100,13 @@ jobs:
           ./scancode --json-pp ../scancode-result.json ../
 
       - name: Create GitHub Release
-        id: create_release
-        uses: "plu5/automatic-releases-with-sha-action@main"
-        with:
-          repo_token: "${{ secrets.PAT_TOKEN }}"
-          automatic_release_tag: ${{ steps.version.outputs.tag }}
-          prerelease: false
-          title: ASAM OSI Converter ${{ steps.version.outputs.tag }}
-          files: |
-            CHANGELOG.md
-            scancode-result.json
-            lichtblick.asam-osi-converter-${{ steps.version.outputs.version }}.foxe
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "ASAM OSI Converter ${{ steps.version.outputs.tag }}" \
+            --notes-file CHANGELOG.md \
+            --verify-tag \
+            CHANGELOG.md \
+            scancode-result.json \
+            "lichtblick.asam-osi-converter-${{ steps.version.outputs.version }}.foxe"
