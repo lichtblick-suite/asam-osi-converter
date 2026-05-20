@@ -14,7 +14,7 @@ import {
 import { osiTimestampToTime } from "@utils/helper";
 import { DeepRequired } from "ts-essentials";
 
-import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
+import { getSensorMountingFrameId } from "@/config/frameTransformNames";
 
 const FLOAT32_SIZE = 4;
 // Per-point layout: x, y, z, intensity (4 × float32 = 16 bytes)
@@ -126,7 +126,7 @@ export function buildPointCloudFromSensorData(
 
   return {
     timestamp: osiTimestampToTime(osiSensorData.timestamp),
-    frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
+    frame_id: getSensorMountingFrameId(osiSensorData.sensor_id),
     pose: {
       position: { x: 0, y: 0, z: 0 },
       orientation: { x: 0, y: 0, z: 0, w: 1 },

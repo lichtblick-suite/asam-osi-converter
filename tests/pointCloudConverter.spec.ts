@@ -112,7 +112,7 @@ describe("buildPointCloudFromSensorData", () => {
 
     expect(result).toBeDefined();
     const pc = result as PointCloud;
-    expect(pc.frame_id).toBe("virtual_mounting_position");
+    expect(pc.frame_id).toBe("virtual_mounting_position_1");
     expect(pc.point_stride).toBe(16); // 4 × float32
     expect(pc.fields).toHaveLength(4);
     expect(pc.fields[0]!.name).toBe("x");
@@ -194,12 +194,34 @@ describe("convertSensorDataToPointCloud", () => {
     ]);
     const result = convertSensorDataToPointCloud(sd as unknown as SensorData);
     expect(result).toBeDefined();
-    expect(result!.frame_id).toBe("virtual_mounting_position");
+    expect(result!.frame_id).toBe("virtual_mounting_position_1");
     expect(result!.data.byteLength).toBe(16);
   });
 
   it("does not throw on malformed input", () => {
     const bad = { timestamp: { seconds: 0, nanos: 0 } } as unknown as SensorData;
     expect(() => convertSensorDataToPointCloud(bad)).not.toThrow();
+  });
+
+  it("uses fallback frame_id when sensor_id is 0", () => {
+    const sd = makeSensorData([
+      { position: { distance: 5, azimuth: 0, elevation: 0 }, snr: 10, rcs: 5 },
+    ]);
+    (sd as any).sensor_id = { value: 0 };
+    const result = buildPointCloudFromSensorData(sd);
+    expect(result).toBeDefined();
+    expect(result!.frame_id).toBe("virtual_mounting_position");
+  });
+
+  it("uses per-sensor frame_id for different sensor_ids", () => {
+    const det = [{ position: { distance: 5, azimuth: 0, elevation: 0 }, snr: 10, rcs: 5 }];
+    const sd1 = makeSensorData(det);
+    const sd2 = makeSensorData(det);
+    (sd2 as any).sensor_id = { value: 2 };
+
+    const r1 = buildPointCloudFromSensorData(sd1);
+    const r2 = buildPointCloudFromSensorData(sd2);
+    expect(r1!.frame_id).toBe("virtual_mounting_position_1");
+    expect(r2!.frame_id).toBe("virtual_mounting_position_2");
   });
 });
