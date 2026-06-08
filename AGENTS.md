@@ -47,7 +47,8 @@
 - Common types in history: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`.
 - **Always sign commits**: use `git commit -s -S` (DCO sign-off + GPG signature) for every commit.
 - **Never mention "Copilot"** in commit messages, PR descriptions, code comments, or any other repository content. Do not add `Co-authored-by: Copilot` trailers.
-- PRs should include a short summary, testing notes (e.g., `yarn test`, `yarn lint`), and link related issues. CODEOWNERS are listed in `CODEOWNERS`; follow the repo’s required review rules.
+- **Documentation drift check**: When changing behavior (frame names, output formats, conventions), always grep `docs/` and code comments for references to the old behavior and update them in the same commit.
+- PRs should include a short summary, testing notes (e.g., `yarn test`, `yarn lint`), and link related issues. CODEOWNERS are listed in `CODEOWNERS`; follow the repo's required review rules.
 
 ## Lint & Autofix Safety
 
