@@ -1,0 +1,3 @@
+[submodule "submodule/asam-openx-standards"]
+	path = submodule/asam-openx-standards
+	url = https://github.com/ASCS-eV/asam-openx-standards.git

@@ -70,6 +70,11 @@ This is a **Lichtblick extension** that registers message converters to transfor
 - `entityPrefixes.ts`: String prefixes for entity IDs (e.g., `PREFIX_LANE`, `PREFIX_TRAFFIC_LIGHT`)
 - `frameTransformNames.ts`: Coordinate frame naming constants
 
+**Standards** (`submodule/asam-openx-standards/`)
+- `standards/asam-osi/` — Authoritative ASAM OSI proto definitions and spec
+- `standards/asam-opendrive/` — ASAM OpenDRIVE spec (for cross-referencing geo-referencing)
+- Use these for verifying standard compliance rather than external URLs
+
 ### Message Converter Pattern
 
 Converters follow this structure:
