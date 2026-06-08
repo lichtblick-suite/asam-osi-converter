@@ -2,13 +2,14 @@ import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { MessageConverterAlert, MessageConverterContext, VariableValue } from "@lichtblick/suite";
 import { osiTimestampToTime } from "@utils/helper";
-import { eulerToQuaternion } from "@utils/math";
+import { eulerToQuaternion, invertQuaternion, pointRotationByQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
 
 import {
   OSI_GLOBAL_FRAME,
   OSI_EGO_VEHICLE_BB_CENTER_FRAME,
   OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
+  OSI_PROJ_FRAME,
 } from "@/config/frameTransformNames";
 
 export const convertGroundTruthToFrameTransforms = (
@@ -105,6 +106,13 @@ export const convertGroundTruthToFrameTransforms = (
       };
       emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
     }
+
+    // [OSI §GT] Publish global → proj_frame when proj_frame_offset is present.
+    // This allows OpenDRIVE map geometry (published in "proj_frame") to align
+    // with OSI objects (published in "global").
+    if (message.proj_frame_offset?.position) {
+      transforms.transforms.push(buildProjFrameTransform(message as DeepRequired<GroundTruth>));
+    }
   } catch (error) {
     console.error(
       "Error during FrameTransform message conversion:\n%s\nSkipping message! (Input message not compatible?)",
@@ -161,5 +169,46 @@ function buildEgoVehicleRearAxleFrameTransform(
       z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
     },
     rotation: eulerToQuaternion(0, 0, 0),
+  };
+}
+
+/**
+ * Build FrameTransform placing "proj_frame" (CRS world) as a child of "global" (OSI inertial).
+ *
+ * The proj_frame_offset defines where the "global" origin sits in "proj_frame" coordinates:
+ *   - position: translation of "global" origin in "proj_frame" (tx, ty, tz)
+ *   - yaw: rotation of "global" axes relative to "proj_frame"
+ *
+ * We publish parent="global", child="proj_frame" so that "global" stays the root of the
+ * frame tree (consistent with ego transforms: global → ego_vehicle_bb_center).
+ * This requires inverting the offset using the existing math helpers:
+ *   R_inv = invertQuaternion(R(yaw))
+ *   t_inv = -pointRotationByQuaternion(t, R_inv)
+ *
+ * Lichtblick resolves entities in "proj_frame" (OpenDRIVE map) through this chain,
+ * enabling alignment with OSI objects in "global".
+ */
+function buildProjFrameTransform(osiGroundTruth: DeepRequired<GroundTruth>): FrameTransform {
+  const offset = osiGroundTruth.proj_frame_offset;
+
+  // Original rotation: "global" rotated by yaw in "proj_frame"
+  const rotation = eulerToQuaternion(0, 0, offset.yaw);
+  // Inverse rotation: "proj_frame" rotated in "global"
+  const rotationInv = invertQuaternion(rotation);
+
+  // Inverse translation: rotate original offset by inverse, then negate
+  const t = { x: offset.position.x, y: offset.position.y, z: offset.position.z };
+  const rotatedT = pointRotationByQuaternion(t, rotationInv);
+
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: OSI_GLOBAL_FRAME,
+    child_frame_id: OSI_PROJ_FRAME,
+    translation: {
+      x: -rotatedT.x,
+      y: -rotatedT.y,
+      z: -rotatedT.z,
+    },
+    rotation: rotationInv,
   };
 }
