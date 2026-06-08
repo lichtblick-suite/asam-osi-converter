@@ -184,3 +184,74 @@ describe("frameTransformConverter — host vehicle ID divergence", () => {
     );
   });
 });
+
+describe("frameTransformConverter — proj_frame_offset", () => {
+  it("publishes proj_frame transform when proj_frame_offset is present", () => {
+    const msg = minimalGroundTruth({
+      proj_frame_offset: {
+        position: { x: 349210.32, y: 5648717.38, z: 0 },
+        yaw: 0.029,
+      },
+    });
+
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, undefined);
+
+    // Should have 3 transforms: bb_center, rear_axle, proj_frame
+    expect(result.transforms).toHaveLength(3);
+
+    const projTransform = result.transforms.find(
+      (t) => t.parent_frame_id === "global" && t.child_frame_id === "proj_frame",
+    )!;
+    expect(projTransform).toBeDefined();
+
+    // Inverted offset: t_inv = -R(-yaw) * t
+    const yaw = 0.029;
+    const cosYaw = Math.cos(yaw);
+    const sinYaw = Math.sin(yaw);
+    const tx = 349210.32;
+    const ty = 5648717.38;
+    expect(projTransform.translation.x).toBeCloseTo(-(tx * cosYaw + ty * sinYaw), 2);
+    expect(projTransform.translation.y).toBeCloseTo(tx * sinYaw - ty * cosYaw, 2);
+    expect(projTransform.translation.z).toBeCloseTo(0, 6);
+  });
+
+  it("does not publish proj_frame transform when proj_frame_offset is missing", () => {
+    const msg = minimalGroundTruth();
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, undefined);
+
+    expect(result.transforms).toHaveLength(2);
+    const projTransform = result.transforms.find(
+      (t) => t.parent_frame_id === "global" && t.child_frame_id === "proj_frame",
+    );
+    expect(projTransform).toBeUndefined();
+  });
+
+  it("does not publish proj_frame transform when position is missing from offset", () => {
+    const msg = minimalGroundTruth({
+      proj_frame_offset: { yaw: 0.5 },
+    });
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, undefined);
+
+    expect(result.transforms).toHaveLength(2);
+  });
+
+  it("handles proj_frame_offset with zero yaw", () => {
+    const msg = minimalGroundTruth({
+      proj_frame_offset: {
+        position: { x: 1000, y: 2000, z: 50 },
+      },
+    });
+
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, undefined);
+    expect(result.transforms).toHaveLength(3);
+
+    const projTransform = result.transforms.find(
+      (t) => t.parent_frame_id === "global" && t.child_frame_id === "proj_frame",
+    )!;
+    expect(projTransform).toBeDefined();
+    // With yaw=0, inversion is simply negation
+    expect(projTransform.translation).toEqual({ x: -1000, y: -2000, z: -50 });
+    // rotation with yaw=0 inverted should still produce identity quaternion
+    expect(projTransform.rotation).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+  });
+});
