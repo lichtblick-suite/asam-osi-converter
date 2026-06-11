@@ -213,7 +213,7 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("registers the message converters", () => {
     activate(mockExtensionContext);
-    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(6);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(7);
   });
 
   it("registers GroundTruth SceneUpdate converter with 3D and Image panel settings", () => {

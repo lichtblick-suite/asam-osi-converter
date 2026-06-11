@@ -7,7 +7,7 @@ import { DeepRequired } from "ts-essentials";
 
 import {
   OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
-  OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
+  getSensorMountingFrameId,
 } from "@/config/frameTransformNames";
 
 export function convertSensorDataToFrameTransforms(
@@ -57,7 +57,7 @@ function buildVirtualMountingPositionFrameTransform(message: DeepRequired<Sensor
   return {
     timestamp: osiTimestampToTime(message.timestamp),
     parent_frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
-    child_frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
+    child_frame_id: getSensorMountingFrameId(message.sensor_id),
     translation: {
       x: mountingPosition.position.x,
       y: mountingPosition.position.y,
