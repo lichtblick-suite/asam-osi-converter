@@ -98,4 +98,30 @@ describe("multi-panel moving-object deletion (shared converter context)", () => 
     expect(scene3D.has("moving_object_1384")).toBe(false);
     expect(sceneImage.has("moving_object_1384")).toBe(false);
   });
+
+  it("removes a departed object from BOTH panels when both are at default settings", () => {
+    // Two unconfigured panels both have `topicConfig === undefined`, so both fall
+    // back to the shared `DEFAULT_CONFIG` key and share one consumer state. In
+    // Lichtblick both panels receive the *same* message object, which the
+    // converter relies on to compute deletions once and reuse them.
+    const ctx = createGroundTruthContext();
+    const scene3D = new PanelScene();
+    const sceneImage = new PanelScene();
+    const defaultEvent = () => ({ topicConfig: undefined }) as never;
+
+    const frame1 = groundTruth([
+      { id: 0, x: 0 },
+      { id: 1384, x: 50 },
+    ]);
+    scene3D.apply(convertGroundTruthToSceneUpdate(ctx, frame1, defaultEvent()));
+    sceneImage.apply(convertGroundTruthToSceneUpdate(ctx, frame1, defaultEvent()));
+    expect(scene3D.has("moving_object_1384")).toBe(true);
+    expect(sceneImage.has("moving_object_1384")).toBe(true);
+
+    const frame2 = groundTruth([{ id: 0, x: 0 }]);
+    scene3D.apply(convertGroundTruthToSceneUpdate(ctx, frame2, defaultEvent()));
+    sceneImage.apply(convertGroundTruthToSceneUpdate(ctx, frame2, defaultEvent()));
+    expect(scene3D.has("moving_object_1384")).toBe(false);
+    expect(sceneImage.has("moving_object_1384")).toBe(false);
+  });
 });

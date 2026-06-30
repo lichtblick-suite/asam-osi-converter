@@ -330,70 +330,92 @@ export function convertGroundTruthToSceneUpdate(
   state.previousConfigSignature = configSignature;
   const caching = config.caching;
 
-  // Deletions logic (comparing previous step's entities with current step's entities)
-  const deletions = [
-    ...getDeletedEntities(
-      osiGroundTruthReq.moving_object,
-      state.previousMovingObjectIds,
-      PREFIX_MOVING_OBJECT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.stationary_object,
-      state.previousStationaryObjectIds,
-      PREFIX_STATIONARY_OBJECT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.traffic_sign,
-      state.previousTrafficSignIds,
-      PREFIX_TRAFFIC_SIGN,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.traffic_light,
-      state.previousTrafficLightIds,
-      PREFIX_TRAFFIC_LIGHT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.road_marking,
-      state.previousRoadMarkingIds,
-      PREFIX_ROAD_MARKING,
-      timestamp,
-    ),
-    ...getCategoryDeletions(
-      osiGroundTruthReq.lane_boundary,
-      state.previousLaneBoundaryIds,
-      PREFIX_LANE_BOUNDARY,
-      timestamp,
-      { visible: config.showPhysicalLanes },
-    ),
-    ...getCategoryDeletions(
-      osiGroundTruthReq.logical_lane_boundary,
-      state.previousLogicalLaneBoundaryIds,
-      PREFIX_LOGICAL_LANE_BOUNDARY,
-      timestamp,
-      { visible: config.showLogicalLanes },
-    ),
-    ...getCategoryDeletions(osiGroundTruthReq.lane, state.previousLaneIds, PREFIX_LANE, timestamp, {
-      visible: config.showPhysicalLanes,
-    }),
-    ...getCategoryDeletions(
-      osiGroundTruthReq.logical_lane,
-      state.previousLogicalLaneIds,
-      PREFIX_LOGICAL_LANE,
-      timestamp,
-      { visible: config.showLogicalLanes },
-    ),
-    ...getCategoryDeletions(
-      osiGroundTruthReq.reference_line,
-      state.previousReferenceLineIds,
-      PREFIX_REFERENCE_LINE,
-      timestamp,
-      { visible: config.showReferenceLines },
-    ),
-  ];
+  // Deletions logic (comparing previous step's entities with current step's entities).
+  //
+  // Computed once per message object per consumer state: when several panels
+  // share one state (e.g. two panels both at default settings, both resolving to
+  // `DEFAULT_CONFIG`), Lichtblick hands them the same message object. Only the
+  // first call diffs the previous-frame id sets; the others reuse the result, so
+  // a departed entity is deleted in every panel instead of only the first.
+  let deletions: PartialSceneEntity[];
+  if (
+    state.previousDeletionMessage === osiGroundTruth &&
+    state.previousDeletionResult != undefined
+  ) {
+    deletions = state.previousDeletionResult;
+  } else {
+    deletions = [
+      ...getDeletedEntities(
+        osiGroundTruthReq.moving_object,
+        state.previousMovingObjectIds,
+        PREFIX_MOVING_OBJECT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.stationary_object,
+        state.previousStationaryObjectIds,
+        PREFIX_STATIONARY_OBJECT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.traffic_sign,
+        state.previousTrafficSignIds,
+        PREFIX_TRAFFIC_SIGN,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.traffic_light,
+        state.previousTrafficLightIds,
+        PREFIX_TRAFFIC_LIGHT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.road_marking,
+        state.previousRoadMarkingIds,
+        PREFIX_ROAD_MARKING,
+        timestamp,
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.lane_boundary,
+        state.previousLaneBoundaryIds,
+        PREFIX_LANE_BOUNDARY,
+        timestamp,
+        { visible: config.showPhysicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.logical_lane_boundary,
+        state.previousLogicalLaneBoundaryIds,
+        PREFIX_LOGICAL_LANE_BOUNDARY,
+        timestamp,
+        { visible: config.showLogicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.lane,
+        state.previousLaneIds,
+        PREFIX_LANE,
+        timestamp,
+        {
+          visible: config.showPhysicalLanes,
+        },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.logical_lane,
+        state.previousLogicalLaneIds,
+        PREFIX_LOGICAL_LANE,
+        timestamp,
+        { visible: config.showLogicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.reference_line,
+        state.previousReferenceLineIds,
+        PREFIX_REFERENCE_LINE,
+        timestamp,
+        { visible: config.showReferenceLines },
+      ),
+    ];
+    state.previousDeletionMessage = osiGroundTruth;
+    state.previousDeletionResult = deletions;
+  }
 
   // Frame cache is partitioned by config signature to prevent cross-config reuse.
   // Respect `caching=false` by skipping frame-level cache reads/writes entirely.

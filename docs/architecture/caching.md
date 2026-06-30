@@ -120,6 +120,8 @@ Even across _different_ configs, the expensive per-feature geometry is still sha
 
 A single shared set is **incorrect**, not merely slower: panel invocation order is non-deterministic, so whichever panel converts first would consume the deletion and leave the others showing a stale entity. This previously caused a moving object that left the data to disappear in one panel while remaining in the other.
 
+Two panels that are both at **default settings** are a special case: each has `topicConfig === undefined`, so both fall back to the shared `DEFAULT_CONFIG` key and therefore share one state. To keep deletions correct there, the deletion computation is **idempotent per message object** — both panels receive the same `GroundTruth` object, so only the first call diffs the previous-frame id sets; the others reuse the cached result (`state.previousDeletionMessage` / `previousDeletionResult`) instead of re-diffing.
+
 :::note[Why we can't "compute once per timestamp"]
 
 Lichtblick invokes message converters **per subscribing panel**, not once per message. We cannot change that from inside an extension. What we _can_ do — and do — is make the heavy work message-keyed (geometry caches shared across panels) while keeping the genuinely panel-specific work (config-gated assembly and per-scene deletions) cheap and isolated.

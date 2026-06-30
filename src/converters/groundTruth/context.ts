@@ -14,6 +14,8 @@ export function createGroundTruthState(): GroundTruthState {
     previousReferenceLineIds: new Set(),
     previousConfig: undefined,
     previousConfigSignature: undefined,
+    previousDeletionMessage: undefined,
+    previousDeletionResult: undefined,
   };
 }
 

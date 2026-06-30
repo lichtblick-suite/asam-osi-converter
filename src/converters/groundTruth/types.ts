@@ -46,6 +46,17 @@ export interface GroundTruthState {
   previousReferenceLineIds: Set<number>;
   previousConfig?: GroundTruthPanelSettings;
   previousConfigSignature?: string;
+  /**
+   * The last GroundTruth message for which deletions were computed, and the
+   * resulting deletions. Used to make deletion computation idempotent per
+   * message: when several panels share one state (e.g. two panels both at
+   * default settings, which both resolve to `DEFAULT_CONFIG`), they all receive
+   * the same message object, so only the first should diff the previous-frame id
+   * sets. The others reuse the result instead of re-diffing (which would mutate
+   * the id sets again and drop the deletions).
+   */
+  previousDeletionMessage?: GroundTruth;
+  previousDeletionResult?: PartialSceneEntity[];
 }
 
 export interface GroundTruthContext {
