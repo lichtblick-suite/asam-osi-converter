@@ -60,3 +60,47 @@ export function getDeletedEntities<T extends { id: { value: number } }>(
     type: SceneEntityDeletionType.MATCHING_ID,
   }));
 }
+
+/**
+ * Computes deletions for an entity category whose visibility can be toggled via
+ * panel settings (e.g. physical/logical lanes, reference lines).
+ *
+ * - When the category is `visible`, this behaves exactly like
+ *   {@link getDeletedEntities}: it deletes entities that were present in the
+ *   previous frame but are absent from the current data, and records the
+ *   current ids for the next comparison.
+ * - When the category is hidden, it deletes every id currently present in the
+ *   data (plus any id still tracked from a previous frame) and clears the
+ *   tracking set. Deleting the current data ids on every hidden frame makes
+ *   turning a category off reliably remove its entities even when a single
+ *   converter context is shared across multiple panels (e.g. the 3D and Image
+ *   panels both consuming SensorView). In that case the previous-frame id sets
+ *   are clobbered between panels, so relying on them alone can drop the
+ *   deletions and leave hidden entities stuck on screen.
+ *
+ * @param osiEntities - The array of entities from the current frame.
+ * @param previousFrameIds - The set of ids tracked from the previous frame.
+ * @param entityPrefix - The prefix used to build scene entity ids.
+ * @param timestamp - The timestamp to associate with the deletions.
+ * @param options.visible - Whether the category is currently shown.
+ */
+export function getCategoryDeletions<T extends { id: { value: number } }>(
+  osiEntities: DeepRequired<T[]>,
+  previousFrameIds: Set<number>,
+  entityPrefix: string,
+  timestamp: Time,
+  { visible }: { visible: boolean },
+): PartialSceneEntity[] {
+  if (visible) {
+    return getDeletedEntities(osiEntities, previousFrameIds, entityPrefix, timestamp);
+  }
+
+  const idsToDelete = new Set<number>(previousFrameIds);
+  osiEntities.forEach((entity) => idsToDelete.add(entity.id.value));
+  previousFrameIds.clear();
+  return Array.from(idsToDelete).map((id) => ({
+    id: generateSceneEntityId(entityPrefix, id),
+    timestamp,
+    type: SceneEntityDeletionType.MATCHING_ID,
+  }));
+}
