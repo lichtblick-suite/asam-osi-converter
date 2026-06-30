@@ -12,7 +12,7 @@ This page describes the end-to-end conversion flow for `osi3.GroundTruth → fox
 
 The converter reads panel settings from `event.topicConfig` (typed as `GroundTruthPanelSettings`). If no config is provided, it falls back to `DEFAULT_CONFIG`.
 
-A **config signature** (JSON-stringified config) is computed. If the signature differs from the previous frame, all caches are invalidated.
+A **config signature** (JSON-stringified config) is computed. If the signature differs from the previous frame, all caches are invalidated. The signature and the deletion-tracking state are held **per consumer** (per subscribing panel) — see [Multi-panel behavior](caching.md#multi-panel-behavior).
 
 ### 2. Host vehicle resolution
 
@@ -28,24 +28,24 @@ If caching is enabled, the converter checks a `WeakMap<GroundTruth, entities>` k
 
 ### 4. Deletion detection
 
-For each entity type, the converter compares current-frame entity IDs against a stored `Set<number>` from the previous frame. Missing IDs generate `SceneEntityDeletion` entries with the current timestamp.
+For each entity type, the converter compares current-frame entity IDs against a stored `Set<number>` from the previous frame. Missing IDs generate `SceneEntityDeletion` entries with the current timestamp. These sets are held **per consumer** (`ctx.consumerStates`), so each panel tracks its own scene — see [Multi-panel behavior](caching.md#multi-panel-behavior). Toggleable categories (lanes, logical lanes, reference lines) additionally emit deletions for the current data IDs while hidden, so turning a category off clears it regardless of previous-frame tracking.
 
 ### 5. Entity building
 
 Entities are built by feature modules in this order:
 
-| Step | Feature | Condition | Builder |
-|------|---------|-----------|---------|
-| 1 | Moving objects | Always | `buildMovingObjectEntity()` |
-| 2 | Stationary objects | Always | `buildStationaryObjectEntity()` |
-| 3 | Traffic signs | Always | `buildTrafficSignEntity()` |
-| 4 | Traffic lights | Always | `buildTrafficLightEntity()` |
-| 5 | Road markings | Always (STOP only) | `buildRoadMarkingEntity()` |
-| 6 | Lane boundaries | `showPhysicalLanes` | `buildLaneBoundaryEntity()` |
-| 7 | Lanes | `showPhysicalLanes` | `buildLaneEntity()` |
-| 8 | Logical lane boundaries | `showLogicalLanes` | `buildLogicalLaneBoundaryEntity()` |
-| 9 | Logical lanes | `showLogicalLanes` | `buildLogicalLaneEntity()` |
-| 10 | Reference lines | `showReferenceLines` | `buildReferenceLineEntity()` |
+| Step | Feature                 | Condition            | Builder                            |
+| ---- | ----------------------- | -------------------- | ---------------------------------- |
+| 1    | Moving objects          | Always               | `buildMovingObjectEntity()`        |
+| 2    | Stationary objects      | Always               | `buildStationaryObjectEntity()`    |
+| 3    | Traffic signs           | Always               | `buildTrafficSignEntity()`         |
+| 4    | Traffic lights          | Always               | `buildTrafficLightEntity()`        |
+| 5    | Road markings           | Always (STOP only)   | `buildRoadMarkingEntity()`         |
+| 6    | Lane boundaries         | `showPhysicalLanes`  | `buildLaneBoundaryEntity()`        |
+| 7    | Lanes                   | `showPhysicalLanes`  | `buildLaneEntity()`                |
+| 8    | Logical lane boundaries | `showLogicalLanes`   | `buildLogicalLaneBoundaryEntity()` |
+| 9    | Logical lanes           | `showLogicalLanes`   | `buildLogicalLaneEntity()`         |
+| 10   | Reference lines         | `showReferenceLines` | `buildReferenceLineEntity()`       |
 
 ### 6. Geometry cache reuse
 
@@ -64,7 +64,7 @@ See [Caching](caching.md) for details.
 
 After building entities:
 
-- Update `previousXyzIds` sets for next frame's deletion detection
+- Update the per-consumer `previousXyzIds` sets for next frame's deletion detection
 - Store current config and config signature
 - Populate frame cache and geometry caches
 

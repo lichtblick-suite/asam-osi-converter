@@ -12,12 +12,12 @@ The converter uses a multi-layer caching system to avoid redundant work across f
 
 **Purpose:** Skip entire conversion if the same message object arrives again with the same config.
 
-| Property | Value |
-|----------|-------|
-| Structure | `Map<configSignature, WeakMap<GroundTruth, PartialSceneEntity[]>>` |
-| Key | Config signature (outer), message object reference (inner) |
-| Hit condition | Same config + same message object identity |
-| Invalidation | Outer map entry cleared when config signature changes |
+| Property      | Value                                                              |
+| ------------- | ------------------------------------------------------------------ |
+| Structure     | `Map<configSignature, WeakMap<GroundTruth, PartialSceneEntity[]>>` |
+| Key           | Config signature (outer), message object reference (inner)         |
+| Hit condition | Same config + same message object identity                         |
+| Invalidation  | Outer map entry cleared when config signature changes              |
 
 The `WeakMap` allows garbage collection of message objects no longer referenced by the runtime.
 
@@ -25,23 +25,23 @@ The `WeakMap` allows garbage collection of message objects no longer referenced 
 
 **Purpose:** Reuse rendered lane boundary entities when the set of boundaries hasn't changed.
 
-| Property | Value |
-|----------|-------|
-| Structure | `Map<string, PartialSceneEntity[]>` |
-| Key | Hash of all `lane_boundary[].id` values |
-| Hit condition | Same set of boundary IDs (regardless of data changes) |
-| Invalidation | Cleared on config change or when `caching` is disabled |
+| Property      | Value                                                  |
+| ------------- | ------------------------------------------------------ |
+| Structure     | `Map<string, PartialSceneEntity[]>`                    |
+| Key           | Hash of all `lane_boundary[].id` values                |
+| Hit condition | Same set of boundary IDs (regardless of data changes)  |
+| Invalidation  | Cleared on config change or when `caching` is disabled |
 
 ### Lane cache
 
 **Purpose:** Reuse rendered lane entities when both lanes and their referenced boundaries are unchanged.
 
-| Property | Value |
-|----------|-------|
-| Structure | `Map<string, PartialSceneEntity[]>` |
-| Key | Hash of all `lane[].id` values |
-| Hit condition | Boundary cache was hit **and** same set of lane IDs |
-| Invalidation | Cleared on config change; depends on boundary cache state |
+| Property      | Value                                                     |
+| ------------- | --------------------------------------------------------- |
+| Structure     | `Map<string, PartialSceneEntity[]>`                       |
+| Key           | Hash of all `lane[].id` values                            |
+| Hit condition | Boundary cache was hit **and** same set of lane IDs       |
+| Invalidation  | Cleared on config change; depends on boundary cache state |
 
 :::note[Cache dependency]
 
@@ -57,12 +57,12 @@ Same pattern as physical lane caches, for `LogicalLaneBoundary` and `LogicalLane
 
 **Purpose:** Reuse loaded 3D model primitives across frames.
 
-| Property | Value |
-|----------|-------|
-| Structure | `Map<string, ModelPrimitive>` |
-| Key | `defaultModelPath + model_reference` (full file path) |
-| Hit condition | Same model path |
-| Invalidation | Cleared on config change |
+| Property      | Value                                                 |
+| ------------- | ----------------------------------------------------- |
+| Structure     | `Map<string, ModelPrimitive>`                         |
+| Key           | `defaultModelPath + model_reference` (full file path) |
+| Hit condition | Same model path                                       |
+| Invalidation  | Cleared on config change                              |
 
 ## Invalidation triggers
 
@@ -96,3 +96,32 @@ New frame arrives
 - **Static scene** (boundary/lane cache hits): Only moving objects, signs, and lights are rebuilt
 - **Config change**: Full rebuild of all entities (unavoidable)
 - **Typical frame**: Moving objects rebuilt (they change position), geometry reused from cache
+
+## Multi-panel behavior
+
+A single converter instance (one `GroundTruthContext`) is shared by **every panel** that subscribes to the topic. The 3D panel and the Image (camera) panel are separate `PanelExtensionAdapter` instances; each one invokes the converter **independently, once per render tick**, passing its own `event.topicConfig`. Lichtblick does not deduplicate conversion across panels, and the message pipeline hands each subscriber its own array of **shared message references** — so both panels call the converter with the **same `GroundTruth` object**.
+
+### Why the frame cache is keyed by config, not just the message
+
+The cached value is the rendered `SceneUpdate`, which is a function of **(message, config)** — not the message alone. The same `GroundTruth` yields different entities depending on the panel's settings:
+
+- `showPhysicalLanes` / `showLogicalLanes` / `showReferenceLines` — whether those categories appear at all
+- `showBoundingBox` vs `show3dModels` — cubes vs glTF models for objects
+- `showAxes` — whether axis arrows are added
+- `defaultModelPath` — the model URLs
+
+So two panels with **different** settings legitimately need **different** results from the same message and cannot share a cached `SceneUpdate`. Two panels with the **same** settings share a `configSignature` and therefore reuse the frame cache **across panels** (the second panel gets a cache hit).
+
+Even across _different_ configs, the expensive per-feature geometry is still shared: lane/boundary/model entities are keyed by **data content** (entity IDs / model path), so whichever panel converts first builds them and the other reuses them. Only the cheap final assembly (which categories to concatenate, per-object cube primitives) is redone per config. Because the config signature is tracked **per consumer** (see below), two panels with different settings no longer thrash the shared caches.
+
+### Why deletions are tracked per consumer
+
+`SceneEntityDeletion`s are a **per-scene delta** — "what to remove from _this panel's_ accumulated scene since _its_ last frame" — not a per-timestamp value. Each panel keeps its own scene, and the same timestamp can require different deletions per panel (e.g. one panel just toggled a category off and must delete it; the other did not). The `previous*Ids` sets therefore live in a per-consumer `GroundTruthState`, stored in `ctx.consumerStates` keyed by the panel's `topicConfig` object identity (falling back to `DEFAULT_CONFIG`).
+
+A single shared set is **incorrect**, not merely slower: panel invocation order is non-deterministic, so whichever panel converts first would consume the deletion and leave the others showing a stale entity. This previously caused a moving object that left the data to disappear in one panel while remaining in the other.
+
+:::note[Why we can't "compute once per timestamp"]
+
+Lichtblick invokes message converters **per subscribing panel**, not once per message. We cannot change that from inside an extension. What we _can_ do — and do — is make the heavy work message-keyed (geometry caches shared across panels) while keeping the genuinely panel-specific work (config-gated assembly and per-scene deletions) cheap and isolated.
+
+:::
