@@ -24,10 +24,10 @@ import {
   createRenderedPhysicalLaneCacheKey,
 } from "@utils/cacheKeys";
 import { convertPathToFileUrl, osiTimestampToTime } from "@utils/helper";
-import { getDeletedEntities, PartialSceneEntity } from "@utils/scene";
+import { getCategoryDeletions, getDeletedEntities, PartialSceneEntity } from "@utils/scene";
 import { DeepPartial, DeepRequired } from "ts-essentials";
 
-import { createGroundTruthContext } from "./context";
+import { createGroundTruthContext, getConsumerState } from "./context";
 import { DEFAULT_CONFIG } from "./panelSettings";
 import {
   GroundTruthPanelSettings,
@@ -257,14 +257,8 @@ export function convertGroundTruthToSceneUpdate(
   hostVehicleIdFallback?: number,
   emitAlert?: MessageConverterEmitAlert,
 ): DeepPartial<SceneUpdate> {
-  const {
-    laneBoundaryCache,
-    laneCache,
-    logicalLaneBoundaryCache,
-    logicalLaneCache,
-    modelCache,
-    state,
-  } = ctx;
+  const { laneBoundaryCache, laneCache, logicalLaneBoundaryCache, logicalLaneCache, modelCache } =
+    ctx;
 
   const osiGroundTruthReq = osiGroundTruth as DeepRequired<GroundTruth>;
   const timestamp = osiTimestampToTime(osiGroundTruthReq.timestamp);
@@ -300,6 +294,16 @@ export function convertGroundTruthToSceneUpdate(
   }
 
   const config = (event?.topicConfig as GroundTruthPanelSettings | undefined) ?? DEFAULT_CONFIG;
+
+  // Deletion tracking (previous-frame entity ids + config signature) must be
+  // isolated per consumer. A single converter instance is shared across every
+  // panel subscribed to this schema (e.g. the 3D and Image panels both consume
+  // SensorView), but each panel renders into its own scene. `config` is the
+  // panel's stable `topicConfig` object (or the shared `DEFAULT_CONFIG`), so it
+  // is a safe per-consumer key. Sharing one state lets the first panel to
+  // convert consume a deletion, leaving the others showing a stale entity.
+  const state = getConsumerState(ctx, config);
+
   // Cache signature ties caches to settings so data is not reused across different panel settings
   const configSignature = JSON.stringify({
     caching: config.caching,
@@ -326,69 +330,99 @@ export function convertGroundTruthToSceneUpdate(
   state.previousConfigSignature = configSignature;
   const caching = config.caching;
 
-  // Deletions logic (comparing previous step's entities with current step's entities)
-  const deletions = [
-    ...getDeletedEntities(
-      osiGroundTruthReq.moving_object,
-      state.previousMovingObjectIds,
-      PREFIX_MOVING_OBJECT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.stationary_object,
-      state.previousStationaryObjectIds,
-      PREFIX_STATIONARY_OBJECT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.traffic_sign,
-      state.previousTrafficSignIds,
-      PREFIX_TRAFFIC_SIGN,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.traffic_light,
-      state.previousTrafficLightIds,
-      PREFIX_TRAFFIC_LIGHT,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      osiGroundTruthReq.road_marking,
-      state.previousRoadMarkingIds,
-      PREFIX_ROAD_MARKING,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      config.showPhysicalLanes ? osiGroundTruthReq.lane_boundary : [],
-      state.previousLaneBoundaryIds,
-      PREFIX_LANE_BOUNDARY,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      config.showLogicalLanes ? osiGroundTruthReq.logical_lane_boundary : [],
-      state.previousLogicalLaneBoundaryIds,
-      PREFIX_LOGICAL_LANE_BOUNDARY,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      config.showPhysicalLanes ? osiGroundTruthReq.lane : [],
-      state.previousLaneIds,
-      PREFIX_LANE,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      config.showLogicalLanes ? osiGroundTruthReq.logical_lane : [],
-      state.previousLogicalLaneIds,
-      PREFIX_LOGICAL_LANE,
-      timestamp,
-    ),
-    ...getDeletedEntities(
-      config.showReferenceLines ? osiGroundTruthReq.reference_line : [],
-      state.previousReferenceLineIds,
-      PREFIX_REFERENCE_LINE,
-      timestamp,
-    ),
-  ];
+  // Deletions logic (comparing previous step's entities with current step's entities).
+  //
+  // TODO(lichtblick-suite/lichtblick#1195): This per-consumer, data-driven
+  // deletion tracking is a workaround. SceneUpdate converters are forced to be
+  // stateful (and per-consumer) to emit deletions when entities leave the data,
+  // which is really protocol/visualization-state concern rather than pure
+  // transformation. Remove once the framework supports self-contained scene
+  // updates / framework-managed entity lifecycle.
+  //
+  // Computed once per message object per consumer state: when several panels
+  // share one state (e.g. two panels both at default settings, both resolving to
+  // `DEFAULT_CONFIG`), Lichtblick hands them the same message object. Only the
+  // first call diffs the previous-frame id sets; the others reuse the result, so
+  // a departed entity is deleted in every panel instead of only the first.
+  let deletions: PartialSceneEntity[];
+  if (
+    state.previousDeletionMessage === osiGroundTruth &&
+    state.previousDeletionResult != undefined
+  ) {
+    deletions = state.previousDeletionResult;
+  } else {
+    deletions = [
+      ...getDeletedEntities(
+        osiGroundTruthReq.moving_object,
+        state.previousMovingObjectIds,
+        PREFIX_MOVING_OBJECT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.stationary_object,
+        state.previousStationaryObjectIds,
+        PREFIX_STATIONARY_OBJECT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.traffic_sign,
+        state.previousTrafficSignIds,
+        PREFIX_TRAFFIC_SIGN,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.traffic_light,
+        state.previousTrafficLightIds,
+        PREFIX_TRAFFIC_LIGHT,
+        timestamp,
+      ),
+      ...getDeletedEntities(
+        osiGroundTruthReq.road_marking,
+        state.previousRoadMarkingIds,
+        PREFIX_ROAD_MARKING,
+        timestamp,
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.lane_boundary,
+        state.previousLaneBoundaryIds,
+        PREFIX_LANE_BOUNDARY,
+        timestamp,
+        { visible: config.showPhysicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.logical_lane_boundary,
+        state.previousLogicalLaneBoundaryIds,
+        PREFIX_LOGICAL_LANE_BOUNDARY,
+        timestamp,
+        { visible: config.showLogicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.lane,
+        state.previousLaneIds,
+        PREFIX_LANE,
+        timestamp,
+        {
+          visible: config.showPhysicalLanes,
+        },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.logical_lane,
+        state.previousLogicalLaneIds,
+        PREFIX_LOGICAL_LANE,
+        timestamp,
+        { visible: config.showLogicalLanes },
+      ),
+      ...getCategoryDeletions(
+        osiGroundTruthReq.reference_line,
+        state.previousReferenceLineIds,
+        PREFIX_REFERENCE_LINE,
+        timestamp,
+        { visible: config.showReferenceLines },
+      ),
+    ];
+    state.previousDeletionMessage = osiGroundTruth;
+    state.previousDeletionResult = deletions;
+  }
 
   // Frame cache is partitioned by config signature to prevent cross-config reuse.
   // Respect `caching=false` by skipping frame-level cache reads/writes entirely.
