@@ -6,6 +6,10 @@ import { DeepRequired } from "ts-essentials";
 jest.mock("@features/trafficlights", () => ({ buildTrafficLightEntity: jest.fn(() => undefined) }));
 jest.mock("@features/trafficsigns", () => ({ buildTrafficSignEntity: jest.fn(() => undefined) }));
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 function movingObject(id: number, x: number) {
   return {
     id: { value: id },

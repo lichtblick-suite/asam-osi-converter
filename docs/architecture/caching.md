@@ -126,4 +126,6 @@ Two panels that are both at **default settings** are a special case: each has `t
 
 Lichtblick invokes message converters **per subscribing panel**, not once per message. We cannot change that from inside an extension. What we _can_ do — and do — is make the heavy work message-keyed (geometry caches shared across panels) while keeping the genuinely panel-specific work (config-gated assembly and per-scene deletions) cheap and isolated.
 
+This per-consumer, data-driven deletion tracking is a workaround for a framework limitation — SceneUpdate converters are forced to be stateful to emit deletions. Tracked upstream in [lichtblick-suite/lichtblick#1195](https://github.com/lichtblick-suite/lichtblick/issues/1195); it can be simplified once the framework supports self-contained scene updates.
+
 :::

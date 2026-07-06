@@ -332,6 +332,13 @@ export function convertGroundTruthToSceneUpdate(
 
   // Deletions logic (comparing previous step's entities with current step's entities).
   //
+  // TODO(lichtblick-suite/lichtblick#1195): This per-consumer, data-driven
+  // deletion tracking is a workaround. SceneUpdate converters are forced to be
+  // stateful (and per-consumer) to emit deletions when entities leave the data,
+  // which is really protocol/visualization-state concern rather than pure
+  // transformation. Remove once the framework supports self-contained scene
+  // updates / framework-managed entity lifecycle.
+  //
   // Computed once per message object per consumer state: when several panels
   // share one state (e.g. two panels both at default settings, both resolving to
   // `DEFAULT_CONFIG`), Lichtblick hands them the same message object. Only the

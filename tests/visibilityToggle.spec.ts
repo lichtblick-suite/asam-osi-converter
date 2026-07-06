@@ -14,6 +14,10 @@ jest.mock("@features/trafficsigns", () => ({
   buildTrafficSignEntity: jest.fn(() => undefined),
 }));
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 const TIME = { sec: 1, nsec: 0 };
 
 type IdEntity = { id: { value: number } };
