@@ -2,13 +2,14 @@ import { FrameTransform, FrameTransforms } from "@foxglove/schemas";
 import { GroundTruth } from "@lichtblick/asam-osi-types";
 import { MessageConverterAlert, MessageConverterContext, VariableValue } from "@lichtblick/suite";
 import { osiTimestampToTime } from "@utils/helper";
-import { eulerToQuaternion } from "@utils/math";
+import { eulerToQuaternion, invertQuaternion, pointRotationByQuaternion } from "@utils/math";
 import { DeepRequired } from "ts-essentials";
 
 import {
   OSI_GLOBAL_FRAME,
   OSI_EGO_VEHICLE_BB_CENTER_FRAME,
   OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
+  OSI_PROJ_FRAME,
 } from "@/config/frameTransformNames";
 
 export const convertGroundTruthToFrameTransforms = (
@@ -53,57 +54,63 @@ export const convertGroundTruthToFrameTransforms = (
   }
 
   try {
-    // Return empty FrameTransforms if host vehicle id is not set
+    // Host-dependent ego transforms require a resolvable host vehicle.
+    // Host-independent transforms (e.g. global -> proj_frame) are handled below regardless.
     if (hostVehicleId == undefined) {
-      console.error("Missing host vehicle id GroundTruth message. Cannot build FrameTransforms.");
+      console.warn("Missing host vehicle id in GroundTruth message. Skipping ego FrameTransforms.");
       const alert: MessageConverterAlert = {
         severity: "warn",
-        message: "GroundTruth is missing host_vehicle_id",
-        tip: "FrameTransforms requires host_vehicle_id in GroundTruth or SensorView.",
+        message: "GroundTruth is missing host_vehicle_id; ego vehicle transforms skipped",
+        tip: "Set host_vehicle_id in GroundTruth or SensorView fallback. global→proj_frame is still published when proj_frame_offset is present.",
       };
       emitAlert?.(alert, "groundtruth-frametransforms-missing-host-vehicle-id");
-      return transforms;
-    }
-
-    // Find host vehicle once — reuse for all subsequent checks
-    const hostObject = message.moving_object?.find((obj) => obj.id?.value === hostVehicleId);
-
-    if (!hostObject) {
-      console.error("Host vehicle not found in moving objects");
-      const alert: MessageConverterAlert = {
-        severity: "warn",
-        message: "GroundTruth host vehicle not found in moving_object",
-        tip: "Ensure host_vehicle_id refers to an entry in moving_object.",
-      };
-      emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-not-found");
-      return transforms;
-    }
-
-    transforms.transforms.push(
-      buildEgoVehicleBBCenterFrameTransform(
-        message as DeepRequired<GroundTruth>,
-        hostObject as DeepRequired<GroundTruth>["moving_object"][number],
-      ),
-    );
-
-    // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
-    if (hostObject.vehicle_attributes?.bbcenter_to_rear) {
-      transforms.transforms.push(
-        buildEgoVehicleRearAxleFrameTransform(
-          message as DeepRequired<GroundTruth>,
-          hostObject as DeepRequired<GroundTruth>["moving_object"][number],
-        ),
-      );
     } else {
-      console.warn(
-        "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
-      );
-      const alert: MessageConverterAlert = {
-        severity: "info",
-        message: "GroundTruth ego vehicle has no bbcenter_to_rear",
-        tip: "Rear-axle FrameTransform is skipped when bbcenter_to_rear is missing.",
-      };
-      emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
+      // Find host vehicle once — reuse for all subsequent checks
+      const hostObject = message.moving_object?.find((obj) => obj.id?.value === hostVehicleId);
+
+      if (!hostObject) {
+        console.warn("Host vehicle not found in moving_object. Skipping ego FrameTransforms.");
+        const alert: MessageConverterAlert = {
+          severity: "warn",
+          message: "GroundTruth host vehicle not found in moving_object; ego transforms skipped",
+          tip: "Ensure host_vehicle_id refers to an entry in moving_object. global→proj_frame is still published when proj_frame_offset is present.",
+        };
+        emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-not-found");
+      } else {
+        transforms.transforms.push(
+          buildEgoVehicleBBCenterFrameTransform(
+            message as DeepRequired<GroundTruth>,
+            hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+          ),
+        );
+
+        // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+        if (hostObject.vehicle_attributes?.bbcenter_to_rear) {
+          transforms.transforms.push(
+            buildEgoVehicleRearAxleFrameTransform(
+              message as DeepRequired<GroundTruth>,
+              hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+            ),
+          );
+        } else {
+          console.warn(
+            "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
+          );
+          const alert: MessageConverterAlert = {
+            severity: "info",
+            message: "GroundTruth ego vehicle has no bbcenter_to_rear",
+            tip: "Rear-axle FrameTransform is skipped when bbcenter_to_rear is missing.",
+          };
+          emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
+        }
+      }
+    }
+
+    // [OSI §GT] Publish global → proj_frame when proj_frame_offset is present.
+    // This allows OpenDRIVE map geometry (published in "proj_frame") to align
+    // with OSI objects (published in "global").
+    if (message.proj_frame_offset?.position) {
+      transforms.transforms.push(buildProjFrameTransform(message as DeepRequired<GroundTruth>));
     }
   } catch (error) {
     console.error(
@@ -161,5 +168,46 @@ function buildEgoVehicleRearAxleFrameTransform(
       z: hostObject.vehicle_attributes.bbcenter_to_rear.z,
     },
     rotation: eulerToQuaternion(0, 0, 0),
+  };
+}
+
+/**
+ * Build FrameTransform placing "proj_frame" (CRS world) as a child of "global" (OSI inertial).
+ *
+ * The proj_frame_offset defines where the "global" origin sits in "proj_frame" coordinates:
+ *   - position: translation of "global" origin in "proj_frame" (tx, ty, tz)
+ *   - yaw: rotation of "global" axes relative to "proj_frame"
+ *
+ * We publish parent="global", child="proj_frame" so that "global" stays the root of the
+ * frame tree (consistent with ego transforms: global → ego_vehicle_bb_center).
+ * This requires inverting the offset using the existing math helpers:
+ *   R_inv = invertQuaternion(R(yaw))
+ *   t_inv = -pointRotationByQuaternion(t, R_inv)
+ *
+ * Lichtblick resolves entities in "proj_frame" (OpenDRIVE map) through this chain,
+ * enabling alignment with OSI objects in "global".
+ */
+function buildProjFrameTransform(osiGroundTruth: DeepRequired<GroundTruth>): FrameTransform {
+  const offset = osiGroundTruth.proj_frame_offset;
+
+  // Original rotation: "global" rotated by yaw in "proj_frame"
+  const rotation = eulerToQuaternion(0, 0, offset.yaw);
+  // Inverse rotation: "proj_frame" rotated in "global"
+  const rotationInv = invertQuaternion(rotation);
+
+  // Inverse translation: rotate original offset by inverse, then negate
+  const t = { x: offset.position.x, y: offset.position.y, z: offset.position.z };
+  const rotatedT = pointRotationByQuaternion(t, rotationInv);
+
+  return {
+    timestamp: osiTimestampToTime(osiGroundTruth.timestamp),
+    parent_frame_id: OSI_GLOBAL_FRAME,
+    child_frame_id: OSI_PROJ_FRAME,
+    translation: {
+      x: -rotatedT.x,
+      y: -rotatedT.y,
+      z: -rotatedT.z,
+    },
+    rotation: rotationInv,
   };
 }
