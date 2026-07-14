@@ -186,6 +186,48 @@ describe("frameTransformConverter — host vehicle ID divergence", () => {
 });
 
 describe("frameTransformConverter — proj_frame_offset", () => {
+  it("publishes only proj_frame transform when host vehicle is missing but proj_frame_offset exists", () => {
+    const msg = minimalGroundTruth({
+      host_vehicle_id: undefined,
+      proj_frame_offset: {
+        position: { x: 100, y: 200, z: 3 },
+        yaw: 0.2,
+      },
+    });
+    const { context, emitAlert } = mockContext();
+
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, context);
+
+    expect(result.transforms).toHaveLength(1);
+    expect(result.transforms[0]!.parent_frame_id).toBe("global");
+    expect(result.transforms[0]!.child_frame_id).toBe("proj_frame");
+    expect(emitAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: "warn" }),
+      "groundtruth-frametransforms-missing-host-vehicle-id",
+    );
+  });
+
+  it("publishes only proj_frame transform when host_vehicle_id is unresolved in moving_object", () => {
+    const msg = minimalGroundTruth({
+      host_vehicle_id: { value: 999 },
+      proj_frame_offset: {
+        position: { x: 100, y: 200, z: 3 },
+        yaw: 0.2,
+      },
+    });
+    const { context, emitAlert } = mockContext();
+
+    const result = convertGroundTruthToFrameTransforms(msg, undefined, undefined, context);
+
+    expect(result.transforms).toHaveLength(1);
+    expect(result.transforms[0]!.parent_frame_id).toBe("global");
+    expect(result.transforms[0]!.child_frame_id).toBe("proj_frame");
+    expect(emitAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: "warn" }),
+      "groundtruth-frametransforms-host-vehicle-not-found",
+    );
+  });
+
   it("publishes proj_frame transform when proj_frame_offset is present", () => {
     const msg = minimalGroundTruth({
       proj_frame_offset: {

@@ -54,57 +54,56 @@ export const convertGroundTruthToFrameTransforms = (
   }
 
   try {
-    // Return empty FrameTransforms if host vehicle id is not set
+    // Host-dependent ego transforms require a resolvable host vehicle.
+    // Host-independent transforms (e.g. global -> proj_frame) are handled below regardless.
     if (hostVehicleId == undefined) {
-      console.error("Missing host vehicle id GroundTruth message. Cannot build FrameTransforms.");
+      console.warn("Missing host vehicle id in GroundTruth message. Skipping ego FrameTransforms.");
       const alert: MessageConverterAlert = {
         severity: "warn",
-        message: "GroundTruth is missing host_vehicle_id",
-        tip: "FrameTransforms requires host_vehicle_id in GroundTruth or SensorView.",
+        message: "GroundTruth is missing host_vehicle_id; ego vehicle transforms skipped",
+        tip: "Set host_vehicle_id in GroundTruth or SensorView fallback. global→proj_frame is still published when proj_frame_offset is present.",
       };
       emitAlert?.(alert, "groundtruth-frametransforms-missing-host-vehicle-id");
-      return transforms;
-    }
-
-    // Find host vehicle once — reuse for all subsequent checks
-    const hostObject = message.moving_object?.find((obj) => obj.id?.value === hostVehicleId);
-
-    if (!hostObject) {
-      console.error("Host vehicle not found in moving objects");
-      const alert: MessageConverterAlert = {
-        severity: "warn",
-        message: "GroundTruth host vehicle not found in moving_object",
-        tip: "Ensure host_vehicle_id refers to an entry in moving_object.",
-      };
-      emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-not-found");
-      return transforms;
-    }
-
-    transforms.transforms.push(
-      buildEgoVehicleBBCenterFrameTransform(
-        message as DeepRequired<GroundTruth>,
-        hostObject as DeepRequired<GroundTruth>["moving_object"][number],
-      ),
-    );
-
-    // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
-    if (hostObject.vehicle_attributes?.bbcenter_to_rear) {
-      transforms.transforms.push(
-        buildEgoVehicleRearAxleFrameTransform(
-          message as DeepRequired<GroundTruth>,
-          hostObject as DeepRequired<GroundTruth>["moving_object"][number],
-        ),
-      );
     } else {
-      console.warn(
-        "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
-      );
-      const alert: MessageConverterAlert = {
-        severity: "info",
-        message: "GroundTruth ego vehicle has no bbcenter_to_rear",
-        tip: "Rear-axle FrameTransform is skipped when bbcenter_to_rear is missing.",
-      };
-      emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
+      // Find host vehicle once — reuse for all subsequent checks
+      const hostObject = message.moving_object?.find((obj) => obj.id?.value === hostVehicleId);
+
+      if (!hostObject) {
+        console.warn("Host vehicle not found in moving_object. Skipping ego FrameTransforms.");
+        const alert: MessageConverterAlert = {
+          severity: "warn",
+          message: "GroundTruth host vehicle not found in moving_object; ego transforms skipped",
+          tip: "Ensure host_vehicle_id refers to an entry in moving_object. global→proj_frame is still published when proj_frame_offset is present.",
+        };
+        emitAlert?.(alert, "groundtruth-frametransforms-host-vehicle-not-found");
+      } else {
+        transforms.transforms.push(
+          buildEgoVehicleBBCenterFrameTransform(
+            message as DeepRequired<GroundTruth>,
+            hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+          ),
+        );
+
+        // Add rear axle FrameTransform if bbcenter_to_rear is set in vehicle attributes of ego vehicle
+        if (hostObject.vehicle_attributes?.bbcenter_to_rear) {
+          transforms.transforms.push(
+            buildEgoVehicleRearAxleFrameTransform(
+              message as DeepRequired<GroundTruth>,
+              hostObject as DeepRequired<GroundTruth>["moving_object"][number],
+            ),
+          );
+        } else {
+          console.warn(
+            "bbcenter_to_rear not found in ego vehicle attributes. Cannot build rear axle FrameTransform.",
+          );
+          const alert: MessageConverterAlert = {
+            severity: "info",
+            message: "GroundTruth ego vehicle has no bbcenter_to_rear",
+            tip: "Rear-axle FrameTransform is skipped when bbcenter_to_rear is missing.",
+          };
+          emitAlert?.(alert, "groundtruth-frametransforms-missing-bbcenter-to-rear");
+        }
+      }
     }
 
     // [OSI §GT] Publish global → proj_frame when proj_frame_offset is present.
