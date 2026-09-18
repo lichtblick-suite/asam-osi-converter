@@ -1287,6 +1287,13 @@
   dependencies:
     undici-types "~7.18.0"
 
+"@types/proj4@^2.5.6":
+  version "2.19.0"
+  resolved "https://ddad.artifactory.cc.bmwgroup.net/artifactory/api/npm/external-npmjs-org-remote/@types/proj4/-/proj4-2.19.0.tgz#4aa8b5236ce09cc2fb4d3299d0f0c1f35ba37266"
+  integrity sha512-mirdnXu5sW9+IphQ4r+ZVii2JVLDbXgMp1lxqbiCppdgL22EwMwL4Dy/cyHVaJ2y/mi7LUQHghpILd3w3j2bnA==
+  dependencies:
+    proj4 "*"
+
 "@types/prop-types@*":
   version "15.7.15"
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.15.tgz#e6e5a86d602beaca71ce5163fadf5f95d70931c7"
@@ -4428,6 +4435,11 @@ merge-stream@^2.0.0:
   resolved "https://registry.yarnpkg.com/merge-stream/-/merge-stream-2.0.0.tgz#52823629a14dd00c9770fb6ad47dc6310f2c1f60"
   integrity sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==
 
+mgrs@1.0.0:
+  version "1.0.0"
+  resolved "https://ddad.artifactory.cc.bmwgroup.net/artifactory/api/npm/external-npmjs-org-remote/mgrs/-/mgrs-1.0.0.tgz#fb91588e78c90025672395cb40b25f7cd6ad1829"
+  integrity sha512-awNbTOqCxK1DBGjalK3xqWIstBZgN6fxsMSiXLs9/spqWkF2pAhb2rrYCFSsr1/tT7PhcDGjZndG8SWYn0byYA==
+
 micromatch@^4.0.0, micromatch@^4.0.4, micromatch@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/micromatch/-/micromatch-4.0.8.tgz#d66fa18f3a47076789320b9b1af32bd86d9fa202"
@@ -4869,6 +4881,14 @@ process-nextick-args@~2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
+
+proj4@*, proj4@^2.20.9:
+  version "2.20.9"
+  resolved "https://ddad.artifactory.cc.bmwgroup.net/artifactory/api/npm/external-npmjs-org-remote/proj4/-/proj4-2.20.9.tgz#73a00460772cdb5d1c931cf6009cb28fb7495a36"
+  integrity sha512-GLBGqXaTcdWnppre3o1sMmy4DcMGSGq/ng+9k2MTNddarRK6SveINqlqYzi3xEXuy06ljY1TTrC6H9C4f360IQ==
+  dependencies:
+    mgrs "1.0.0"
+    wkt-parser "^1.5.5"
 
 prompts@^2.0.1:
   version "2.4.2"
@@ -5924,6 +5944,11 @@ which@^2.0.1:
   integrity sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==
   dependencies:
     isexe "^2.0.0"
+
+wkt-parser@^1.5.5:
+  version "1.5.5"
+  resolved "https://ddad.artifactory.cc.bmwgroup.net/artifactory/api/npm/external-npmjs-org-remote/wkt-parser/-/wkt-parser-1.5.5.tgz#251a5b0ba289842a2e8d5b25049c57fb49fb9183"
+  integrity sha512-/zMYi94/7D7fxcOSlVmWn6vnOMj3Gq5d1xvVjaYOS9n6h0qOJ4I7YYVxBWYcH1vq9+suhqzXkn05Yx47zQNUIA==
 
 word-wrap@^1.2.5:
   version "1.2.5"
