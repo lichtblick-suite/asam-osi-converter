@@ -1,6 +1,17 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [1.1.0] — 2026-08-26
+
+### 🚀 Features
+
+- Convert OSI CameraSensorView raw images for the Lichtblick Image panel
+- Derive Foxglove camera calibration from OSI resolution and field of view
+- Emit camera mounting and optical coordinate frames without embedded GroundTruth
+- Convert OSI LidarSensorView reflections to Foxglove PointCloud messages
+- Emit LiDAR mounting coordinate frames for 3D visualization
+
 ## [1.0.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v1.0.1) — 2026-07-06
 
 ### 🏗️ Build
@@ -297,4 +308,3 @@ All notable changes to this project will be documented in this file.
 
 - Automate changelog creation and update (#18)
 ## [0.0.1](https://github.com/lichtblick-suite/asam-osi-converter/tree/v0.0.1) — 2024-10-18
-
