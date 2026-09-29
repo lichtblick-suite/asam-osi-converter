@@ -65,6 +65,8 @@ Converters are registered as [Lichtblick message converters](https://lichtblick-
 ## Converter delegation
 
 - **SensorView**: Extracts `msg.global_ground_truth` and delegates to the GroundTruth converter
+- **SensorView camera/LiDAR**: Converts camera images/calibration and LiDAR reflections
+  for the Image and 3D panels
 - **SensorData**: Limited implementation — only renders detected lane boundaries and displays a "not supported yet" text label
 
 ## Entity ID convention

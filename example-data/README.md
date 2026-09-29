@@ -8,6 +8,14 @@ Another option to create traces is the OpenPASS [gt-gen-simlator](https://gitlab
 
 ## Example traces
 
+### SensorView Camera and LiDAR
+
+**File Name:** sensorViewCameraLidar.mcap
+
+Minimal trace with four `CameraSensorView` topics and one `LidarSensorView`
+topic over three frames. Use it to review camera image, camera calibration,
+LiDAR point cloud, and sensor mounting frame visualization.
+
 ### Moving Host with Stop Line
 
 **File Name:** MovingHostWithStopLine.mcap

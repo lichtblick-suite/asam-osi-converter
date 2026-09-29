@@ -13,6 +13,12 @@ This extension reads OSI messages from [MCAP trace files](https://opensimulation
 * Install the extension in Lichtblick by dragging the `.foxe` file into the Lichtblick window.
 * Open a file/stream which is following the ASAM OSI standard.
 
+The extension converts `CameraSensorView.image_data` to `foxglove.RawImage` for
+the Image panel, supports packed `RGB_U8_LIN`, selected mono and U8 Bayer
+formats, derives pinhole `foxglove.CameraCalibration` messages from the OSI
+image dimensions and field of view, and converts `LidarSensorView.reflection`
+to `foxglove.PointCloud` for the 3D panel.
+
 ## Coding guidelines
 
 The code should follow the coding guidelines of Lichtblick. This includes the usage of typescript, prettier, eslint and the lichtblick-suite sdk.

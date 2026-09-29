@@ -33,6 +33,10 @@ Produces **1–2 transforms**:
 1. **Global → BB Center**: Uses `host_vehicle.base.position` and `host_vehicle.base.orientation`
 2. **BB Center → Rear Axle** *(conditional)*: Uses `host_vehicle.vehicle_attributes.bbcenter_to_rear` (pure translation in body frame). Only produced if `bbcenter_to_rear` is present.
 
+For SensorView, the converter also emits camera `mounting` and `optical` frames,
+and LiDAR mounting frames, derived from each view configuration. These frames
+are parented to `ego_vehicle_rear_axle` and use topic-derived, stable child IDs.
+
 ### SensorData
 
 Produces **1 transform**:
