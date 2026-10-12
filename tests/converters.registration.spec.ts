@@ -213,7 +213,7 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("registers the message converters", () => {
     activate(mockExtensionContext);
-    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(9);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(10);
   });
 
   it("registers GroundTruth SceneUpdate converter with 3D and Image panel settings", () => {
@@ -250,6 +250,18 @@ describe("OSI Visualizer: Message Converter", () => {
     const result = messageConverterArgs.converter(mockMessageData);
     expect(result.deletions).toBeDefined();
     expect(result.entities).toBeDefined();
+  });
+
+  it("registers SensorData radar point cloud conversion", () => {
+    activate(mockExtensionContext);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromSchemaName: "osi3.SensorData",
+        toSchemaName: "foxglove.PointCloud",
+        converter: expect.any(Function),
+        supportsLatestPerRenderTick: true,
+      }),
+    );
   });
 
   it("registers SensorView image, calibration, and point cloud converters", () => {

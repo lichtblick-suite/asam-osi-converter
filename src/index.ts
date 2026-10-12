@@ -9,6 +9,7 @@ import {
   convertSensorViewToPointCloud,
   generateGroundTruth3DPanelSettings,
   convertSensorDataToFrameTransforms,
+  convertSensorDataToPointCloud,
 } from "@converters";
 import { preloadDynamicTextures } from "@features/trafficsigns";
 import { ExtensionContext } from "@lichtblick/suite";
@@ -86,6 +87,12 @@ export function activate(extensionContext: ExtensionContext): void {
     fromSchemaName: "osi3.SensorView",
     toSchemaName: "foxglove.PointCloud",
     converter: convertSensorViewToPointCloud,
+    supportsLatestPerRenderTick: true,
+  });
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorData",
+    toSchemaName: "foxglove.PointCloud",
+    converter: convertSensorDataToPointCloud,
     supportsLatestPerRenderTick: true,
   });
 }

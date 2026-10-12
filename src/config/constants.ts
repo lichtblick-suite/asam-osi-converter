@@ -17,6 +17,7 @@ import { ColorCode, ColorCodeName } from "@utils/helper";
 //// COLOR CONFIG ////
 
 export const HOST_OBJECT_COLOR: Color = ColorCode("b", 0.5);
+export const DETECTED_MOVING_OBJECT_COLOR: Color = ColorCode("c", 0.5);
 export const MOVING_OBJECT_COLOR: Record<MovingObject_Type, Color> = {
   [MovingObject_Type.UNKNOWN]: ColorCode("gray", 0.5),
   [MovingObject_Type.OTHER]: ColorCode("c", 0.5),

@@ -11,16 +11,22 @@ import {
   VariableValue,
 } from "@lichtblick/suite";
 import { ColorCode } from "@utils/helper";
+import { objectToCubePrimitive } from "@utils/primitives/objects";
 import { PartialSceneEntity } from "@utils/scene";
 import { DeepRequired, DeepPartial } from "ts-essentials";
 
-import { PREFIX_DETECTED_LANE_BOUNDARIES } from "@/config/entityPrefixes";
+import { DETECTED_MOVING_OBJECT_COLOR } from "@/config/constants";
+import {
+  PREFIX_DETECTED_LANE_BOUNDARIES,
+  PREFIX_DETECTED_MOVING_OBJECTS,
+} from "@/config/entityPrefixes";
 import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
 
 export function buildSensorDataSceneEntities(
   osiSensorData: DeepRequired<SensorData>,
   alertHook?: MessageConverterEmitAlert,
 ): PartialSceneEntity[] {
+  const sensorData: SensorData = osiSensorData;
   const ToPoint3 = (boundary: DeepRequired<LaneBoundary_BoundaryPoint>): Point3 => {
     return { x: boundary.position.x, y: boundary.position.y, z: boundary.position.z };
   };
@@ -57,7 +63,7 @@ export function buildSensorDataSceneEntities(
     {
       severity: "info",
       message: "SensorData conversion is in early stages",
-      tip: "Currently, only lane boundaries are visualized from SensorData. More features will be added in the future.",
+      tip: "Currently, lane boundaries and moving object bounding boxes are visualized from SensorData. More features will be added in the future.",
     },
     "sensordata-conversion-info",
   );
@@ -68,9 +74,39 @@ export function buildSensorDataSceneEntities(
     id: PREFIX_DETECTED_LANE_BOUNDARIES,
     lifetime: { sec: 0, nsec: 0 },
     frame_locked: true,
-    lines: makePrimitiveLines(osiSensorData.lane_boundary, 1.0),
+    lines: makePrimitiveLines(
+      (sensorData.lane_boundary ?? []) as DeepRequired<DetectedLaneBoundary>[],
+      1.0,
+    ),
   };
-  return [road_output_scene_update];
+  const movingObjects: PartialSceneEntity = {
+    timestamp: road_output_scene_update.timestamp,
+    frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
+    id: PREFIX_DETECTED_MOVING_OBJECTS,
+    lifetime: { sec: 0, nsec: 0 },
+    frame_locked: true,
+    // Replace the full set of boxes each frame, including when no objects remain.
+    cubes: (sensorData.moving_object ?? []).flatMap(({ base }) => {
+      if (base?.position == undefined || base.dimension == undefined) {
+        return [];
+      }
+      return [
+        objectToCubePrimitive(
+          base.position.x ?? 0,
+          base.position.y ?? 0,
+          base.position.z ?? 0,
+          base.orientation?.roll ?? 0,
+          base.orientation?.pitch ?? 0,
+          base.orientation?.yaw ?? 0,
+          base.dimension.width ?? 0,
+          base.dimension.length ?? 0,
+          base.dimension.height ?? 0,
+          DETECTED_MOVING_OBJECT_COLOR,
+        ),
+      ];
+    }),
+  };
+  return [road_output_scene_update, movingObjects];
 }
 
 export const convertSensorDataToSceneUpdate = (
