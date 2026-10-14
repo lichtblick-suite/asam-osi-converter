@@ -1,7 +1,7 @@
 import {
   convertGroundTruthToFrameTransforms,
   registerGroundTruthConverter,
-  convertSensorDataToSceneUpdate,
+  registerSensorDataConverter,
   registerSensorViewConverter,
   convertSensorViewToFrameTransforms,
   convertSensorViewToRawImage,
@@ -41,10 +41,11 @@ export function activate(extensionContext: ExtensionContext): void {
     supportsLatestPerRenderTick: true,
   });
 
+  const sensorDataConverter = registerSensorDataConverter();
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: convertSensorDataToSceneUpdate,
+    converter: sensorDataConverter,
     supportsLatestPerRenderTick: true,
   });
 

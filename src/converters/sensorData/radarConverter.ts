@@ -55,6 +55,11 @@ export function convertSensorDataToPointCloud(
       continue;
     }
     const horizontalDistance = distance * Math.cos(elevation);
+    // OSI identifiers are uint64 values and may be represented as bigint by
+    // some decoders. PointCloud currently has no uint64 field, so normalize
+    // the value before writing the UINT32 field and preserve cloud conversion
+    // even when the identifier is absent or malformed.
+    const objectId = Number(detection.object_id?.value ?? 0);
     values.push(
       horizontalDistance * Math.cos(azimuth),
       horizontalDistance * Math.sin(azimuth),
@@ -62,13 +67,19 @@ export function convertSensorDataToPointCloud(
       finite(detection.radial_velocity) ? detection.radial_velocity : 0,
       finite(detection.rcs) ? detection.rcs : 0,
       finite(detection.snr) ? detection.snr : 0,
+      Number.isFinite(objectId) ? objectId : 0,
     );
   }
 
   const data = new Uint8Array(values.length * 4);
   const view = new DataView(data.buffer);
   values.forEach((value, index) => {
-    view.setFloat32(index * 4, value, true);
+    const offset = index * 4;
+    if (index % 7 === 6) {
+      view.setUint32(offset, value, true);
+    } else {
+      view.setFloat32(offset, value, true);
+    }
   });
 
   return {
@@ -78,7 +89,7 @@ export function convertSensorDataToPointCloud(
       position: { x: 0, y: 0, z: 0 },
       orientation: { x: 0, y: 0, z: 0, w: 1 },
     },
-    point_stride: 24,
+    point_stride: 28,
     fields: [
       { name: "x", offset: 0, type: NumericType.FLOAT32 },
       { name: "y", offset: 4, type: NumericType.FLOAT32 },
@@ -86,6 +97,7 @@ export function convertSensorDataToPointCloud(
       { name: "radial_velocity", offset: 12, type: NumericType.FLOAT32 },
       { name: "rcs", offset: 16, type: NumericType.FLOAT32 },
       { name: "snr", offset: 20, type: NumericType.FLOAT32 },
+      { name: "object_id", offset: 24, type: NumericType.UINT32 },
     ],
     data,
   };

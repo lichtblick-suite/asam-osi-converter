@@ -1,12 +1,17 @@
 import {
   PREFIX_DETECTED_LANE_BOUNDARIES,
-  PREFIX_DETECTED_MOVING_OBJECTS,
+  PREFIX_DETECTED_MOVING_OBJECT,
 } from "@/config/entityPrefixes";
+import { SceneEntityDeletionType } from "@foxglove/schemas";
 import { OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME } from "@/config/frameTransformNames";
-import { convertSensorDataToSceneUpdate } from "@/converters/sensorData/sceneUpdateConverter";
+import {
+  convertSensorDataToSceneUpdate,
+  registerSensorDataConverter,
+} from "@/converters/sensorData/sceneUpdateConverter";
 
 const timestamp = { seconds: 12, nanos: 34 };
 const detectedObject = {
+  header: { tracking_id: { value: 42 }, measurement_state: 2 },
   base: {
     position: { x: 10, y: -2, z: 1 },
     orientation: { roll: 0, pitch: 0, yaw: Math.PI / 2 },
@@ -24,10 +29,16 @@ describe("SensorData detected moving objects", () => {
     expect(result.entities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: PREFIX_DETECTED_MOVING_OBJECTS,
+          id: `${PREFIX_DETECTED_MOVING_OBJECT}_42`,
           timestamp: { sec: 12, nsec: 34 },
           frame_id: OSI_SENSORDATA_VIRTUAL_MOUNTING_POSITION_FRAME,
           frame_locked: true,
+          metadata: expect.arrayContaining([
+            { key: "tracking_id", value: "42" },
+            { key: "measurement_state", value: "MEASURED" },
+            { key: "position", value: "10, -2, 1" },
+            { key: "dimensions", value: "4, 2, 1.5" },
+          ]),
           cubes: [
             expect.objectContaining({
               pose: {
@@ -52,29 +63,52 @@ describe("SensorData detected moving objects", () => {
     const result = convertSensorDataToSceneUpdate({
       timestamp,
       lane_boundary: [{ boundary_line: [{ position: { x: 1, y: 2, z: 3 } }] }],
-      moving_object: [detectedObject, detectedObject],
+      moving_object: [detectedObject, { ...detectedObject, header: { tracking_id: { value: 43 } } }],
     });
 
     expect(
       result.entities?.find((entity) => entity?.id === PREFIX_DETECTED_LANE_BOUNDARIES),
     ).toMatchObject({ lines: [{ points: [{ x: 1, y: 2, z: 3 }] }] });
+    expect(result.entities?.map((entity) => entity?.id)).toEqual(
+      expect.arrayContaining([
+        `${PREFIX_DETECTED_MOVING_OBJECT}_42`,
+        `${PREFIX_DETECTED_MOVING_OBJECT}_43`,
+      ]),
+    );
     expect(
-      result.entities?.find((entity) => entity?.id === PREFIX_DETECTED_MOVING_OBJECTS)?.cubes,
-    ).toHaveLength(2);
+      result.entities
+        ?.filter((entity) => entity?.id?.startsWith(`${PREFIX_DETECTED_MOVING_OBJECT}_`))
+        .every((entity) => entity?.cubes?.length === 1),
+    ).toBe(true);
   });
 
-  it("replaces the previous boxes with an empty set when detections disappear", () => {
+  it("emits no moving-object entity when detections disappear", () => {
     const previous = convertSensorDataToSceneUpdate({ timestamp, moving_object: [detectedObject] });
     const current = convertSensorDataToSceneUpdate({ timestamp });
-    const previousObjects = previous.entities?.find(
-      (entity) => entity?.id === PREFIX_DETECTED_MOVING_OBJECTS,
+    const previousObject = previous.entities?.find(
+      (entity) => entity?.id === `${PREFIX_DETECTED_MOVING_OBJECT}_42`,
     );
-    const currentObjects = current.entities?.find(
-      (entity) => entity?.id === PREFIX_DETECTED_MOVING_OBJECTS,
+    const currentObject = current.entities?.find(
+      (entity) => entity?.id === `${PREFIX_DETECTED_MOVING_OBJECT}_42`,
     );
 
-    expect(previousObjects?.cubes).toHaveLength(1);
-    expect(currentObjects).toMatchObject({ id: previousObjects?.id, cubes: [] });
+    expect(previousObject?.cubes).toHaveLength(1);
+    expect(currentObject).toBeUndefined();
+  });
+
+  it("emits a matching-id deletion when a tracked object disappears", () => {
+    const converter = registerSensorDataConverter();
+    const event = { topic: "sensor_data", schemaName: "osi3.SensorData" } as never;
+
+    converter({ timestamp, moving_object: [detectedObject] }, event);
+    const result = converter({ timestamp }, event);
+
+    expect(result.deletions).toEqual([
+      expect.objectContaining({
+        id: `${PREFIX_DETECTED_MOVING_OBJECT}_42`,
+        type: SceneEntityDeletionType.MATCHING_ID,
+      }),
+    ]);
   });
 
   it("skips missing geometry and defaults an omitted orientation to zero", () => {
@@ -84,7 +118,7 @@ describe("SensorData detected moving objects", () => {
       moving_object: [{}, { base: {} }, { base }],
     });
     const objects = result.entities?.find(
-      (entity) => entity?.id === PREFIX_DETECTED_MOVING_OBJECTS,
+      (entity) => entity?.id === `${PREFIX_DETECTED_MOVING_OBJECT}_2`,
     );
 
     expect(objects?.cubes).toHaveLength(1);

@@ -40,6 +40,7 @@ describe("SensorData radar PointCloud conversion", () => {
                 radial_velocity: -2,
                 rcs: -5,
                 snr: 12,
+                object_id: { value: 42 },
               },
             ],
           },
@@ -51,7 +52,7 @@ describe("SensorData radar PointCloud conversion", () => {
       timestamp: { sec: 3, nsec: 50 },
       frame_id: sensorDataRadarFrameId(undefined),
       pose: { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 1 } },
-      point_stride: 24,
+      point_stride: 28,
       fields: [
         { name: "x", offset: 0, type: NumericType.FLOAT32 },
         { name: "y", offset: 4, type: NumericType.FLOAT32 },
@@ -59,12 +60,14 @@ describe("SensorData radar PointCloud conversion", () => {
         { name: "radial_velocity", offset: 12, type: NumericType.FLOAT32 },
         { name: "rcs", offset: 16, type: NumericType.FLOAT32 },
         { name: "snr", offset: 20, type: NumericType.FLOAT32 },
+        { name: "object_id", offset: 24, type: NumericType.UINT32 },
       ],
     });
     const values = pointValues(result);
     expect(values[0]).toBeCloseTo(0);
     expect(values[1]).toBeCloseTo(10 * Math.cos(Math.PI / 6));
-    expect(values.slice(2)).toEqual([5, -2, -5, 12]);
+    expect(values.slice(2, 6)).toEqual([5, -2, -5, 12]);
+    expect(new DataView(result!.data.buffer).getUint32(24, true)).toBe(42);
   });
 
   it("displays radar 0 in its own frame and reports additional radars", () => {
@@ -96,7 +99,7 @@ describe("SensorData radar PointCloud conversion", () => {
       { emitAlert },
     );
 
-    expect(pointValues(result)).toEqual([2, 0, 0, 0, 0, 0]);
+    expect(pointValues(result).slice(0, 6)).toEqual([2, 0, 0, 0, 0, 0]);
     expect(emitAlert).toHaveBeenCalledWith(
       expect.objectContaining({ severity: "info" }),
       "sensordata-pointcloud-multiple-radars",
@@ -133,7 +136,7 @@ describe("SensorData radar PointCloud conversion", () => {
       },
     });
 
-    expect(pointValues(result)).toEqual([3, 0, 0, 0, 0, 0]);
+    expect(pointValues(result).slice(0, 6)).toEqual([3, 0, 0, 0, 0, 0]);
   });
 
   it("keeps points in sensor coordinates and warns when their mounting transform is unavailable", () => {
@@ -147,7 +150,7 @@ describe("SensorData radar PointCloud conversion", () => {
       emitAlert,
     });
 
-    expect(pointValues(result)).toEqual([10, 0, 0, 0, 0, 0]);
+    expect(pointValues(result).slice(0, 6)).toEqual([10, 0, 0, 0, 0, 0]);
     expect(transforms.transforms).toEqual([]);
     expect(emitAlert).toHaveBeenCalledWith(
       expect.objectContaining({ severity: "warn" }),
@@ -199,7 +202,7 @@ describe("SensorData radar PointCloud conversion", () => {
     const frames = convertSensorDataToFrameTransforms(message, event).transforms;
     const radarFrame = frames.find((frame) => frame.child_frame_id === cloud?.frame_id)!;
 
-    expect(pointValues(cloud)).toEqual([4, 0, 0, 0, 0, 0]);
+    expect(pointValues(cloud).slice(0, 6)).toEqual([4, 0, 0, 0, 0, 0]);
     expect(radarFrame).toMatchObject({
       timestamp: { sec: 3, nsec: 50 },
       parent_frame_id: OSI_EGO_VEHICLE_REAR_AXLE_FRAME,
