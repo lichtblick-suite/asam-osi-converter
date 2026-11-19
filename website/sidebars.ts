@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Reference",
-      items: ["reference/lanes", "reference/logical-lanes"],
+      items: ["reference/lanes", "reference/logical-lanes", "reference/road-markings"],
     },
     "contributing",
   ],

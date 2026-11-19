@@ -40,7 +40,7 @@ Entities are built by feature modules in this order:
 | 2    | Stationary objects      | Always               | `buildStationaryObjectEntity()`    |
 | 3    | Traffic signs           | Always               | `buildTrafficSignEntity()`         |
 | 4    | Traffic lights          | Always               | `buildTrafficLightEntity()`        |
-| 5    | Road markings           | Always (STOP only)   | `buildRoadMarkingEntity()`         |
+| 5    | Road markings           | Always (STOP, zebra) | `buildRoadMarkingEntity()`         |
 | 6    | Lane boundaries         | `showPhysicalLanes`  | `buildLaneBoundaryEntity()`        |
 | 7    | Lanes                   | `showPhysicalLanes`  | `buildLaneEntity()`                |
 | 8    | Logical lane boundaries | `showLogicalLanes`   | `buildLogicalLaneBoundaryEntity()` |

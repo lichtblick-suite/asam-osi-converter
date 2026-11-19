@@ -10,6 +10,7 @@ For the general Lichtblick extension development workflow, see the [Local Develo
 yarn install          # Install dependencies
 yarn build            # Build extension
 yarn test             # Run tests
+yarn test:e2e         # Build and run render tests in a local Lichtblick app
 yarn lint             # Lint with auto-fix
 yarn lint:ci          # Lint without auto-fix (CI mode)
 yarn local-install    # Build and install into local Lichtblick
@@ -39,6 +40,7 @@ Commits are validated by commitlint via the Husky `commit-msg` hook.
 
 - Framework: Jest + ts-jest, `jsdom` environment
 - Test files: `tests/**/*.spec.ts`
+- Render tests: `tests/e2e/*.e2e.ts` (Playwright, not run in CI; see [Road Markings](reference/road-markings.md#render-probe))
 - Add or update tests alongside changes to converters, features, or utilities
 
 ## Adding a new feature
