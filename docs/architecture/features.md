@@ -63,7 +63,7 @@ Zebra crossings of type `SYMBOLIC_TRAFFIC_SIGN` (StVO 293) are split into 0.5 m 
 
 Only road markings with `traffic_main_sign_type` of `STOP` or `ZEBRA_CROSSING` are currently rendered. Other marking types are filtered out.
 
-Position and orientation are taken as-is from the global ground truth frame. A marking lying flat on the road therefore needs `pitch = -π/2` (x-axis up) and `yaw + roll = lane heading + π` (z-axis along the driving direction), as in `example-data/MovingHostWithStopLine.mcap`. Traces with identity orientation render as upright markings.
+Position and orientation are taken as-is from the global ground truth frame. A marking lying flat on the road therefore needs `pitch = -π/2` (x-axis up) and `yaw + roll = lane heading + π` (z-axis along the driving direction), as in `example-data/MovingHostWithStopLine.mcap`. Traces with identity orientation render as upright markings. See [Road Markings](../reference/road-markings.md) for the geometry and how it is verified.
 
 :::
 

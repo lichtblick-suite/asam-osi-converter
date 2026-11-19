@@ -14,6 +14,14 @@ Another option to create traces is the OpenPASS [gt-gen-simlator](https://gitlab
 
 With this MCAP you can simply test stop line road marking.
 
+### NDS Crosswalks
+
+**File Name:** nds_crosswalk_missing.mcap
+
+Urban scene with two `ZEBRA_CROSSING` road markings (IDs 6452 and 6221) for testing zebra crossing visualization.
+
+This trace does not follow the OSI road marking geometry yet, so `tests/exampleData.roadmarkings.spec.ts` fails for it. All eight road markings use identity orientation, which makes them stand upright instead of lying on the road, their boxes are up to 2.4 m off the road surface, and `monochrome_color` is `UNKNOWN`. A flat marking needs `pitch = -π/2` and `yaw + roll = lane heading + π`; see [Road Markings](../docs/reference/road-markings.md).
+
 ### Moving Host with 3D Model
 
 **File Name:** MovingHostWith3DModel.mcap
