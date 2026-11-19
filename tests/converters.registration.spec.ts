@@ -213,7 +213,7 @@ describe("OSI Visualizer: Message Converter", () => {
 
   it("registers the message converters", () => {
     activate(mockExtensionContext);
-    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(6);
+    expect(mockRegisterMessageConverter).toHaveBeenCalledTimes(9);
   });
 
   it("registers GroundTruth SceneUpdate converter with 3D and Image panel settings", () => {
@@ -225,8 +225,8 @@ describe("OSI Visualizer: Message Converter", () => {
     };
     expect(args.fromSchemaName).toBe("osi3.GroundTruth");
     expect(args.toSchemaName).toBe("foxglove.SceneUpdate");
-    expect(args.panelSettings?.["3D"]).toBeDefined();
-    expect(args.panelSettings?.["Image"]).toBeDefined();
+    expect(args.panelSettings["3D"]).toBeDefined();
+    expect(args.panelSettings["Image"]).toBeDefined();
   });
 
   it("registers SensorView SceneUpdate converter with 3D and Image panel settings", () => {
@@ -238,8 +238,8 @@ describe("OSI Visualizer: Message Converter", () => {
     };
     expect(args.fromSchemaName).toBe("osi3.SensorView");
     expect(args.toSchemaName).toBe("foxglove.SceneUpdate");
-    expect(args.panelSettings?.["3D"]).toBeDefined();
-    expect(args.panelSettings?.["Image"]).toBeDefined();
+    expect(args.panelSettings["3D"]).toBeDefined();
+    expect(args.panelSettings["Image"]).toBeDefined();
   });
 
   it("converts a simple message { fromSchemaName: osi_3_msgs/osi_GroundTruth toSchemaName: foxglove.SceneUpdate }", () => {
@@ -250,5 +250,34 @@ describe("OSI Visualizer: Message Converter", () => {
     const result = messageConverterArgs.converter(mockMessageData);
     expect(result.deletions).toBeDefined();
     expect(result.entities).toBeDefined();
+  });
+
+  it("registers SensorView image, calibration, and point cloud converters", () => {
+    activate(mockExtensionContext);
+    const registrations = mockRegisterMessageConverter.mock.calls.map(
+      (call) => call[0] as { fromSchemaName: string; toSchemaName: string },
+    );
+    const rawImage = registrations.find(
+      (registration) => registration.toSchemaName === "foxglove.RawImage",
+    );
+    const calibration = registrations.find(
+      (registration) => registration.toSchemaName === "foxglove.CameraCalibration",
+    );
+    const pointCloud = registrations.find(
+      (registration) => registration.toSchemaName === "foxglove.PointCloud",
+    );
+
+    expect(rawImage).toMatchObject({
+      fromSchemaName: "osi3.SensorView",
+      toSchemaName: "foxglove.RawImage",
+    });
+    expect(calibration).toMatchObject({
+      fromSchemaName: "osi3.SensorView",
+      toSchemaName: "foxglove.CameraCalibration",
+    });
+    expect(pointCloud).toMatchObject({
+      fromSchemaName: "osi3.SensorView",
+      toSchemaName: "foxglove.PointCloud",
+    });
   });
 });
