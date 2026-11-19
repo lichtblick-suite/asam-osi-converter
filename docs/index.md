@@ -17,6 +17,9 @@ A [Lichtblick](https://github.com/Lichtblick-Suite/lichtblick) extension that co
 | `osi3.SensorView` | `foxglove.FrameTransforms` | Frame transforms via embedded ground truth |
 | `osi3.SensorData` | `foxglove.SceneUpdate` | Detected lane boundaries (limited) |
 | `osi3.SensorData` | `foxglove.FrameTransforms` | Sensor mounting position transform |
+| `osi3.SensorView` | `foxglove.RawImage` | Raw camera image |
+| `osi3.SensorView` | `foxglove.CameraCalibration` | Pinhole calibration derived from resolution and FOV |
+| `osi3.SensorView` | `foxglove.PointCloud` | LiDAR reflections converted to XYZ and intensity |
 
 ## Quick start
 

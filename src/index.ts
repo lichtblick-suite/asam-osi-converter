@@ -1,11 +1,15 @@
 import {
   convertGroundTruthToFrameTransforms,
   registerGroundTruthConverter,
-  convertSensorDataToSceneUpdate,
+  registerSensorDataConverter,
   registerSensorViewConverter,
   convertSensorViewToFrameTransforms,
+  convertSensorViewToRawImage,
+  convertSensorViewToCameraCalibration,
+  convertSensorViewToPointCloud,
   generateGroundTruth3DPanelSettings,
   convertSensorDataToFrameTransforms,
+  convertSensorDataToPointCloud,
 } from "@converters";
 import { preloadDynamicTextures } from "@features/trafficsigns";
 import { ExtensionContext } from "@lichtblick/suite";
@@ -37,10 +41,11 @@ export function activate(extensionContext: ExtensionContext): void {
     supportsLatestPerRenderTick: true,
   });
 
+  const sensorDataConverter = registerSensorDataConverter();
   extensionContext.registerMessageConverter({
     fromSchemaName: "osi3.SensorData",
     toSchemaName: "foxglove.SceneUpdate",
-    converter: convertSensorDataToSceneUpdate,
+    converter: sensorDataConverter,
     supportsLatestPerRenderTick: true,
   });
 
@@ -62,6 +67,33 @@ export function activate(extensionContext: ExtensionContext): void {
     fromSchemaName: "osi3.SensorView",
     toSchemaName: "foxglove.FrameTransforms",
     converter: convertSensorViewToFrameTransforms,
+    supportsLatestPerRenderTick: true,
+  });
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorView",
+    toSchemaName: "foxglove.RawImage",
+    converter: convertSensorViewToRawImage,
+    supportsLatestPerRenderTick: true,
+  });
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorView",
+    toSchemaName: "foxglove.CameraCalibration",
+    converter: convertSensorViewToCameraCalibration,
+    supportsLatestPerRenderTick: true,
+  });
+
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorView",
+    toSchemaName: "foxglove.PointCloud",
+    converter: convertSensorViewToPointCloud,
+    supportsLatestPerRenderTick: true,
+  });
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "osi3.SensorData",
+    toSchemaName: "foxglove.PointCloud",
+    converter: convertSensorDataToPointCloud,
     supportsLatestPerRenderTick: true,
   });
 }
