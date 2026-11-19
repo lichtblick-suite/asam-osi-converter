@@ -121,3 +121,7 @@ dist
 # Docusaurus
 website/build/
 website/.docusaurus/
+
+# Playwright
+test-results/
+playwright-report/
