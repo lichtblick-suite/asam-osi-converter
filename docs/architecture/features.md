@@ -55,11 +55,15 @@ Renders traffic signs using dynamically loaded PNG textures. Textures are preloa
 **OSI type:** `RoadMarking`
 **Primitives:** CubePrimitive
 
-Renders road markings (currently STOP markings only) as oriented cubes. Position is centered on `base.position`, orientation applied from `base.orientation`, and dimensions follow the OSI road marking coordinate system where the x-axis is the surface normal.
+Renders road markings (currently STOP and ZEBRA_CROSSING markings only) as oriented cubes. Position is centered on `base.position`, orientation applied from `base.orientation`, and dimensions follow the OSI road marking coordinate system where the x-axis is the surface normal (paint thickness = `length`), the y-axis spans the `width` and the z-axis spans the `height` from the 'bottom' to the 'top' of the marking image (normally the driving direction).
+
+Zebra crossings of type `SYMBOLIC_TRAFFIC_SIGN` (StVO 293) are split into 0.5 m stripes with 0.5 m gaps along the local y-axis, each stripe spanning the full `height` along the local z-axis. Other zebra crossing types (e.g. a painted StVO 350 sign image) render as a single solid box.
 
 :::note
 
-Only road markings with `traffic_main_sign_type == STOP` are currently rendered. Other marking types are filtered out.
+Only road markings with `traffic_main_sign_type` of `STOP` or `ZEBRA_CROSSING` are currently rendered. Other marking types are filtered out.
+
+Position and orientation are taken as-is from the global ground truth frame. A marking lying flat on the road therefore needs `pitch = -π/2` (x-axis up) and `yaw + roll = lane heading + π` (z-axis along the driving direction), as in `example-data/MovingHostWithStopLine.mcap`. Traces with identity orientation render as upright markings.
 
 :::
 

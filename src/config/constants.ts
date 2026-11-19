@@ -134,6 +134,10 @@ export const ROAD_MARKING_COLOR: Record<RoadMarking_Classification_Color, Color>
   [RoadMarking_Classification_Color.VIOLET]: { r: 0.9, g: 0.5, b: 0.9, a: 1 },
 };
 
+// Zebra crossing (StVO 293) stripe pattern along the road marking's local y-axis (width)
+export const ZEBRA_CROSSING_STRIPE_WIDTH = 0.5;
+export const ZEBRA_CROSSING_STRIPE_GAP = 0.5;
+
 export const BRAKE_LIGHT_COLOR: Record<
   MovingObject_VehicleClassification_LightState_BrakeLightState,
   Color
